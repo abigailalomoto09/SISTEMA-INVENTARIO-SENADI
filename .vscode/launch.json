@@ -1,0 +1,35 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Abrir App en Edge",
+            "type": "pwa-msedge",
+            "request": "launch",
+            "url": "http://localhost:8080/SistemaInventarioV3/",
+            "webRoot": "${workspaceFolder}/src/main/webapp"
+        },
+        {
+            "name": "Abrir App en Chrome",
+            "type": "pwa-chrome",
+            "request": "launch",
+            "url": "http://localhost:8080/SistemaInventarioV3/",
+            "webRoot": "${workspaceFolder}/src/main/webapp"
+        },
+        {
+            "name": "Adjuntar a Java 5005",
+            "type": "java",
+            "request": "attach",
+            "hostName": "localhost",
+            "port": 5005
+        }
+    ],
+    "compounds": [
+        {
+            "name": "Validar y abrir app",
+            "configurations": [
+                "Abrir App en Edge"
+            ],
+            "preLaunchTask": "Proyecto: Validar completo"
+        }
+    ]
+}
