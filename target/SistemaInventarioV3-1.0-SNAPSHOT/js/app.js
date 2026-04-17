@@ -28,37 +28,37 @@
             label: "Laptop",
             hint: "Equipo portatil para trabajo administrativo o tecnico.",
             fields: ["procesador", "ram", "discoDuro", "sistemaOperativo", "numeroSerie", "ip"],
-            columns: ["codigoSbaiOriginal", "codigoMegan", "descripcion", "ip", "marca", "modelo", "numeroSerie", "custodio", "ubicacion", "procesador", "ram", "discoDuro", "sistemaOperativo", "estado", "observacion"]
+            columns: ["codigoSbaiOriginal", "codigoMegan", "descripcion", "ip", "marca", "modelo", "numeroSerie", "custodio", "ubicacionEdificio", "ubicacionPiso", "ubicacionDetalle", "procesador", "ram", "discoDuro", "sistemaOperativo", "estado", "observacion"]
         },
         desktop: {
             label: "Desktop",
             hint: "Estacion fija con foco en rendimiento de oficina o laboratorio.",
             fields: ["procesador", "ram", "discoDuro", "sistemaOperativo", "numeroSerie", "ip"],
-            columns: ["codigoSbaiOriginal", "codigoMegan", "descripcion", "ip", "marca", "modelo", "numeroSerie", "custodio", "ubicacion", "procesador", "ram", "discoDuro", "sistemaOperativo", "estado", "observacion"]
+            columns: ["codigoSbaiOriginal", "codigoMegan", "descripcion", "ip", "marca", "modelo", "numeroSerie", "custodio", "ubicacionEdificio", "ubicacionPiso", "ubicacionDetalle", "procesador", "ram", "discoDuro", "sistemaOperativo", "estado", "observacion"]
         },
         telefonos: {
             label: "Telefonos",
             hint: "Terminal telefonica o movil asignada a un custodio o dependencia.",
             fields: ["numeroSerie", "caracteristicas"],
-            columns: ["codigoSbaiOriginal", "codigoMegan", "descripcion", "marca", "modelo", "numeroSerie", "custodio", "ubicacion", "caracteristicas", "estado", "observacion"]
+            columns: ["codigoSbaiOriginal", "codigoMegan", "descripcion", "marca", "modelo", "numeroSerie", "custodio", "ubicacionEdificio", "ubicacionPiso", "ubicacionDetalle", "caracteristicas", "estado", "observacion"]
         },
         escaners: {
             label: "Escanners",
             hint: "Equipo de digitalizacion con datos de resolucion y conexion.",
             fields: ["numeroSerie", "caracteristicas"],
-            columns: ["codigoSbaiOriginal", "codigoMegan", "descripcion", "marca", "modelo", "numeroSerie", "custodio", "ubicacion", "caracteristicas", "estado", "observacion"]
+            columns: ["codigoSbaiOriginal", "codigoMegan", "descripcion", "marca", "modelo", "numeroSerie", "custodio", "ubicacionEdificio", "ubicacionPiso", "ubicacionDetalle", "caracteristicas", "estado", "observacion"]
         },
         impresoras: {
             label: "Impresoras",
             hint: "Equipo de impresion con tecnologia y tipo de conexion.",
             fields: ["numeroSerie", "ip", "caracteristicas"],
-            columns: ["codigoSbaiOriginal", "codigoMegan", "descripcion", "marca", "modelo", "numeroSerie", "custodio", "ubicacion", "ip", "caracteristicas", "estado", "observacion"]
+            columns: ["codigoSbaiOriginal", "codigoMegan", "descripcion", "marca", "modelo", "numeroSerie", "custodio", "ubicacionEdificio", "ubicacionPiso", "ubicacionDetalle", "ip", "caracteristicas", "estado", "observacion"]
         },
         proyectores: {
             label: "Proyectores",
             hint: "Equipo audiovisual con datos de resolucion y brillo.",
             fields: ["numeroSerie", "caracteristicas", "actaUgdt", "actaUgad", "anotaciones"],
-            columns: ["codigoSbaiOriginal", "codigoMegan", "descripcion", "marca", "modelo", "numeroSerie", "custodio", "custodioAnterior", "ubicacion", "caracteristicas", "estado", "observacion", "actaUgdt", "actaUgad", "anotaciones"]
+            columns: ["codigoSbaiOriginal", "codigoMegan", "descripcion", "marca", "modelo", "numeroSerie", "custodio", "custodioAnterior", "ubicacionEdificio", "ubicacionPiso", "ubicacionDetalle", "caracteristicas", "estado", "observacion", "actaUgdt", "actaUgad", "anotaciones"]
         }
     };
 
@@ -664,7 +664,7 @@
         state.filteredInventory = state.inventory.slice();
         // Initialize visible columns
         if (state.visibleColumns.length === 0) {
-            state.visibleColumns = ["codigoSbai", "codigoMegan", "tipo", "marca", "modelo", "numeroSerie", "custodio", "ubicacion", "estado"];
+            state.visibleColumns = ["codigoSbai", "codigoMegan", "tipo", "marca", "modelo", "numeroSerie", "custodio", "ubicacionEdificio", "ubicacionPiso", "ubicacionDetalle", "estado"];
         }
     }
 
@@ -693,6 +693,9 @@
             custodio: item.custodioActual?.nombre || "",
             custodioAnterior: item.custodioAnterior?.nombre || "",
             ubicacion: [item.ubicacion?.edificio, item.ubicacion?.piso, item.ubicacion?.detalle].filter(Boolean).join(" - "),
+            ubicacionEdificio: item.ubicacion?.edificio || "",
+            ubicacionPiso: item.ubicacion?.piso || "",
+            ubicacionDetalle: item.ubicacion?.detalle || "",
             estado: item.estado || "OPERATIVO",
             procesador: item.procesador || "",
             ip: item.ip || "",
@@ -737,9 +740,9 @@
 
     const ALL_INVENTORY_COLUMNS = [
         "codigoSbai", "codigoMegan", "tipo", "descripcion", "ip", "marca", "modelo",
-        "numeroSerie", "custodio", "custodioAnterior", "ubicacion", "procesador",
-        "ram", "discoDuro", "sistemaOperativo", "caracteristicas", "estado",
-        "observacion", "actaUgdt", "actaUgad", "anotaciones"
+        "numeroSerie", "custodio", "custodioAnterior", "ubicacionEdificio", "ubicacionPiso",
+        "ubicacionDetalle", "procesador", "ram", "discoDuro", "sistemaOperativo",
+        "caracteristicas", "estado", "observacion", "actaUgdt", "actaUgad", "anotaciones"
     ];
 
     function renderColumnSelector() {
@@ -1500,6 +1503,9 @@
             custodio: "Custodio",
             custodioAnterior: "Custodio Anterior",
             ubicacion: "Ubicacion",
+            ubicacionEdificio: "Edificio",
+            ubicacionPiso: "Piso",
+            ubicacionDetalle: "Detalle",
             estado: "Estado",
             procesador: "Procesador",
             observacion: "Observaciones",
