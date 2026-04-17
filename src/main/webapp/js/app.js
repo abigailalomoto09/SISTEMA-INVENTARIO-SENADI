@@ -19,62 +19,61 @@
         searchCriteria: [],
         searchResults: [],
         recentReports: [],
-        sidebarOpen: false
+        sidebarOpen: false,
+        visibleColumns: [],
     };
 
     const CATEGORY_CONFIG = {
         laptops: {
             label: "Laptop",
-            hint: "Equipo portátil para trabajo administrativo o técnico.",
-            fields: ["procesador", "ram", "discoDuro", "sistemaOperativo", "numeroSerie"]
+            hint: "Equipo portatil para trabajo administrativo o tecnico.",
+            fields: ["procesador", "ram", "discoDuro", "sistemaOperativo", "numeroSerie", "ip"],
+            columns: ["codigoSbaiOriginal", "codigoMegan", "descripcion", "ip", "marca", "modelo", "numeroSerie", "custodio", "ubicacion", "procesador", "ram", "discoDuro", "sistemaOperativo", "estado", "observacion"]
         },
         desktop: {
             label: "Desktop",
-            hint: "Estación fija con foco en rendimiento de oficina o laboratorio.",
-            fields: ["procesador", "ram", "discoDuro", "sistemaOperativo", "numeroSerie"]
+            hint: "Estacion fija con foco en rendimiento de oficina o laboratorio.",
+            fields: ["procesador", "ram", "discoDuro", "sistemaOperativo", "numeroSerie", "ip"],
+            columns: ["codigoSbaiOriginal", "codigoMegan", "descripcion", "ip", "marca", "modelo", "numeroSerie", "custodio", "ubicacion", "procesador", "ram", "discoDuro", "sistemaOperativo", "estado", "observacion"]
         },
         telefonos: {
-            label: "Teléfonos",
-            hint: "Terminal telefónica o móvil asignada a un custodio o dependencia.",
-            fields: ["numeroSerie", "linea", "imei"]
+            label: "Telefonos",
+            hint: "Terminal telefonica o movil asignada a un custodio o dependencia.",
+            fields: ["numeroSerie", "caracteristicas"],
+            columns: ["codigoSbaiOriginal", "codigoMegan", "descripcion", "marca", "modelo", "numeroSerie", "custodio", "ubicacion", "caracteristicas", "estado", "observacion"]
         },
         escaners: {
-            label: "Escáner",
-            hint: "Equipo de digitalización con datos de resolución y conexión.",
-            fields: ["numeroSerie", "resolucion", "conexion"]
+            label: "Escanners",
+            hint: "Equipo de digitalizacion con datos de resolucion y conexion.",
+            fields: ["numeroSerie", "caracteristicas"],
+            columns: ["codigoSbaiOriginal", "codigoMegan", "descripcion", "marca", "modelo", "numeroSerie", "custodio", "ubicacion", "caracteristicas", "estado", "observacion"]
         },
         impresoras: {
-            label: "Impresora",
-            hint: "Equipo de impresión con tecnología y tipo de conexión.",
-            fields: ["numeroSerie", "tecnologia", "conexion"]
-        },
-        perifericos: {
-            label: "Periféricos",
-            hint: "Accesorios como teclados, mouse, bases o monitores auxiliares.",
-            fields: ["numeroSerie", "conexion", "compatibilidad"]
-        },
-        cables: {
-            label: "Cables",
-            hint: "Elementos de conectividad con control de tipo y longitud.",
-            fields: ["tipoCable", "longitud", "estadoFisico"]
+            label: "Impresoras",
+            hint: "Equipo de impresion con tecnologia y tipo de conexion.",
+            fields: ["numeroSerie", "ip", "caracteristicas"],
+            columns: ["codigoSbaiOriginal", "codigoMegan", "descripcion", "marca", "modelo", "numeroSerie", "custodio", "ubicacion", "ip", "caracteristicas", "estado", "observacion"]
         },
         proyectores: {
-            label: "Proyector",
-            hint: "Equipo audiovisual con datos de resolución y brillo.",
-            fields: ["numeroSerie", "resolucion", "lumenes"]
+            label: "Proyectores",
+            hint: "Equipo audiovisual con datos de resolucion y brillo.",
+            fields: ["numeroSerie", "caracteristicas", "actaUgdt", "actaUgad", "anotaciones"],
+            columns: ["codigoSbaiOriginal", "codigoMegan", "descripcion", "marca", "modelo", "numeroSerie", "custodio", "custodioAnterior", "ubicacion", "caracteristicas", "estado", "observacion", "actaUgdt", "actaUgad", "anotaciones"]
         }
     };
 
     const INVENTORY_QUICK_FILTERS = [
-        { label: "Solo activos", type: "status", value: "Activo" },
+        { label: "Solo operativos", type: "status", value: "OPERATIVO" },
         { label: "Solo desktop", type: "type", value: "pcs" },
         { label: "Solo laptop", type: "type", value: "laptops" },
+        { label: "Solo telefonos", type: "type", value: "telefonos" },
+        { label: "Solo impresoras", type: "type", value: "impresoras" },
         { label: "Limpiar filtros", type: "reset", value: "" }
     ];
 
     const SEARCH_QUICK_PRESETS = [
-        { label: "Activos", criteria: [{ field: "estado", value: "Activo" }] },
-        { label: "Reportados", criteria: [{ field: "estado", value: "Reportado para baja" }] },
+        { label: "Operativos", criteria: [{ field: "estado", value: "OPERATIVO" }] },
+        { label: "No operativos", criteria: [{ field: "estado", value: "NO OPERATIVO" }] },
         { label: "Dell", criteria: [{ field: "marca", value: "Dell" }] },
         { label: "Intel", criteria: [{ field: "procesador", value: "Intel" }] }
     ];
@@ -266,7 +265,7 @@
                 <div class="app-main">
                     <header class="topbar">
                         <div class="topbar__actions">
-                            <button class="topbar__toggle" id="sidebarToggle">☰</button>
+                            <button class="topbar__toggle" id="sidebarToggle"><i class="fas fa-bars"></i></button>
                             <div class="topbar__title">
                                 <h1>${pageTitle(page)}</h1>
                                 <p>${pageDescription(page, role)}</p>
@@ -288,15 +287,13 @@
             ? [
                 ["dashboard", "Dashboard", `${basePrefix}/pages/dashboard.html`],
                 ["inventario", "Inventario", `${basePrefix}/pages/inventario.html`],
-                ["busqueda", "Búsqueda", `${basePrefix}/pages/busqueda.html`],
-                ["reportes", "Reportes", `${basePrefix}/pages/reportes.html`],
+                ["busqueda", "Busqueda", `${basePrefix}/pages/busqueda.html`],
                 ["nuevo-equipo", "Nuevo Equipo", `${basePrefix}/pages/nuevo-equipo.html`]
             ]
             : [
                 ["dashboard", "Dashboard", `${basePrefix}/pages/usuario/dashboard.html`],
                 ["inventario", "Inventario", `${basePrefix}/pages/usuario/inventario.html`],
-                ["busqueda", "Búsqueda", `${basePrefix}/pages/usuario/busqueda.html`],
-                ["reportes", "Reportes", `${basePrefix}/pages/usuario/reportes.html`]
+                ["busqueda", "Busqueda", `${basePrefix}/pages/usuario/busqueda.html`]
             ];
         return nav.map(([key, label, href]) => `<a href="${href}" class="${key === page ? "is-active" : ""}"><span>•</span><span>${label}</span></a>`).join("");
     }
@@ -305,8 +302,7 @@
         const titles = {
             dashboard: "Bienvenido",
             inventario: "Inventario completo",
-            busqueda: "Búsqueda avanzada",
-            reportes: "Reportes",
+            busqueda: "Busqueda avanzada",
             "nuevo-equipo": "Nuevo equipo"
         };
         return titles[pageName] || "Sistema de Inventario";
@@ -314,31 +310,19 @@
 
     function pageDescription(pageName, currentRole) {
         const descriptions = {
-            dashboard: currentRole === "admin" ? "Accesos rápidos y vista general del sistema." : "Accesos directos para consulta y reportes.",
-            inventario: currentRole === "admin" ? "Filtro, edición, histórico y cambio de estado." : "Consulta completa con edición limitada de custodio.",
-            busqueda: "Búsqueda multi-criterio client-side con tags.",
-            reportes: "Generación PDF/Excel y lista de reportes recientes.",
-            "nuevo-equipo": "Formulario dinámico por categoría con guardado simulado."
+            dashboard: currentRole === "admin" ? "Accesos rapidos y vista general del sistema." : "Accesos directos para consulta y reportes.",
+            inventario: currentRole === "admin" ? "Filtro, edicion, historico y cambio de estado." : "Consulta completa con edicion limitada de custodio.",
+            busqueda: "Busqueda multi-criterio client-side con tags.",
+            "nuevo-equipo": "Formulario dinamico por categoria con guardado simulado."
         };
         return descriptions[pageName] || "";
     }
 
     function renderPage() {
-        if (page === "dashboard") {
-            return renderDashboard();
-        }
-        if (page === "inventario") {
-            return renderInventoryPage();
-        }
-        if (page === "busqueda") {
-            return renderSearchPage();
-        }
-        if (page === "reportes") {
-            return renderReportsPage();
-        }
-        if (page === "nuevo-equipo") {
-            return renderNewEquipmentPage();
-        }
+        if (page === "dashboard") { return renderDashboard(); }
+        if (page === "inventario") { return renderInventoryPage(); }
+        if (page === "busqueda") { return renderSearchPage(); }
+        if (page === "nuevo-equipo") { return renderNewEquipmentPage(); }
         return "";
     }
 
@@ -354,15 +338,15 @@
                     </div>
                     <div class="stats-grid">
                         <article class="stat-card"><span>Total cargado</span><strong id="statTotal">--</strong></article>
-                        <article class="stat-card"><span>Activos</span><strong id="statActive">--</strong></article>
+                        <article class="stat-card"><span>Operativos</span><strong id="statActive">--</strong></article>
                         <article class="stat-card"><span>Ubicaciones</span><strong id="statLocations">--</strong></article>
                     </div>
                 </div>
             </section>
             <div class="section-heading">
                 <div>
-                    <h2>Accesos rápidos</h2>
-                    <p>${role === "admin" ? "Nuevo Equipo, Búsqueda y Reportes." : "Ver Inventario, Búsqueda y Descargar Reporte."}</p>
+                    <h2>Accesos rapidos</h2>
+                    <p>${role === "admin" ? "Nuevo Equipo, Busqueda y Exportar." : "Ver Inventario, Busqueda y Exportar."}</p>
                 </div>
             </div>
             <section class="quick-grid">${dashboardCards().join("")}</section>
@@ -372,14 +356,12 @@
     function dashboardCards() {
         const cards = role === "admin"
             ? [
-                ["Nuevo Equipo", "Registrar equipos por categoría con formulario dinámico.", `${basePrefix}/pages/nuevo-equipo.html`],
-                ["Búsqueda", "Filtrar por código, custodio, ubicación, estado o procesador.", `${basePrefix}/pages/busqueda.html`],
-                ["Reportes", "Generar salidas PDF o Excel y revisar descargas recientes.", `${basePrefix}/pages/reportes.html`]
+                ["Nuevo Equipo", "Registrar equipos por categoria con formulario dinamico.", `${basePrefix}/pages/nuevo-equipo.html`],
+                ["Busqueda", "Filtrar por codigo, custodio, ubicacion, estado o procesador.", `${basePrefix}/pages/busqueda.html`]
             ]
             : [
                 ["Ver Inventario", "Consultar el inventario y actualizar solo custodio.", `${basePrefix}/pages/usuario/inventario.html`],
-                ["Búsqueda", "Aplicar criterios múltiples y revisar resultados sin acciones.", `${basePrefix}/pages/usuario/busqueda.html`],
-                ["Descargar Reporte", "Generar reportes PDF o Excel desde la vista técnica.", `${basePrefix}/pages/usuario/reportes.html`]
+                ["Busqueda", "Aplicar criterios multiples y revisar resultados sin acciones.", `${basePrefix}/pages/usuario/busqueda.html`]
             ];
         return cards.map(([title, text, href]) => `<a class="mini-card" href="${href}"><strong>${title}</strong><span>${text}</span></a>`);
     }
@@ -389,8 +371,8 @@
             <section class="panel">
                 <div class="stats-grid" id="inventoryStats">
                     <article class="stat-card"><span>Total</span><strong id="inventoryStatTotal">--</strong></article>
-                    <article class="stat-card"><span>Activos</span><strong id="inventoryStatActive">--</strong></article>
-                    <article class="stat-card"><span>Inactivos</span><strong id="inventoryStatInactive">--</strong></article>
+                    <article class="stat-card"><span>Operativos</span><strong id="inventoryStatActive">--</strong></article>
+                    <article class="stat-card"><span>No operativos</span><strong id="inventoryStatInactive">--</strong></article>
                     <article class="stat-card"><span>Baja</span><strong id="inventoryStatLow">--</strong></article>
                 </div>
                 <div class="filters-grid">
@@ -398,36 +380,47 @@
                         <label for="filterStatus">Estado</label>
                         <select id="filterStatus">
                             <option value="">Todos</option>
-                            <option value="Activo">Activo</option>
-                            <option value="Inactivo">Inactivo</option>
-                            <option value="Reportado para baja">Reportado para baja</option>
+                            <option value="OPERATIVO">OPERATIVO</option>
+                            <option value="NO OPERATIVO">NO OPERATIVO</option>
+                            <option value="REPORTADO PARA DAR DE BAJA">REPORTADO PARA DAR DE BAJA</option>
                         </select>
                     </div>
                     <div class="field-group">
-                        <label for="filterLocation">Ubicación</label>
+                        <label for="filterLocation">Ubicacion</label>
                         <input id="filterLocation" type="text" placeholder="Edificio, piso o detalle">
                     </div>
                     <div class="field-group">
-                        <label for="filterType">Categoría</label>
+                        <label for="filterType">Categoria</label>
                         <select id="filterType">
                             <option value="">Todas</option>
                             <option value="pcs">Desktop</option>
                             <option value="laptops">Laptop</option>
+                            <option value="telefonos">Telefonos</option>
+                            <option value="escaners">Escanners</option>
+                            <option value="impresoras">Impresoras</option>
+                            <option value="proyectores">Proyectores</option>
                         </select>
                     </div>
+                    <div class="field-group">
+                        <label>&nbsp;</label>
+                        <div class="toolbar">
+                            <button class="btn btn-secondary" id="columnSelectorBtn" type="button"><i class="fas fa-columns"></i> Columnas</button>
+                            <button class="btn btn-primary" id="exportBtn" type="button"><i class="fas fa-file-export"></i> Exportar</button>
+                        </div>
+                    </div>
+                </div>
+                <div id="columnSelectorPanel" class="column-selector-panel hidden">
+                    <div class="column-selector-grid" id="columnSelectorGrid"></div>
                 </div>
                 <div class="search-tags" id="inventoryQuickFilters">
                     ${INVENTORY_QUICK_FILTERS.map((item) => `<button class="search-tag search-tag--button" type="button" data-quick-filter="${item.type}" data-value="${item.value}">${item.label}</button>`).join("")}
                 </div>
-                ${role === "usuario" ? '<div class="helper-banner">Como usuario técnico, solo puede modificar el campo Actual Custodio.</div>' : ""}
+                ${role === "usuario" ? '<div class="helper-banner">Como usuario tecnico, solo puede modificar el campo Actual Custodio.</div>' : ""}
                 <div id="inventoryMeta" class="search-results-meta"></div>
                 <div class="table-wrap">
                     <table>
                         <thead>
-                            <tr>
-                                ${["codigoSbai", "codigoMegan", "tipo", "marca", "modelo", "numeroSerie", "custodio", "ubicacion", "procesador", "estado"].map((key) => `<th><button class="table-sort" data-sort="${key}">${labelForColumn(key)}</button></th>`).join("")}
-                                <th>Acciones</th>
-                            </tr>
+                            <tr id="inventoryHeaderRow"></tr>
                         </thead>
                         <tbody id="inventoryBody"></tbody>
                     </table>
@@ -477,7 +470,7 @@
                             <tr>
                                 <th>Código Megan</th>
                                 <th>Código SBYE</th>
-                                <th>S/N</th>
+                                <th>Numero de Serie</th>
                                 <th>Marca</th>
                                 <th>Modelo</th>
                                 <th>Custodio</th>
@@ -594,15 +587,13 @@
                 <div class="split">
                     <div>
                         <div class="field-group">
-                            <label for="equipmentCategory">Categoría</label>
+                            <label for="equipmentCategory">Categoria</label>
                             <select id="equipmentCategory">
                                 <option value="laptops">Laptop</option>
                                 <option value="desktop">Desktop</option>
-                                <option value="telefonos">Teléfonos</option>
-                                <option value="escaners">Escáner</option>
+                                <option value="telefonos">Telefonos</option>
+                                <option value="escaners">Escanners</option>
                                 <option value="impresoras">Impresoras</option>
-                                <option value="perifericos">Periféricos</option>
-                                <option value="cables">Cables</option>
                                 <option value="proyectores">Proyectores</option>
                             </select>
                         </div>
@@ -632,40 +623,26 @@
         });
         document.getElementById("logoutButton")?.addEventListener("click", logout);
         document.getElementById("modalRoot")?.addEventListener("click", (event) => {
-            if (event.target.classList.contains("modal-backdrop")) {
-                closeModal();
-            }
+            if (event.target.classList.contains("modal-backdrop")) { closeModal(); }
         });
 
-        if (page === "inventario") {
-            bindInventoryEvents();
-        }
-        if (page === "busqueda") {
-            bindSearchEvents();
-        }
-        if (page === "reportes") {
-            bindReportEvents();
-        }
-        if (page === "nuevo-equipo") {
-            bindNewEquipmentEvents();
-        }
+        if (page === "inventario") { bindInventoryEvents(); }
+        if (page === "busqueda") { bindSearchEvents(); }
+        if (page === "nuevo-equipo") { bindNewEquipmentEvents(); }
     }
 
     async function loadInitialData() {
-        if (page === "dashboard" || page === "inventario" || page === "busqueda" || page === "reportes") {
+        if (page === "dashboard" || page === "inventario" || page === "busqueda") {
             await loadInventory();
             updateDashboardStats();
         }
         if (page === "inventario") {
+            renderColumnSelector();
             renderInventory();
         }
         if (page === "busqueda") {
             renderSearchTags();
             renderSearchResults([]);
-        }
-        if (page === "reportes") {
-            renderRecentReports();
-            renderReportPreview();
         }
         if (page === "nuevo-equipo") {
             renderDynamicFields(document.getElementById("equipmentCategory").value);
@@ -673,9 +650,22 @@
     }
 
     async function loadInventory() {
-        const [pcs, laptops] = await Promise.all([fetchInventoryType("pcs"), fetchInventoryType("laptops")]);
-        state.inventory = normalizeItems(pcs, "pcs").concat(normalizeItems(laptops, "laptops"));
+        const [pcs, laptops, telefonos, escaners, impresoras, proyectores] = await Promise.all([
+            fetchInventoryType("pcs"), fetchInventoryType("laptops"),
+            fetchInventoryType("telefonos"), fetchInventoryType("escaners"),
+            fetchInventoryType("impresoras"), fetchInventoryType("proyectores")
+        ]);
+        state.inventory = normalizeItems(pcs, "pcs")
+            .concat(normalizeItems(laptops, "laptops"))
+            .concat(normalizeItems(telefonos, "telefonos"))
+            .concat(normalizeItems(escaners, "escaners"))
+            .concat(normalizeItems(impresoras, "impresoras"))
+            .concat(normalizeItems(proyectores, "proyectores"));
         state.filteredInventory = state.inventory.slice();
+        // Initialize visible columns
+        if (state.visibleColumns.length === 0) {
+            state.visibleColumns = ["codigoSbai", "codigoMegan", "tipo", "marca", "modelo", "numeroSerie", "custodio", "ubicacion", "estado"];
+        }
     }
 
     async function fetchInventoryType(type) {
@@ -694,16 +684,27 @@
     function normalizeItems(items, type) {
         return items.map((item) => ({
             tipo: type,
-            codigoSbai: item.codigoSbai || "",
+            codigoSbai: item.codigoSbaiOriginal || item.codigoSbai || "",
+            codigoSbaiOriginal: item.codigoSbaiOriginal || "",
             codigoMegan: item.codigoMegan || "",
             numeroSerie: item.numeroSerie || "",
             marca: item.marca || "",
             modelo: item.modelo || "",
             custodio: item.custodioActual?.nombre || "",
+            custodioAnterior: item.custodioAnterior?.nombre || "",
             ubicacion: [item.ubicacion?.edificio, item.ubicacion?.piso, item.ubicacion?.detalle].filter(Boolean).join(" - "),
-            estado: item.estado || "Activo",
+            estado: item.estado || "OPERATIVO",
             procesador: item.procesador || "",
+            ip: item.ip || "",
             observacion: item.observacion || "",
+            caracteristicas: item.caracteristicas || "",
+            ram: item.ram || "",
+            discoDuro: item.discoDuro || "",
+            sistemaOperativo: item.sistemaOperativo || "",
+            actaUgdt: item.actaUgdt || "",
+            actaUgad: item.actaUgad || "",
+            anotaciones: item.anotaciones || "",
+            descripcion: item.descripcion || "",
             raw: item
         }));
     }
@@ -713,7 +714,7 @@
             return;
         }
         const total = state.inventory.length;
-        const active = state.inventory.filter((item) => item.estado === "Activo").length;
+        const active = state.inventory.filter((item) => item.estado === "OPERATIVO").length;
         const locations = new Set(state.inventory.map((item) => item.ubicacion).filter(Boolean)).size;
         setText("statTotal", total);
         setText("statActive", active);
@@ -725,10 +726,81 @@
             document.getElementById(id)?.addEventListener("input", applyInventoryFilters);
             document.getElementById(id)?.addEventListener("change", applyInventoryFilters);
         });
-        document.querySelectorAll("[data-sort]").forEach((button) => button.addEventListener("click", () => sortInventory(button.dataset.sort)));
         document.getElementById("prevPage")?.addEventListener("click", () => changePage(-1));
         document.getElementById("nextPage")?.addEventListener("click", () => changePage(1));
         document.querySelectorAll("[data-quick-filter]").forEach((button) => button.addEventListener("click", () => applyQuickInventoryFilter(button.dataset.quickFilter, button.dataset.value)));
+        document.getElementById("columnSelectorBtn")?.addEventListener("click", toggleColumnSelector);
+        document.getElementById("exportBtn")?.addEventListener("click", showExportModal);
+    }
+
+    // ==================== COLUMN SELECTOR ====================
+
+    const ALL_INVENTORY_COLUMNS = [
+        "codigoSbai", "codigoMegan", "tipo", "descripcion", "ip", "marca", "modelo",
+        "numeroSerie", "custodio", "custodioAnterior", "ubicacion", "procesador",
+        "ram", "discoDuro", "sistemaOperativo", "caracteristicas", "estado",
+        "observacion", "actaUgdt", "actaUgad", "anotaciones"
+    ];
+
+    function renderColumnSelector() {
+        const grid = document.getElementById("columnSelectorGrid");
+        if (!grid) { return; }
+        grid.innerHTML = ALL_INVENTORY_COLUMNS.map((col) => {
+            const checked = state.visibleColumns.includes(col) ? "checked" : "";
+            return `<label class="column-checkbox"><input type="checkbox" value="${col}" ${checked}><span>${labelForColumn(col)}</span></label>`;
+        }).join("");
+        grid.querySelectorAll("input[type=checkbox]").forEach((cb) => {
+            cb.addEventListener("change", () => {
+                state.visibleColumns = Array.from(grid.querySelectorAll("input:checked")).map((i) => i.value);
+                renderInventory();
+            });
+        });
+    }
+
+    function toggleColumnSelector() {
+        const panel = document.getElementById("columnSelectorPanel");
+        if (panel) { panel.classList.toggle("hidden"); }
+    }
+
+    // ==================== EXPORT ====================
+
+    function showExportModal() {
+        openModal("Exportar inventario", `
+            <div class="field-group">
+                <label for="exportFormat">Formato</label>
+                <select id="exportFormat">
+                    <option value="pdf">PDF</option>
+                    <option value="excel">Excel</option>
+                </select>
+            </div>
+            <p class="muted">Se exportara la vista filtrada actual con ${state.filteredInventory.length} registros.</p>
+        `, [
+            { label: "Cancelar", className: "btn btn-secondary", onClick: closeModal },
+            { label: "Exportar", className: "btn btn-primary", onClick: executeExport }
+        ]);
+    }
+
+    function executeExport() {
+        const format = document.getElementById("exportFormat").value;
+        closeModal();
+        if (format === "pdf") { exportPdf(); } else { exportExcel(); }
+    }
+
+    function exportPdf() {
+        const cols = state.visibleColumns;
+        const win = window.open("", "_blank");
+        if (!win) { showToast("Bloqueado", "Permite ventanas emergentes para generar el PDF.", "info"); return; }
+        win.document.write(`<html><head><title>Reporte Inventario</title><style>body{font-family:Arial;padding:24px}table{border-collapse:collapse;width:100%}th,td{border:1px solid #ccc;padding:8px;text-align:left;font-size:12px}</style></head><body><h1>Reporte de Inventario</h1><p>Generado: ${new Date().toLocaleString("es-EC")} | ${state.filteredInventory.length} registros</p><table><thead><tr>${cols.map((c) => `<th>${labelForColumn(c)}</th>`).join("")}</tr></thead><tbody>${state.filteredInventory.map((item) => `<tr>${cols.map((c) => `<td>${escapeHtml(item[c] || "-")}</td>`).join("")}</tr>`).join("")}</tbody></table><script>window.onload=function(){window.print();}<\/script></body></html>`);
+        win.document.close();
+        showToast("PDF preparado", "Se abrio una vista imprimible.", "success");
+    }
+
+    function exportExcel() {
+        const tipo = document.getElementById("filterType")?.value || "";
+        const endpointMap = { pcs: "/reportes/pcs/excel", laptops: "/reportes/laptops/excel", telefonos: "/reportes/telefonos/excel", escaners: "/reportes/escaners/excel", impresoras: "/reportes/impresoras/excel", proyectores: "/reportes/proyectores/excel" };
+        const endpoint = endpointMap[tipo] || "/reportes/inventario/excel";
+        window.open(`${API_BASE}${endpoint}`, "_blank");
+        showToast("Excel solicitado", "Se inicio la descarga.", "success");
     }
 
     function applyInventoryFilters() {
@@ -759,8 +831,12 @@
     function renderInventory() {
         const tbody = document.getElementById("inventoryBody");
         const mobile = document.getElementById("inventoryMobile");
-        if (!tbody || !mobile) {
-            return;
+        const headerRow = document.getElementById("inventoryHeaderRow");
+        if (!tbody || !mobile) { return; }
+        const cols = state.visibleColumns;
+        // Render header
+        if (headerRow) {
+            headerRow.innerHTML = cols.map((key) => `<th><button class="table-sort" data-sort="${key}">${labelForColumn(key)}</button></th>`).join("") + "<th>Acciones</th>";
         }
         const total = state.filteredInventory.length;
         const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
@@ -768,12 +844,25 @@
         const start = (state.inventoryPage - 1) * PAGE_SIZE;
         const pageItems = state.filteredInventory.slice(start, start + PAGE_SIZE);
         updateInventoryStats();
-        setText("inventoryMeta", `${total} resultados · página ${state.inventoryPage} de ${totalPages}`);
+        setText("inventoryMeta", `${total} resultados - pagina ${state.inventoryPage} de ${totalPages}`);
         setText("inventoryPaginationMeta", pageItems.length ? `Mostrando ${start + 1}-${start + pageItems.length}` : "Sin resultados");
-        tbody.innerHTML = pageItems.length ? pageItems.map(renderInventoryRow).join("") : `<tr><td colspan="11">No hay equipos para los filtros aplicados.</td></tr>`;
+        tbody.innerHTML = pageItems.length ? pageItems.map((item) => {
+            const cells = cols.map((key) => {
+                if (key === "estado") return `<td>${stateBadge(item[key])}</td>`;
+                if (key === "tipo") return `<td>${tipoLabel(item[key])}</td>`;
+                return `<td>${escapeHtml(item[key] || "-")}</td>`;
+            }).join("");
+            return `<tr>${cells}<td>${renderInventoryActions(item)}</td></tr>`;
+        }).join("") : `<tr><td colspan="${cols.length + 1}">No hay equipos para los filtros aplicados.</td></tr>`;
         mobile.innerHTML = pageItems.map(renderMobileInventoryCard).join("");
         tbody.querySelectorAll("[data-action]").forEach((button) => button.addEventListener("click", handleInventoryAction));
         mobile.querySelectorAll("[data-action]").forEach((button) => button.addEventListener("click", handleInventoryAction));
+        document.querySelectorAll("[data-sort]").forEach((button) => button.addEventListener("click", () => sortInventory(button.dataset.sort)));
+    }
+
+    function tipoLabel(tipo) {
+        const labels = { pcs: "Desktop", laptops: "Laptop", telefonos: "Telefonos", escaners: "Escanners", impresoras: "Impresoras", proyectores: "Proyectores" };
+        return labels[tipo] || tipo;
     }
 
     function updateInventoryStats() {
@@ -781,9 +870,9 @@
             return;
         }
         const total = state.filteredInventory.length;
-        const active = state.filteredInventory.filter((item) => item.estado === "Activo").length;
-        const inactive = state.filteredInventory.filter((item) => item.estado === "Inactivo").length;
-        const low = state.filteredInventory.filter((item) => item.estado === "Reportado para baja").length;
+        const active = state.filteredInventory.filter((item) => item.estado === "OPERATIVO").length;
+        const inactive = state.filteredInventory.filter((item) => item.estado === "NO OPERATIVO").length;
+        const low = state.filteredInventory.filter((item) => item.estado === "REPORTADO PARA DAR DE BAJA").length;
         setText("inventoryStatTotal", total);
         setText("inventoryStatActive", active);
         setText("inventoryStatInactive", inactive);
@@ -824,13 +913,13 @@
     function renderInventoryActions(item) {
         const buttons = [];
         if (role === "admin") {
-            buttons.push(`<button class="icon-btn" data-action="edit" data-id="${item.codigoSbai}" title="Editar">✎</button>`);
+            buttons.push(`<button class="icon-btn" data-action="edit" data-id="${item.codigoSbai}" title="Editar"><i class="fas fa-edit"></i></button>`);
         } else {
-            buttons.push(`<button class="icon-btn" data-action="custodian" data-id="${item.codigoSbai}" title="Editar custodio">👤</button>`);
+            buttons.push(`<button class="icon-btn" data-action="custodian" data-id="${item.codigoSbai}" title="Editar custodio"><i class="fas fa-user-edit"></i></button>`);
         }
-        buttons.push(`<button class="icon-btn" data-action="history" data-id="${item.codigoSbai}" title="Historial">🕘</button>`);
+        buttons.push(`<button class="icon-btn" data-action="history" data-id="${item.codigoSbai}" title="Historial"><i class="fas fa-history"></i></button>`);
         if (role === "admin") {
-            buttons.push(`<button class="icon-btn" data-action="status" data-id="${item.codigoSbai}" title="Cambiar estado">⇄</button>`);
+            buttons.push(`<button class="icon-btn" data-action="status" data-id="${item.codigoSbai}" title="Cambiar estado"><i class="fas fa-exchange-alt"></i></button>`);
         }
         return `<div class="action-row">${buttons.join("")}</div>`;
     }
@@ -927,9 +1016,9 @@
             <div class="field-group">
                 <label for="statusSelect">Nuevo estado</label>
                 <select id="statusSelect">
-                    <option value="Activo">Activo</option>
-                    <option value="Inactivo">Inactivo</option>
-                    <option value="Reportado para baja">Reportado para baja</option>
+                    <option value="OPERATIVO">OPERATIVO</option>
+                    <option value="NO OPERATIVO">NO OPERATIVO</option>
+                    <option value="REPORTADO PARA DAR DE BAJA">REPORTADO PARA DAR DE BAJA</option>
                 </select>
             </div>
         `, [
@@ -1090,7 +1179,7 @@
                 <td>${escapeHtml(item.ubicacion || "-")}</td>
                 <td>${stateBadge(item.estado)}</td>
                 <td>${escapeHtml(item.procesador || "-")}</td>
-                ${role === "admin" ? `<td><div class="action-row"><button class="icon-btn" data-action="edit" data-id="${item.codigoSbai}">✎</button><button class="icon-btn" data-action="history" data-id="${item.codigoSbai}">🕘</button></div></td>` : ""}
+                ${role === "admin" ? `<td><div class="action-row"><button class="icon-btn" data-action="edit" data-id="${item.codigoSbai}"><i class="fas fa-edit"></i></button><button class="icon-btn" data-action="history" data-id="${item.codigoSbai}"><i class="fas fa-history"></i></button></div></td>` : ""}
             </tr>
         `).join("") : `<tr><td colspan="${role === "admin" ? 10 : 9}">No se encontraron coincidencias.</td></tr>`;
         mobile.innerHTML = results.map((item) => `
@@ -1310,23 +1399,22 @@
 
     function renderDynamicFields(category) {
         const container = document.getElementById("dynamicEquipmentFields");
-        if (!container) {
-            return;
-        }
+        if (!container) { return; }
         const categoryConfig = CATEGORY_CONFIG[category] || CATEGORY_CONFIG.laptops;
-        const fields = ["codigoMegan", "codigoSbai", "descripcion", "marca", "modelo", "custodio", "ubicacion", "estado"].concat(categoryConfig.fields || []);
-        container.innerHTML = fields.map((field) => {
+        const columns = categoryConfig.columns || [];
+        container.innerHTML = columns.map((field) => {
             if (field === "estado") {
-                return editField(field, labelForColumn(field), "Activo", false, "select");
+                return editField(field, labelForColumn(field), "OPERATIVO", false, "select");
+            }
+            if (field === "observacion" || field === "caracteristicas" || field === "anotaciones") {
+                return editField(field, labelForColumn(field), "", false, "textarea");
             }
             return editField(field, labelForColumn(field), "");
         }).join("");
         const select = container.querySelector('select[name="estado"]');
-        if (select) {
-            select.value = "Activo";
-        }
+        if (select) { select.value = "OPERATIVO"; }
         setText("equipmentCategoryHint", categoryConfig.hint || "");
-        renderEquipmentSummary(categoryConfig, fields);
+        renderEquipmentSummary(categoryConfig, columns);
     }
 
     function renderEquipmentSummary(categoryConfig, fields) {
@@ -1363,7 +1451,7 @@
             <div class="modal">
                 <div class="modal__header">
                     <h3>${title}</h3>
-                    <button class="modal-close" id="modalClose">×</button>
+                    <button class="modal-close" id="modalClose"><i class="fas fa-times"></i></button>
                 </div>
                 <div class="modal__body">${bodyHtml}</div>
                 <div class="modal__footer form-actions" id="modalFooter"></div>
@@ -1402,43 +1490,40 @@
 
     function labelForColumn(key) {
         const labels = {
-            codigoSbai: "Código SBYE",
-            codigoMegan: "Código Megan",
-            tipo: "Categoría",
+            codigoSbai: "Codigo SBAI",
+            codigoSbaiOriginal: "Codigo SBAI",
+            codigoMegan: "Codigo Megan",
+            tipo: "Categoria",
             marca: "Marca",
             modelo: "Modelo",
-            numeroSerie: "S/N",
+            numeroSerie: "Numero de Serie",
             custodio: "Custodio",
-            ubicacion: "Ubicación",
+            custodioAnterior: "Custodio Anterior",
+            ubicacion: "Ubicacion",
             estado: "Estado",
             procesador: "Procesador",
             observacion: "Observaciones",
             sistemaOperativo: "Sistema Operativo",
             ram: "RAM",
             discoDuro: "Disco Duro",
-            linea: "Línea",
-            imei: "IMEI",
-            resolucion: "Resolución",
-            conexion: "Conexión",
-            tecnologia: "Tecnología",
-            compatibilidad: "Compatibilidad",
-            tipoCable: "Tipo de cable",
-            longitud: "Longitud",
-            estadoFisico: "Estado físico",
-            lumenes: "Lúmenes",
-            descripcion: "Descripción"
+            ip: "IP",
+            caracteristicas: "Caracteristicas",
+            descripcion: "Descripcion",
+            actaUgdt: "Acta UGDT",
+            actaUgad: "Acta UGAD",
+            anotaciones: "Anotaciones"
         };
         return labels[key] || key;
     }
 
     function stateBadge(status) {
-        if (status === "Activo") {
-            return '<span class="badge badge-success">Activo</span>';
+        if (status === "OPERATIVO") {
+            return '<span class="badge badge-success">OPERATIVO</span>';
         }
-        if (status === "Inactivo") {
-            return '<span class="badge badge-warning">Inactivo</span>';
+        if (status === "NO OPERATIVO") {
+            return '<span class="badge badge-warning">NO OPERATIVO</span>';
         }
-        return '<span class="badge badge-danger">Reportado para baja</span>';
+        return '<span class="badge badge-danger">REPORTADO PARA DAR DE BAJA</span>';
     }
 
     function editField(name, label, value, disabled, type) {
@@ -1447,9 +1532,9 @@
         }
         if (type === "select") {
             return `<label class="field-group"><span>${label}</span><select name="${name}" ${disabled ? "disabled" : ""}>
-                <option value="Activo">Activo</option>
-                <option value="Inactivo">Inactivo</option>
-                <option value="Reportado para baja">Reportado para baja</option>
+                <option value="OPERATIVO">OPERATIVO</option>
+                <option value="NO OPERATIVO">NO OPERATIVO</option>
+                <option value="REPORTADO PARA DAR DE BAJA">REPORTADO PARA DAR DE BAJA</option>
             </select></label>`;
         }
         return `<label class="field-group"><span>${label}</span><input name="${name}" value="${escapeHtml(value || "")}" ${disabled ? "readonly" : ""}></label>`;

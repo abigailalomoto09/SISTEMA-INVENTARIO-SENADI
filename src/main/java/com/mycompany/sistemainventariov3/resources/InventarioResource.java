@@ -2,8 +2,12 @@ package com.mycompany.sistemainventariov3.resources;
 
 import com.google.gson.Gson;
 import com.mycompany.sistemainventariov3.dto.ApiResponse;
+import com.mycompany.sistemainventariov3.model.Escaner;
+import com.mycompany.sistemainventariov3.model.Impresora;
 import com.mycompany.sistemainventariov3.model.Laptop;
 import com.mycompany.sistemainventariov3.model.PC;
+import com.mycompany.sistemainventariov3.model.Proyector;
+import com.mycompany.sistemainventariov3.model.Telefono;
 import com.mycompany.sistemainventariov3.service.BienService;
 import com.mycompany.sistemainventariov3.util.SesionUsuario;
 
@@ -263,6 +267,286 @@ public class InventarioResource {
         }
     }
     
+    // ==================== TELEFONOS ====================
+
+    @GET
+    @Path("telefonos")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response listarTelefonos() {
+        try {
+            List<Telefono> list = bienService.listarTelefonos();
+            ApiResponse<List<Telefono>> response = ApiResponse.success("Listado de Telefonos obtenido", list);
+            return Response.ok(gson.toJson(response)).build();
+        } catch (Exception e) {
+            ApiResponse<?> resp = ApiResponse.error("ERROR", e.getMessage());
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(gson.toJson(resp)).build();
+        }
+    }
+
+    @POST
+    @Path("telefonos")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response crearTelefono(String json) {
+        try {
+            validarAutenticacion(); validarAdministrador();
+            Telefono entity = gson.fromJson(json, Telefono.class);
+            Telefono creado = bienService.crearTelefono(entity);
+            ApiResponse<Telefono> response = ApiResponse.success("Telefono creado exitosamente", creado);
+            return Response.status(Response.Status.CREATED).entity(gson.toJson(response)).build();
+        } catch (Exception e) {
+            ApiResponse<?> resp = ApiResponse.error("ERROR", e.getMessage());
+            return Response.status(Response.Status.BAD_REQUEST).entity(gson.toJson(resp)).build();
+        }
+    }
+
+    @PUT
+    @Path("telefonos/{codigoSbai}")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response actualizarTelefono(@PathParam("codigoSbai") String codigoSbai, String json) {
+        try {
+            validarAutenticacion(); validarAdministrador();
+            Telefono entity = gson.fromJson(json, Telefono.class);
+            entity.setCodigoSbaiOriginal(codigoSbai);
+            Telefono actualizado = bienService.actualizarTelefono(entity, "");
+            ApiResponse<Telefono> response = ApiResponse.success("Telefono actualizado exitosamente", actualizado);
+            return Response.ok(gson.toJson(response)).build();
+        } catch (Exception e) {
+            ApiResponse<?> resp = ApiResponse.error("ERROR", e.getMessage());
+            return Response.status(Response.Status.BAD_REQUEST).entity(gson.toJson(resp)).build();
+        }
+    }
+
+    @DELETE
+    @Path("telefonos/{codigoSbai}")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response eliminarTelefono(@PathParam("codigoSbai") String codigoSbai) {
+        try {
+            validarAutenticacion(); validarAdministrador();
+            bienService.eliminarTelefono(codigoSbai);
+            ApiResponse<?> response = ApiResponse.success("Telefono eliminado exitosamente");
+            return Response.ok(gson.toJson(response)).build();
+        } catch (Exception e) {
+            ApiResponse<?> resp = ApiResponse.error("ERROR", e.getMessage());
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(gson.toJson(resp)).build();
+        }
+    }
+
+    // ==================== ESCANERS ====================
+
+    @GET
+    @Path("escaners")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response listarEscaners() {
+        try {
+            List<Escaner> list = bienService.listarEscaners();
+            ApiResponse<List<Escaner>> response = ApiResponse.success("Listado de Escaners obtenido", list);
+            return Response.ok(gson.toJson(response)).build();
+        } catch (Exception e) {
+            ApiResponse<?> resp = ApiResponse.error("ERROR", e.getMessage());
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(gson.toJson(resp)).build();
+        }
+    }
+
+    @POST
+    @Path("escaners")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response crearEscaner(String json) {
+        try {
+            validarAutenticacion(); validarAdministrador();
+            Escaner entity = gson.fromJson(json, Escaner.class);
+            Escaner creado = bienService.crearEscaner(entity);
+            ApiResponse<Escaner> response = ApiResponse.success("Escaner creado exitosamente", creado);
+            return Response.status(Response.Status.CREATED).entity(gson.toJson(response)).build();
+        } catch (Exception e) {
+            ApiResponse<?> resp = ApiResponse.error("ERROR", e.getMessage());
+            return Response.status(Response.Status.BAD_REQUEST).entity(gson.toJson(resp)).build();
+        }
+    }
+
+    @PUT
+    @Path("escaners/{codigoSbai}")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response actualizarEscaner(@PathParam("codigoSbai") String codigoSbai, String json) {
+        try {
+            validarAutenticacion(); validarAdministrador();
+            Escaner entity = gson.fromJson(json, Escaner.class);
+            entity.setCodigoSbaiOriginal(codigoSbai);
+            Escaner actualizado = bienService.actualizarEscaner(entity, "");
+            ApiResponse<Escaner> response = ApiResponse.success("Escaner actualizado exitosamente", actualizado);
+            return Response.ok(gson.toJson(response)).build();
+        } catch (Exception e) {
+            ApiResponse<?> resp = ApiResponse.error("ERROR", e.getMessage());
+            return Response.status(Response.Status.BAD_REQUEST).entity(gson.toJson(resp)).build();
+        }
+    }
+
+    @DELETE
+    @Path("escaners/{codigoSbai}")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response eliminarEscaner(@PathParam("codigoSbai") String codigoSbai) {
+        try {
+            validarAutenticacion(); validarAdministrador();
+            bienService.eliminarEscaner(codigoSbai);
+            ApiResponse<?> response = ApiResponse.success("Escaner eliminado exitosamente");
+            return Response.ok(gson.toJson(response)).build();
+        } catch (Exception e) {
+            ApiResponse<?> resp = ApiResponse.error("ERROR", e.getMessage());
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(gson.toJson(resp)).build();
+        }
+    }
+
+    // ==================== IMPRESORAS ====================
+
+    @GET
+    @Path("impresoras")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response listarImpresoras() {
+        try {
+            List<Impresora> list = bienService.listarImpresoras();
+            ApiResponse<List<Impresora>> response = ApiResponse.success("Listado de Impresoras obtenido", list);
+            return Response.ok(gson.toJson(response)).build();
+        } catch (Exception e) {
+            ApiResponse<?> resp = ApiResponse.error("ERROR", e.getMessage());
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(gson.toJson(resp)).build();
+        }
+    }
+
+    @POST
+    @Path("impresoras")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response crearImpresora(String json) {
+        try {
+            validarAutenticacion(); validarAdministrador();
+            Impresora entity = gson.fromJson(json, Impresora.class);
+            Impresora creado = bienService.crearImpresora(entity);
+            ApiResponse<Impresora> response = ApiResponse.success("Impresora creada exitosamente", creado);
+            return Response.status(Response.Status.CREATED).entity(gson.toJson(response)).build();
+        } catch (Exception e) {
+            ApiResponse<?> resp = ApiResponse.error("ERROR", e.getMessage());
+            return Response.status(Response.Status.BAD_REQUEST).entity(gson.toJson(resp)).build();
+        }
+    }
+
+    @PUT
+    @Path("impresoras/{codigoSbai}")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response actualizarImpresora(@PathParam("codigoSbai") String codigoSbai, String json) {
+        try {
+            validarAutenticacion(); validarAdministrador();
+            Impresora entity = gson.fromJson(json, Impresora.class);
+            entity.setCodigoSbaiOriginal(codigoSbai);
+            Impresora actualizado = bienService.actualizarImpresora(entity, "");
+            ApiResponse<Impresora> response = ApiResponse.success("Impresora actualizada exitosamente", actualizado);
+            return Response.ok(gson.toJson(response)).build();
+        } catch (Exception e) {
+            ApiResponse<?> resp = ApiResponse.error("ERROR", e.getMessage());
+            return Response.status(Response.Status.BAD_REQUEST).entity(gson.toJson(resp)).build();
+        }
+    }
+
+    @DELETE
+    @Path("impresoras/{codigoSbai}")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response eliminarImpresora(@PathParam("codigoSbai") String codigoSbai) {
+        try {
+            validarAutenticacion(); validarAdministrador();
+            bienService.eliminarImpresora(codigoSbai);
+            ApiResponse<?> response = ApiResponse.success("Impresora eliminada exitosamente");
+            return Response.ok(gson.toJson(response)).build();
+        } catch (Exception e) {
+            ApiResponse<?> resp = ApiResponse.error("ERROR", e.getMessage());
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(gson.toJson(resp)).build();
+        }
+    }
+
+    // ==================== PROYECTORES ====================
+
+    @GET
+    @Path("proyectores")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response listarProyectores() {
+        try {
+            List<Proyector> list = bienService.listarProyectores();
+            ApiResponse<List<Proyector>> response = ApiResponse.success("Listado de Proyectores obtenido", list);
+            return Response.ok(gson.toJson(response)).build();
+        } catch (Exception e) {
+            ApiResponse<?> resp = ApiResponse.error("ERROR", e.getMessage());
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(gson.toJson(resp)).build();
+        }
+    }
+
+    @POST
+    @Path("proyectores")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response crearProyector(String json) {
+        try {
+            validarAutenticacion(); validarAdministrador();
+            Proyector entity = gson.fromJson(json, Proyector.class);
+            Proyector creado = bienService.crearProyector(entity);
+            ApiResponse<Proyector> response = ApiResponse.success("Proyector creado exitosamente", creado);
+            return Response.status(Response.Status.CREATED).entity(gson.toJson(response)).build();
+        } catch (Exception e) {
+            ApiResponse<?> resp = ApiResponse.error("ERROR", e.getMessage());
+            return Response.status(Response.Status.BAD_REQUEST).entity(gson.toJson(resp)).build();
+        }
+    }
+
+    @PUT
+    @Path("proyectores/{codigoSbai}")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response actualizarProyector(@PathParam("codigoSbai") String codigoSbai, String json) {
+        try {
+            validarAutenticacion(); validarAdministrador();
+            Proyector entity = gson.fromJson(json, Proyector.class);
+            entity.setCodigoSbaiOriginal(codigoSbai);
+            Proyector actualizado = bienService.actualizarProyector(entity, "");
+            ApiResponse<Proyector> response = ApiResponse.success("Proyector actualizado exitosamente", actualizado);
+            return Response.ok(gson.toJson(response)).build();
+        } catch (Exception e) {
+            ApiResponse<?> resp = ApiResponse.error("ERROR", e.getMessage());
+            return Response.status(Response.Status.BAD_REQUEST).entity(gson.toJson(resp)).build();
+        }
+    }
+
+    @DELETE
+    @Path("proyectores/{codigoSbai}")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response eliminarProyector(@PathParam("codigoSbai") String codigoSbai) {
+        try {
+            validarAutenticacion(); validarAdministrador();
+            bienService.eliminarProyector(codigoSbai);
+            ApiResponse<?> response = ApiResponse.success("Proyector eliminado exitosamente");
+            return Response.ok(gson.toJson(response)).build();
+        } catch (Exception e) {
+            ApiResponse<?> resp = ApiResponse.error("ERROR", e.getMessage());
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(gson.toJson(resp)).build();
+        }
+    }
+
+    // ==================== CATEGORIAS ====================
+
+    @GET
+    @Path("categorias")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response obtenerCategorias() {
+        try {
+            Map<String, Object> categorias = bienService.obtenerCategorias();
+            ApiResponse<Map<String, Object>> response = ApiResponse.success("Categorias obtenidas", categorias);
+            return Response.ok(gson.toJson(response)).build();
+        } catch (Exception e) {
+            ApiResponse<?> resp = ApiResponse.error("ERROR", e.getMessage());
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(gson.toJson(resp)).build();
+        }
+    }
+
     // ==================== VALIDACIONES ====================
     
     private void validarAutenticacion() throws Exception {

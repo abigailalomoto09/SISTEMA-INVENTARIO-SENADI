@@ -10,6 +10,7 @@ import javax.persistence.*;
 public class Ubicacion {
     
     @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id_ubicacion")
     private Integer idUbicacion;
     

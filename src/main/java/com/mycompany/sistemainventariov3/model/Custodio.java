@@ -10,6 +10,7 @@ import javax.persistence.*;
 public class Custodio {
     
     @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id_custodio")
     private Integer idCustodio;
     

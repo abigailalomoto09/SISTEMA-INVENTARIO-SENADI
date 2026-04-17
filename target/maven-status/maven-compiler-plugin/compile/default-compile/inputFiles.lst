@@ -1,34 +1,42 @@
-C:\Users\mayer\Documents\NetBeansProjects\SistemaInventarioV3\src\main\java\com\mycompany\sistemainventariov3\resources\TestResource.java
-C:\Users\mayer\Documents\NetBeansProjects\SistemaInventarioV3\src\main\java\com\mycompany\sistemainventariov3\dao\DAOGenerico.java
-C:\Users\mayer\Documents\NetBeansProjects\SistemaInventarioV3\src\main\java\com\mycompany\sistemainventariov3\service\DatabaseService.java
-C:\Users\mayer\Documents\NetBeansProjects\SistemaInventarioV3\src\main\java\com\mycompany\sistemainventariov3\service\HistoricoService.java
-C:\Users\mayer\Documents\NetBeansProjects\SistemaInventarioV3\src\main\java\com\mycompany\sistemainventariov3\dao\PCDAO.java
-C:\Users\mayer\Documents\NetBeansProjects\SistemaInventarioV3\src\main\java\com\mycompany\sistemainventariov3\model\Custodio.java
-C:\Users\mayer\Documents\NetBeansProjects\SistemaInventarioV3\src\main\java\com\mycompany\sistemainventariov3\service\UsuarioService.java
-C:\Users\mayer\Documents\NetBeansProjects\SistemaInventarioV3\src\main\java\com\mycompany\sistemainventariov3\util\SessionRequestFilter.java
-C:\Users\mayer\Documents\NetBeansProjects\SistemaInventarioV3\src\main\java\com\mycompany\sistemainventariov3\resources\DatabaseResource.java
-C:\Users\mayer\Documents\NetBeansProjects\SistemaInventarioV3\src\main\java\com\mycompany\sistemainventariov3\model\Laptop.java
-C:\Users\mayer\Documents\NetBeansProjects\SistemaInventarioV3\src\main\java\com\mycompany\sistemainventariov3\dao\LaptopDAO.java
-C:\Users\mayer\Documents\NetBeansProjects\SistemaInventarioV3\src\main\java\com\mycompany\sistemainventariov3\dao\UsuarioDAO.java
-C:\Users\mayer\Documents\NetBeansProjects\SistemaInventarioV3\src\main\java\com\mycompany\sistemainventariov3\service\BienService.java
-C:\Users\mayer\Documents\NetBeansProjects\SistemaInventarioV3\src\main\java\com\mycompany\sistemainventariov3\dao\UbicacionDAO.java
-C:\Users\mayer\Documents\NetBeansProjects\SistemaInventarioV3\src\main\java\com\mycompany\sistemainventariov3\resources\JavaEE8Resource.java
-C:\Users\mayer\Documents\NetBeansProjects\SistemaInventarioV3\src\main\java\com\mycompany\sistemainventariov3\ConnectionTest.java
-C:\Users\mayer\Documents\NetBeansProjects\SistemaInventarioV3\src\main\java\com\mycompany\sistemainventariov3\dao\HistoricoCambioDAO.java
-C:\Users\mayer\Documents\NetBeansProjects\SistemaInventarioV3\src\main\java\com\mycompany\sistemainventariov3\resources\HistoricoResource.java
-C:\Users\mayer\Documents\NetBeansProjects\SistemaInventarioV3\src\main\java\com\mycompany\sistemainventariov3\resources\ReportesResource.java
-C:\Users\mayer\Documents\NetBeansProjects\SistemaInventarioV3\src\main\java\com\mycompany\sistemainventariov3\util\JPAUtil.java
-C:\Users\mayer\Documents\NetBeansProjects\SistemaInventarioV3\src\main\java\com\mycompany\sistemainventariov3\util\DataLoader.java
-C:\Users\mayer\Documents\NetBeansProjects\SistemaInventarioV3\src\main\java\com\mycompany\sistemainventariov3\model\PC.java
-C:\Users\mayer\Documents\NetBeansProjects\SistemaInventarioV3\src\main\java\com\mycompany\sistemainventariov3\dto\ApiResponse.java
-C:\Users\mayer\Documents\NetBeansProjects\SistemaInventarioV3\src\main\java\com\mycompany\sistemainventariov3\resources\LoginResource.java
-C:\Users\mayer\Documents\NetBeansProjects\SistemaInventarioV3\src\main\java\com\mycompany\sistemainventariov3\model\Ubicacion.java
-C:\Users\mayer\Documents\NetBeansProjects\SistemaInventarioV3\src\main\java\com\mycompany\sistemainventariov3\util\EncriptacionUtil.java
-C:\Users\mayer\Documents\NetBeansProjects\SistemaInventarioV3\src\main\java\com\mycompany\sistemainventariov3\dto\LoginRequest.java
-C:\Users\mayer\Documents\NetBeansProjects\SistemaInventarioV3\src\main\java\com\mycompany\sistemainventariov3\dao\CustodioDAO.java
-C:\Users\mayer\Documents\NetBeansProjects\SistemaInventarioV3\src\main\java\com\mycompany\sistemainventariov3\model\HistoricoCambio.java
-C:\Users\mayer\Documents\NetBeansProjects\SistemaInventarioV3\src\main\java\com\mycompany\sistemainventariov3\model\Usuario.java
-C:\Users\mayer\Documents\NetBeansProjects\SistemaInventarioV3\src\main\java\com\mycompany\sistemainventariov3\util\SesionUsuario.java
-C:\Users\mayer\Documents\NetBeansProjects\SistemaInventarioV3\src\main\java\com\mycompany\sistemainventariov3\resources\BusquedaResource.java
-C:\Users\mayer\Documents\NetBeansProjects\SistemaInventarioV3\src\main\java\com\mycompany\sistemainventariov3\resources\InventarioResource.java
-C:\Users\mayer\Documents\NetBeansProjects\SistemaInventarioV3\src\main\java\com\mycompany\sistemainventariov3\JAXRSConfiguration.java
+C:\Users\Joseph Zambrano\Documents\SENADI\SISTEMA-INVENTARIO-SENADI\src\main\java\com\mycompany\sistemainventariov3\dao\EscanerDAO.java
+C:\Users\Joseph Zambrano\Documents\SENADI\SISTEMA-INVENTARIO-SENADI\src\main\java\com\mycompany\sistemainventariov3\service\HistoricoService.java
+C:\Users\Joseph Zambrano\Documents\SENADI\SISTEMA-INVENTARIO-SENADI\src\main\java\com\mycompany\sistemainventariov3\resources\LoginResource.java
+C:\Users\Joseph Zambrano\Documents\SENADI\SISTEMA-INVENTARIO-SENADI\src\main\java\com\mycompany\sistemainventariov3\service\DatabaseService.java
+C:\Users\Joseph Zambrano\Documents\SENADI\SISTEMA-INVENTARIO-SENADI\src\main\java\com\mycompany\sistemainventariov3\service\BienService.java
+C:\Users\Joseph Zambrano\Documents\SENADI\SISTEMA-INVENTARIO-SENADI\src\main\java\com\mycompany\sistemainventariov3\service\UsuarioService.java
+C:\Users\Joseph Zambrano\Documents\SENADI\SISTEMA-INVENTARIO-SENADI\src\main\java\com\mycompany\sistemainventariov3\model\Proyector.java
+C:\Users\Joseph Zambrano\Documents\SENADI\SISTEMA-INVENTARIO-SENADI\src\main\java\com\mycompany\sistemainventariov3\dao\PCDAO.java
+C:\Users\Joseph Zambrano\Documents\SENADI\SISTEMA-INVENTARIO-SENADI\src\main\java\com\mycompany\sistemainventariov3\dao\UsuarioDAO.java
+C:\Users\Joseph Zambrano\Documents\SENADI\SISTEMA-INVENTARIO-SENADI\src\main\java\com\mycompany\sistemainventariov3\model\Ubicacion.java
+C:\Users\Joseph Zambrano\Documents\SENADI\SISTEMA-INVENTARIO-SENADI\src\main\java\com\mycompany\sistemainventariov3\model\Laptop.java
+C:\Users\Joseph Zambrano\Documents\SENADI\SISTEMA-INVENTARIO-SENADI\src\main\java\com\mycompany\sistemainventariov3\resources\InventarioResource.java
+C:\Users\Joseph Zambrano\Documents\SENADI\SISTEMA-INVENTARIO-SENADI\src\main\java\com\mycompany\sistemainventariov3\model\Impresora.java
+C:\Users\Joseph Zambrano\Documents\SENADI\SISTEMA-INVENTARIO-SENADI\src\main\java\com\mycompany\sistemainventariov3\dao\LaptopDAO.java
+C:\Users\Joseph Zambrano\Documents\SENADI\SISTEMA-INVENTARIO-SENADI\src\main\java\com\mycompany\sistemainventariov3\dao\UbicacionDAO.java
+C:\Users\Joseph Zambrano\Documents\SENADI\SISTEMA-INVENTARIO-SENADI\src\main\java\com\mycompany\sistemainventariov3\dao\HistoricoCambioDAO.java
+C:\Users\Joseph Zambrano\Documents\SENADI\SISTEMA-INVENTARIO-SENADI\src\main\java\com\mycompany\sistemainventariov3\dao\DAOGenerico.java
+C:\Users\Joseph Zambrano\Documents\SENADI\SISTEMA-INVENTARIO-SENADI\src\main\java\com\mycompany\sistemainventariov3\ConnectionTest.java
+C:\Users\Joseph Zambrano\Documents\SENADI\SISTEMA-INVENTARIO-SENADI\src\main\java\com\mycompany\sistemainventariov3\dao\TelefonoDAO.java
+C:\Users\Joseph Zambrano\Documents\SENADI\SISTEMA-INVENTARIO-SENADI\src\main\java\com\mycompany\sistemainventariov3\model\HistoricoCambio.java
+C:\Users\Joseph Zambrano\Documents\SENADI\SISTEMA-INVENTARIO-SENADI\src\main\java\com\mycompany\sistemainventariov3\resources\BusquedaResource.java
+C:\Users\Joseph Zambrano\Documents\SENADI\SISTEMA-INVENTARIO-SENADI\src\main\java\com\mycompany\sistemainventariov3\dto\LoginRequest.java
+C:\Users\Joseph Zambrano\Documents\SENADI\SISTEMA-INVENTARIO-SENADI\src\main\java\com\mycompany\sistemainventariov3\model\Custodio.java
+C:\Users\Joseph Zambrano\Documents\SENADI\SISTEMA-INVENTARIO-SENADI\src\main\java\com\mycompany\sistemainventariov3\resources\JavaEE8Resource.java
+C:\Users\Joseph Zambrano\Documents\SENADI\SISTEMA-INVENTARIO-SENADI\src\main\java\com\mycompany\sistemainventariov3\dao\CustodioDAO.java
+C:\Users\Joseph Zambrano\Documents\SENADI\SISTEMA-INVENTARIO-SENADI\src\main\java\com\mycompany\sistemainventariov3\util\EncriptacionUtil.java
+C:\Users\Joseph Zambrano\Documents\SENADI\SISTEMA-INVENTARIO-SENADI\src\main\java\com\mycompany\sistemainventariov3\util\JPAUtil.java
+C:\Users\Joseph Zambrano\Documents\SENADI\SISTEMA-INVENTARIO-SENADI\src\main\java\com\mycompany\sistemainventariov3\resources\ReportesResource.java
+C:\Users\Joseph Zambrano\Documents\SENADI\SISTEMA-INVENTARIO-SENADI\src\main\java\com\mycompany\sistemainventariov3\resources\DatabaseResource.java
+C:\Users\Joseph Zambrano\Documents\SENADI\SISTEMA-INVENTARIO-SENADI\src\main\java\com\mycompany\sistemainventariov3\util\DataLoader.java
+C:\Users\Joseph Zambrano\Documents\SENADI\SISTEMA-INVENTARIO-SENADI\src\main\java\com\mycompany\sistemainventariov3\resources\TestResource.java
+C:\Users\Joseph Zambrano\Documents\SENADI\SISTEMA-INVENTARIO-SENADI\src\main\java\com\mycompany\sistemainventariov3\util\SesionUsuario.java
+C:\Users\Joseph Zambrano\Documents\SENADI\SISTEMA-INVENTARIO-SENADI\src\main\java\com\mycompany\sistemainventariov3\resources\HistoricoResource.java
+C:\Users\Joseph Zambrano\Documents\SENADI\SISTEMA-INVENTARIO-SENADI\src\main\java\com\mycompany\sistemainventariov3\model\PC.java
+C:\Users\Joseph Zambrano\Documents\SENADI\SISTEMA-INVENTARIO-SENADI\src\main\java\com\mycompany\sistemainventariov3\util\SessionRequestFilter.java
+C:\Users\Joseph Zambrano\Documents\SENADI\SISTEMA-INVENTARIO-SENADI\src\main\java\com\mycompany\sistemainventariov3\model\Usuario.java
+C:\Users\Joseph Zambrano\Documents\SENADI\SISTEMA-INVENTARIO-SENADI\src\main\java\com\mycompany\sistemainventariov3\JAXRSConfiguration.java
+C:\Users\Joseph Zambrano\Documents\SENADI\SISTEMA-INVENTARIO-SENADI\src\main\java\com\mycompany\sistemainventariov3\dao\ImpresoraDAO.java
+C:\Users\Joseph Zambrano\Documents\SENADI\SISTEMA-INVENTARIO-SENADI\src\main\java\com\mycompany\sistemainventariov3\model\Escaner.java
+C:\Users\Joseph Zambrano\Documents\SENADI\SISTEMA-INVENTARIO-SENADI\src\main\java\com\mycompany\sistemainventariov3\model\Telefono.java
+C:\Users\Joseph Zambrano\Documents\SENADI\SISTEMA-INVENTARIO-SENADI\src\main\java\com\mycompany\sistemainventariov3\dao\ProyectorDAO.java
+C:\Users\Joseph Zambrano\Documents\SENADI\SISTEMA-INVENTARIO-SENADI\src\main\java\com\mycompany\sistemainventariov3\dto\ApiResponse.java

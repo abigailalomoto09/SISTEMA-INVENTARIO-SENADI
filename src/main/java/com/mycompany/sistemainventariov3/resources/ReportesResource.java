@@ -2,8 +2,12 @@ package com.mycompany.sistemainventariov3.resources;
 
 import com.google.gson.Gson;
 import com.mycompany.sistemainventariov3.dto.ApiResponse;
+import com.mycompany.sistemainventariov3.model.Escaner;
+import com.mycompany.sistemainventariov3.model.Impresora;
 import com.mycompany.sistemainventariov3.model.Laptop;
 import com.mycompany.sistemainventariov3.model.PC;
+import com.mycompany.sistemainventariov3.model.Proyector;
+import com.mycompany.sistemainventariov3.model.Telefono;
 import com.mycompany.sistemainventariov3.service.BienService;
 import com.mycompany.sistemainventariov3.util.SesionUsuario;
 import org.apache.poi.ss.usermodel.*;
@@ -117,6 +121,56 @@ public class ReportesResource {
         }
     }
     
+    // ==================== EXPORT NUEVAS ENTIDADES ====================
+
+    @GET @Path("telefonos/excel") @Produces("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+    public Response exportarTelefonosExcel() {
+        try { validarAutenticacion();
+            List<Telefono> list = bienService.listarTelefonos();
+            Workbook wb = new XSSFWorkbook(); Sheet sh = wb.createSheet("Telefonos");
+            createHeaderRow(sh, new String[]{"Codigo SBAI","Codigo Megan","Descripcion","Marca","Modelo","Numero de Serie","Custodio","Ubicacion","Caracteristicas","Estado","Observacion"});
+            int r=1; for(Telefono t:list){ Row row=sh.createRow(r++); setCellValue(row,0,t.getCodigoSbaiOriginal()); setCellValue(row,1,t.getCodigoMegan()); setCellValue(row,2,t.getDescripcion()); setCellValue(row,3,t.getMarca()); setCellValue(row,4,t.getModelo()); setCellValue(row,5,t.getNumeroSerie()); setCellValue(row,6,t.getCustodioActual()!=null?t.getCustodioActual().getNombre():""); setCellValue(row,7,t.getUbicacion()!=null?t.getUbicacion().getUbicacionCompleta():""); setCellValue(row,8,t.getCaracteristicas()); setCellValue(row,9,t.getEstado()); setCellValue(row,10,t.getObservacion()); }
+            autoSizeColumns(sh,11); ByteArrayOutputStream out=new ByteArrayOutputStream(); wb.write(out); wb.close();
+            return Response.ok(out.toByteArray()).header("Content-Disposition","attachment; filename=Inventario_Telefonos.xlsx").build();
+        } catch(Exception e){ ApiResponse<?> resp=ApiResponse.error("ERROR",e.getMessage()); return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(gson.toJson(resp)).build(); }
+    }
+
+    @GET @Path("escaners/excel") @Produces("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+    public Response exportarEscanersExcel() {
+        try { validarAutenticacion();
+            List<Escaner> list = bienService.listarEscaners();
+            Workbook wb = new XSSFWorkbook(); Sheet sh = wb.createSheet("Escanners");
+            createHeaderRow(sh, new String[]{"Codigo SBAI","Codigo Megan","Descripcion","Marca","Modelo","Numero de Serie","Custodio","Ubicacion","Caracteristicas","Estado","Observacion"});
+            int r=1; for(Escaner x:list){ Row row=sh.createRow(r++); setCellValue(row,0,x.getCodigoSbaiOriginal()); setCellValue(row,1,x.getCodigoMegan()); setCellValue(row,2,x.getDescripcion()); setCellValue(row,3,x.getMarca()); setCellValue(row,4,x.getModelo()); setCellValue(row,5,x.getNumeroSerie()); setCellValue(row,6,x.getCustodioActual()!=null?x.getCustodioActual().getNombre():""); setCellValue(row,7,x.getUbicacion()!=null?x.getUbicacion().getUbicacionCompleta():""); setCellValue(row,8,x.getCaracteristicas()); setCellValue(row,9,x.getEstado()); setCellValue(row,10,x.getObservacion()); }
+            autoSizeColumns(sh,11); ByteArrayOutputStream out=new ByteArrayOutputStream(); wb.write(out); wb.close();
+            return Response.ok(out.toByteArray()).header("Content-Disposition","attachment; filename=Inventario_Escaners.xlsx").build();
+        } catch(Exception e){ ApiResponse<?> resp=ApiResponse.error("ERROR",e.getMessage()); return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(gson.toJson(resp)).build(); }
+    }
+
+    @GET @Path("impresoras/excel") @Produces("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+    public Response exportarImpresorasExcel() {
+        try { validarAutenticacion();
+            List<Impresora> list = bienService.listarImpresoras();
+            Workbook wb = new XSSFWorkbook(); Sheet sh = wb.createSheet("Impresoras");
+            createHeaderRow(sh, new String[]{"Codigo SBAI","Codigo Megan","Descripcion","Marca","Modelo","Numero de Serie","Custodio","Ubicacion","IP","Caracteristicas","Estado","Observacion"});
+            int r=1; for(Impresora x:list){ Row row=sh.createRow(r++); setCellValue(row,0,x.getCodigoSbaiOriginal()); setCellValue(row,1,x.getCodigoMegan()); setCellValue(row,2,x.getDescripcion()); setCellValue(row,3,x.getMarca()); setCellValue(row,4,x.getModelo()); setCellValue(row,5,x.getNumeroSerie()); setCellValue(row,6,x.getCustodioActual()!=null?x.getCustodioActual().getNombre():""); setCellValue(row,7,x.getUbicacion()!=null?x.getUbicacion().getUbicacionCompleta():""); setCellValue(row,8,x.getIp()); setCellValue(row,9,x.getCaracteristicas()); setCellValue(row,10,x.getEstado()); setCellValue(row,11,x.getObservacion()); }
+            autoSizeColumns(sh,12); ByteArrayOutputStream out=new ByteArrayOutputStream(); wb.write(out); wb.close();
+            return Response.ok(out.toByteArray()).header("Content-Disposition","attachment; filename=Inventario_Impresoras.xlsx").build();
+        } catch(Exception e){ ApiResponse<?> resp=ApiResponse.error("ERROR",e.getMessage()); return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(gson.toJson(resp)).build(); }
+    }
+
+    @GET @Path("proyectores/excel") @Produces("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+    public Response exportarProyectoresExcel() {
+        try { validarAutenticacion();
+            List<Proyector> list = bienService.listarProyectores();
+            Workbook wb = new XSSFWorkbook(); Sheet sh = wb.createSheet("Proyectores");
+            createHeaderRow(sh, new String[]{"Codigo SBAI","Codigo Megan","Descripcion","Marca","Modelo","Numero de Serie","Custodio","Custodio Anterior","Ubicacion","Caracteristicas","Estado","Observacion","Acta UGDT","Acta UGAD","Anotaciones"});
+            int r=1; for(Proyector x:list){ Row row=sh.createRow(r++); setCellValue(row,0,x.getCodigoSbaiOriginal()); setCellValue(row,1,x.getCodigoMegan()); setCellValue(row,2,x.getDescripcion()); setCellValue(row,3,x.getMarca()); setCellValue(row,4,x.getModelo()); setCellValue(row,5,x.getNumeroSerie()); setCellValue(row,6,x.getCustodioActual()!=null?x.getCustodioActual().getNombre():""); setCellValue(row,7,x.getCustodioAnterior()!=null?x.getCustodioAnterior().getNombre():""); setCellValue(row,8,x.getUbicacion()!=null?x.getUbicacion().getUbicacionCompleta():""); setCellValue(row,9,x.getCaracteristicas()); setCellValue(row,10,x.getEstado()); setCellValue(row,11,x.getObservacion()); setCellValue(row,12,x.getActaUgdt()); setCellValue(row,13,x.getActaUgad()); setCellValue(row,14,x.getAnotaciones()); }
+            autoSizeColumns(sh,15); ByteArrayOutputStream out=new ByteArrayOutputStream(); wb.write(out); wb.close();
+            return Response.ok(out.toByteArray()).header("Content-Disposition","attachment; filename=Inventario_Proyectores.xlsx").build();
+        } catch(Exception e){ ApiResponse<?> resp=ApiResponse.error("ERROR",e.getMessage()); return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(gson.toJson(resp)).build(); }
+    }
+
     /**
      * Obtener estadísticas del inventario
      * GET /resources/reportes/estadisticas
@@ -137,11 +191,10 @@ public class ReportesResource {
             estadisticas.put("totalBienes", pcs.size() + laptops.size());
             
             // Contar por estados
-            long pcsActivas = pcs.stream().filter(p -> "Activo".equals(p.getEstado())).count();
-            long laptopsActivas = laptops.stream().filter(l -> "Activo".equals(l.getEstado())).count();
-            
-            estadisticas.put("pcsActivas", pcsActivas);
-            estadisticas.put("laptopsActivas", laptopsActivas);
+            long pcsOperativo = pcs.stream().filter(p -> "OPERATIVO".equals(p.getEstado())).count();
+            long laptopsOperativo = laptops.stream().filter(l -> "OPERATIVO".equals(l.getEstado())).count();
+            estadisticas.put("pcsOperativo", pcsOperativo);
+            estadisticas.put("laptopsOperativo", laptopsOperativo);
             
             ApiResponse<?> response = ApiResponse.success("Estadísticas obtenidas", estadisticas);
             return Response.ok(gson.toJson(response)).build();
@@ -177,9 +230,9 @@ public class ReportesResource {
     
     private void generarHojaPCs(Workbook workbook, List<PC> pcs) {
         Sheet sheet = workbook.createSheet("PCs");
-        createHeaderRow(sheet, new String[]{"Código SBAI", "Código Megan", "Descripción", "Marca", 
-            "Modelo", "Serie", "Custodio", "Ubicación", "Procesador", "RAM", "Disco Duro", 
-            "S.O.", "Estado", "Observaciones"});
+        createHeaderRow(sheet, new String[]{"Codigo SBAI", "Codigo Megan", "Descripcion", "Marca",
+            "Modelo", "Numero de Serie", "Custodio", "Ubicacion", "Procesador", "RAM", "Disco Duro",
+            "S.O.", "IP", "Estado", "Observaciones"});
         
         int rowNum = 1;
         for (PC pc : pcs) {
@@ -196,18 +249,18 @@ public class ReportesResource {
             setCellValue(row, 9, pc.getRam());
             setCellValue(row, 10, pc.getDiscoDuro());
             setCellValue(row, 11, pc.getSistemaOperativo());
-            setCellValue(row, 12, pc.getEstado());
-            setCellValue(row, 13, pc.getObservacion());
+            setCellValue(row, 12, pc.getIp());
+            setCellValue(row, 13, pc.getEstado());
+            setCellValue(row, 14, pc.getObservacion());
         }
-        
-        autoSizeColumns(sheet, 14);
+        autoSizeColumns(sheet, 15);
     }
     
     private void generarHojaLaptops(Workbook workbook, List<Laptop> laptops) {
         Sheet sheet = workbook.createSheet("Laptops");
-        createHeaderRow(sheet, new String[]{"Código SBAI", "Código Megan", "Descripción", "Marca", 
-            "Modelo", "Serie", "Custodio", "Ubicación", "Procesador", "RAM", "Disco Duro", 
-            "S.O.", "Estado", "Observaciones"});
+        createHeaderRow(sheet, new String[]{"Codigo SBAI", "Codigo Megan", "Descripcion", "Marca",
+            "Modelo", "Numero de Serie", "Custodio", "Ubicacion", "Procesador", "RAM", "Disco Duro",
+            "S.O.", "IP", "Estado", "Observaciones"});
         
         int rowNum = 1;
         for (Laptop laptop : laptops) {
@@ -224,11 +277,11 @@ public class ReportesResource {
             setCellValue(row, 9, laptop.getRam());
             setCellValue(row, 10, laptop.getDiscoDuro());
             setCellValue(row, 11, laptop.getSistemaOperativo());
-            setCellValue(row, 12, laptop.getEstado());
-            setCellValue(row, 13, laptop.getObservacion());
+            setCellValue(row, 12, laptop.getIp());
+            setCellValue(row, 13, laptop.getEstado());
+            setCellValue(row, 14, laptop.getObservacion());
         }
-        
-        autoSizeColumns(sheet, 14);
+        autoSizeColumns(sheet, 15);
     }
     
     private void generarHojaResumen(Workbook workbook, int totalPCs, int totalLaptops) {

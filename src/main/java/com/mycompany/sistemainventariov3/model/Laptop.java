@@ -24,8 +24,8 @@ public class Laptop {
     @Column(name = "descripcion", length = 255)
     private String descripcion;
     
-    @Column(name = "fecha_ingreso")
-    private Date fechaIngreso;
+    @Column(name = "ip", length = 120)
+    private String ip;
     
     @Column(name = "costo")
     private BigDecimal costo;
@@ -107,12 +107,12 @@ public class Laptop {
         this.descripcion = descripcion;
     }
 
-    public Date getFechaIngreso() {
-        return fechaIngreso;
+    public String getIp() {
+        return ip;
     }
 
-    public void setFechaIngreso(Date fechaIngreso) {
-        this.fechaIngreso = fechaIngreso;
+    public void setIp(String ip) {
+        this.ip = ip;
     }
 
     public BigDecimal getCosto() {
