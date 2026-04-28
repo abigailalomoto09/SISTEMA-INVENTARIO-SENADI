@@ -12,6 +12,14 @@ public class BienService {
     
     private PCDAO pcDAO;
     private LaptopDAO laptopDAO;
+    private TelefonoDAO telefonoDAO;
+    private EscanerDAO escanerDAO;
+    private ImpresoraDAO impresoraDAO;
+    private ProyectorDAO proyectorDAO;
+    private InfraestructuraDAO infraestructuraDAO;
+    private LicenciaDAO licenciaDAO;
+    private PeriferícoDAO periferícoDAO;
+    private BienControlAdministrativoDAO bienControlAdministrativoDAO;
     private HistoricoService historicoService;
     private CustodioDAO custodioDAO;
     private UbicacionDAO ubicacionDAO;
@@ -19,6 +27,14 @@ public class BienService {
     public BienService() {
         this.pcDAO = new PCDAO();
         this.laptopDAO = new LaptopDAO();
+        this.telefonoDAO = new TelefonoDAO();
+        this.escanerDAO = new EscanerDAO();
+        this.impresoraDAO = new ImpresoraDAO();
+        this.proyectorDAO = new ProyectorDAO();
+        this.infraestructuraDAO = new InfraestructuraDAO();
+        this.licenciaDAO = new LicenciaDAO();
+        this.periferícoDAO = new PeriferícoDAO();
+        this.bienControlAdministrativoDAO = new BienControlAdministrativoDAO();
         this.historicoService = new HistoricoService();
         this.custodioDAO = new CustodioDAO();
         this.ubicacionDAO = new UbicacionDAO();
@@ -30,31 +46,16 @@ public class BienService {
      * Crear nuevo PC
      */
     public PC crearPC(PC pc) throws Exception {
-        validarCodigosUnicos(pc.getCodigoMegan(), pc.getCodigoSbai(), "pcs");
         pc = pcDAO.guardar(pc);
-        historicoService.registrarCambio("pcs", pc.getCodigoSbai(), "REGISTRO", "", "Nuevo equipo registrado", "", "INSERT");
+        historicoService.registrarCambio("pcs", pc.getCodigoSbaiOriginal(), "REGISTRO", "", "Nuevo equipo registrado", "", "INSERT");
         return pc;
-    }
-    
-    /**
-     * Obtener PC por ID
-     */
-    public PC obtenerPC(String codigoSbai) {
-        return pcDAO.buscarPorCodigoSbai(codigoSbai);
     }
     
     /**
      * Actualizar PC con histórico automático
      */
     public PC actualizarPC(PC pcActualizado, String motivo) throws Exception {
-        PC pcAnterior = pcDAO.buscarPorCodigoSbai(pcActualizado.getCodigoSbai());
-        if (pcAnterior == null) {
-            throw new Exception("PC no encontrada");
-        }
-        
-        // Registrar cambios en cada campo
-        registrarCambiosEntidad(pcAnterior, pcActualizado, "pcs", motivo);
-        
+        registrarCambiosEntidad(null, pcActualizado, "pcs", motivo);
         PC pcActualizada = pcDAO.guardar(pcActualizado);
         return pcActualizada;
     }
@@ -63,12 +64,7 @@ public class BienService {
      * Eliminar PC
      */
     public void eliminarPC(String codigoSbai) throws Exception {
-        PC pc = pcDAO.buscarPorCodigoSbai(codigoSbai);
-        if (pc == null) {
-            throw new Exception("PC no encontrada");
-        }
-        historicoService.registrarCambio("pcs", pc.getCodigoSbai(), "ELIMINACION", pc.getCodigoMegan(), "", "", "DELETE");
-        pcDAO.eliminar(pc);
+        historicoService.registrarCambio("pcs", codigoSbai, "ELIMINACION", "", "", "", "DELETE");
     }
     
     /**
@@ -77,6 +73,15 @@ public class BienService {
     public List<PC> listarPCs() {
         return pcDAO.obtenerTodas();
     }
+
+    /**
+     * Obtener PC por codigo SBAI original.
+     * Con el nuevo modelo puede haber varios items por codigo, por lo que
+     * se devuelve el primer registro asociado.
+     */
+    public PC obtenerPC(String codigoSbai) {
+        return pcDAO.buscarPorCodigoSbai(codigoSbai);
+    }
     
     /**
      * Buscar PCs por estado
@@ -84,9 +89,9 @@ public class BienService {
     public List<PC> buscarPCsPorEstado(String estado) {
         return pcDAO.buscarPorEstado(estado);
     }
-    
+
     /**
-     * Buscar PCs por marca
+     * Buscar PCs por marca.
      */
     public List<PC> buscarPCsPorMarca(String marca) {
         return pcDAO.buscarPorMarca(marca);
@@ -98,31 +103,16 @@ public class BienService {
      * Crear nuevo Laptop
      */
     public Laptop crearLaptop(Laptop laptop) throws Exception {
-        validarCodigosUnicos(laptop.getCodigoMegan(), laptop.getCodigoSbai(), "laptops");
         laptop = laptopDAO.guardar(laptop);
-        historicoService.registrarCambio("laptops", laptop.getCodigoSbai(), "REGISTRO", "", "Nuevo equipo registrado", "", "INSERT");
+        historicoService.registrarCambio("laptops", laptop.getCodigoSbaiOriginal(), "REGISTRO", "", "Nuevo equipo registrado", "", "INSERT");
         return laptop;
-    }
-    
-    /**
-     * Obtener Laptop por ID
-     */
-    public Laptop obtenerLaptop(String codigoSbai) {
-        return laptopDAO.buscarPorCodigoSbai(codigoSbai);
     }
     
     /**
      * Actualizar Laptop con histórico automático
      */
     public Laptop actualizarLaptop(Laptop laptopActualizado, String motivo) throws Exception {
-        Laptop laptopAnterior = laptopDAO.buscarPorCodigoSbai(laptopActualizado.getCodigoSbai());
-        if (laptopAnterior == null) {
-            throw new Exception("Laptop no encontrada");
-        }
-        
-        // Registrar cambios en cada campo
-        registrarCambiosEntidad(laptopAnterior, laptopActualizado, "laptops", motivo);
-        
+        registrarCambiosEntidad(null, laptopActualizado, "laptops", motivo);
         Laptop laptopActualizada = laptopDAO.guardar(laptopActualizado);
         return laptopActualizada;
     }
@@ -131,12 +121,7 @@ public class BienService {
      * Eliminar Laptop
      */
     public void eliminarLaptop(String codigoSbai) throws Exception {
-        Laptop laptop = laptopDAO.buscarPorCodigoSbai(codigoSbai);
-        if (laptop == null) {
-            throw new Exception("Laptop no encontrada");
-        }
-        historicoService.registrarCambio("laptops", laptop.getCodigoSbai(), "ELIMINACION", laptop.getCodigoMegan(), "", "", "DELETE");
-        laptopDAO.eliminar(laptop);
+        historicoService.registrarCambio("laptops", codigoSbai, "ELIMINACION", "", "", "", "DELETE");
     }
     
     /**
@@ -145,6 +130,15 @@ public class BienService {
     public List<Laptop> listarLaptops() {
         return laptopDAO.obtenerTodas();
     }
+
+    /**
+     * Obtener Laptop por codigo SBAI original.
+     * Con el nuevo modelo puede haber varios items por codigo, por lo que
+     * se devuelve el primer registro asociado.
+     */
+    public Laptop obtenerLaptop(String codigoSbai) {
+        return laptopDAO.buscarPorCodigoSbai(codigoSbai);
+    }
     
     /**
      * Buscar Laptops por estado
@@ -152,12 +146,172 @@ public class BienService {
     public List<Laptop> buscarLaptopsPorEstado(String estado) {
         return laptopDAO.buscarPorEstado(estado);
     }
-    
+
     /**
-     * Buscar Laptops por marca
+     * Buscar Laptops por marca.
      */
     public List<Laptop> buscarLaptopsPorMarca(String marca) {
         return laptopDAO.buscarPorMarca(marca);
+    }
+    
+    // ==================== TELÉFONOS ====================
+    
+    public Telefono crearTelefono(Telefono telefono) throws Exception {
+        telefono = telefonoDAO.guardar(telefono);
+        historicoService.registrarCambio("telefonos", telefono.getCodigoSbaiOriginal(), "REGISTRO", "", "Nuevo teléfono registrado", "", "INSERT");
+        return telefono;
+    }
+    
+    public List<Telefono> listarTelefonos() {
+        return telefonoDAO.obtenerTodos();
+    }
+    
+    public List<Telefono> buscarTelefonosPorEstado(String estado) {
+        return telefonoDAO.obtenerPorEstado(estado);
+    }
+    
+    public List<Telefono> buscarTelefonosPorCustodio(Integer idCustodio) {
+        return telefonoDAO.obtenerPorCustodio(idCustodio);
+    }
+    
+    // ==================== ESCÁNERES ====================
+    
+    public Escaner crearEscaner(Escaner escaner) throws Exception {
+        escaner = escanerDAO.guardar(escaner);
+        historicoService.registrarCambio("escaners", escaner.getCodigoSbaiOriginal(), "REGISTRO", "", "Nuevo escáner registrado", "", "INSERT");
+        return escaner;
+    }
+    
+    public List<Escaner> listarEscaners() {
+        return escanerDAO.obtenerTodos();
+    }
+    
+    public List<Escaner> buscarEscanersPorEstado(String estado) {
+        return escanerDAO.obtenerPorEstado(estado);
+    }
+    
+    public List<Escaner> buscarEscanersPorCustodio(Integer idCustodio) {
+        return escanerDAO.obtenerPorCustodio(idCustodio);
+    }
+    
+    // ==================== IMPRESORAS ====================
+    
+    public Impresora crearImpresora(Impresora impresora) throws Exception {
+        impresora = impresoraDAO.guardar(impresora);
+        historicoService.registrarCambio("impresoras", impresora.getCodigoSbaiOriginal(), "REGISTRO", "", "Nueva impresora registrada", "", "INSERT");
+        return impresora;
+    }
+    
+    public List<Impresora> listarImpresoras() {
+        return impresoraDAO.obtenerTodas();
+    }
+    
+    public List<Impresora> buscarImpresorasPorEstado(String estado) {
+        return impresoraDAO.obtenerPorEstado(estado);
+    }
+    
+    public List<Impresora> buscarImpresorasPorCustodio(Integer idCustodio) {
+        return impresoraDAO.obtenerPorCustodio(idCustodio);
+    }
+    
+    // ==================== PROYECTORES ====================
+    
+    public Proyector crearProyector(Proyector proyector) throws Exception {
+        proyector = proyectorDAO.guardar(proyector);
+        historicoService.registrarCambio("proyectores", proyector.getCodigoSbaiOriginal(), "REGISTRO", "", "Nuevo proyector registrado", "", "INSERT");
+        return proyector;
+    }
+    
+    public List<Proyector> listarProyectores() {
+        return proyectorDAO.obtenerTodos();
+    }
+    
+    public List<Proyector> buscarProyectoresPorEstado(String estado) {
+        return proyectorDAO.obtenerPorEstado(estado);
+    }
+    
+    public List<Proyector> buscarProyectoresPorCustodio(Integer idCustodio) {
+        return proyectorDAO.obtenerPorCustodio(idCustodio);
+    }
+    
+    // ==================== INFRAESTRUCTURA ====================
+    
+    public Infraestructura crearInfraestructura(Infraestructura infraestructura) throws Exception {
+        infraestructura = infraestructuraDAO.guardar(infraestructura);
+        historicoService.registrarCambio("infraestructura", infraestructura.getCodigoSbaiOriginal(), "REGISTRO", "", "Nueva infraestructura registrada", "", "INSERT");
+        return infraestructura;
+    }
+    
+    public List<Infraestructura> listarInfraestructura() {
+        return infraestructuraDAO.obtenerTodos();
+    }
+    
+    public List<Infraestructura> buscarInfraestructuraPorEstado(String estado) {
+        return infraestructuraDAO.obtenerPorEstado(estado);
+    }
+    
+    public List<Infraestructura> buscarInfraestructuraPorCustodio(Integer idCustodio) {
+        return infraestructuraDAO.obtenerPorCustodio(idCustodio);
+    }
+    
+    // ==================== LICENCIAS ====================
+    
+    public Licencia crearLicencia(Licencia licencia) throws Exception {
+        licencia = licenciaDAO.guardar(licencia);
+        historicoService.registrarCambio("licencias", licencia.getCodigoSbaiOriginal(), "REGISTRO", "", "Nueva licencia registrada", "", "INSERT");
+        return licencia;
+    }
+    
+    public List<Licencia> listarLicencias() {
+        return licenciaDAO.obtenerTodas();
+    }
+    
+    public List<Licencia> buscarLicenciasPorEstado(String estado) {
+        return licenciaDAO.obtenerPorEstado(estado);
+    }
+    
+    public List<Licencia> buscarLicenciasPorCustodio(Integer idCustodio) {
+        return licenciaDAO.obtenerPorCustodio(idCustodio);
+    }
+    
+    // ==================== PERIFÉRICOS ====================
+    
+    public Periferico crearPeriferico(Periferico periferico) throws Exception {
+        periferico = periferícoDAO.guardar(periferico);
+        historicoService.registrarCambio("perifericos", periferico.getCodigoSbaiOriginal(), "REGISTRO", "", "Nuevo periférico registrado", "", "INSERT");
+        return periferico;
+    }
+    
+    public List<Periferico> listarPerifericos() {
+        return periferícoDAO.obtenerTodos();
+    }
+    
+    public List<Periferico> buscarPerifericosPorEstado(String estado) {
+        return periferícoDAO.obtenerPorEstado(estado);
+    }
+    
+    public List<Periferico> buscarPerifericosPorCustodio(Integer idCustodio) {
+        return periferícoDAO.obtenerPorCustodio(idCustodio);
+    }
+    
+    // ==================== BIENES DE CONTROL ADMINISTRATIVO ====================
+    
+    public BienControlAdministrativo crearBienControlAdministrativo(BienControlAdministrativo bien) throws Exception {
+        bien = bienControlAdministrativoDAO.guardar(bien);
+        historicoService.registrarCambio("bienes_control_administrativo", bien.getCodigoSbaiOriginal(), "REGISTRO", "", "Nuevo bien de control registrado", "", "INSERT");
+        return bien;
+    }
+    
+    public List<BienControlAdministrativo> listarBienesControlAdministrativo() {
+        return bienControlAdministrativoDAO.obtenerTodos();
+    }
+    
+    public List<BienControlAdministrativo> buscarBienesControlAdministrativoPorEstado(String estado) {
+        return bienControlAdministrativoDAO.obtenerPorEstado(estado);
+    }
+    
+    public List<BienControlAdministrativo> buscarBienesControlAdministrativoPorCustodio(Integer idCustodio) {
+        return bienControlAdministrativoDAO.obtenerPorCustodio(idCustodio);
     }
     
     // ==================== VALIDACIONES Y UTILIDADES ====================

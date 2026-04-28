@@ -1,21 +1,33 @@
 package com.mycompany.sistemainventariov3.model;
 
 /**
- * Modelo Usuario para autenticación con usuarios quemados (hardcoded)
- * Solo usuario, password y rol
+ * Modelo de sesion del usuario autenticado.
  */
 public class Usuario {
-    
+
     private String usuario;
     private String password;
-    private String rol; // ADMINISTRADOR, TECNICO
+    private String rol; // ADMINISTRADOR, TECNICO, CUSTODIO
+    private String nombreCompleto;
+    private Integer idCustodio;
+    private boolean activo = true;
 
-    public Usuario() {}
+    public Usuario() {
+    }
 
     public Usuario(String usuario, String password, String rol) {
         this.usuario = usuario;
         this.password = password;
         this.rol = rol;
+    }
+
+    public Usuario(String usuario, String password, String rol, String nombreCompleto, Integer idCustodio, boolean activo) {
+        this.usuario = usuario;
+        this.password = password;
+        this.rol = rol;
+        this.nombreCompleto = nombreCompleto;
+        this.idCustodio = idCustodio;
+        this.activo = activo;
     }
 
     public String getUsuario() {
@@ -40,5 +52,29 @@ public class Usuario {
 
     public void setRol(String rol) {
         this.rol = rol;
+    }
+
+    public String getNombreCompleto() {
+        return nombreCompleto;
+    }
+
+    public void setNombreCompleto(String nombreCompleto) {
+        this.nombreCompleto = nombreCompleto;
+    }
+
+    public Integer getIdCustodio() {
+        return idCustodio;
+    }
+
+    public void setIdCustodio(Integer idCustodio) {
+        this.idCustodio = idCustodio;
+    }
+
+    public boolean isActivo() {
+        return activo;
+    }
+
+    public void setActivo(boolean activo) {
+        this.activo = activo;
     }
 }

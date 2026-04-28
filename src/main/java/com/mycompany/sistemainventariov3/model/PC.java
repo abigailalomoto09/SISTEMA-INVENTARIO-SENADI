@@ -1,86 +1,110 @@
 package com.mycompany.sistemainventariov3.model;
 
+import org.hibernate.annotations.Where;
+
 import javax.persistence.*;
-import java.math.BigDecimal;
 import java.util.Date;
 
 /**
- * Entidad PC - Computadora de escritorio
+ * Entidad PC sobre el modelo final equipo + pc.
  */
 @Entity
-@Table(name = "pcs")
+@Table(name = "equipo")
+@SecondaryTable(name = "pc", pkJoinColumns = @PrimaryKeyJoinColumn(name = "id_equipo", referencedColumnName = "id_equipo"))
+@Where(clause = "tipo_equipo = 'pc'")
 public class PC {
-    
+
     @Id
-    @Column(name = "codigo_sbai", length = 120)
-    private String codigoSbai;
-    
-    @Column(name = "codigo_sbai_original", length = 120)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "id_equipo")
+    private Integer idEquipo;
+
+    @Column(name = "tipo_equipo", nullable = false)
+    private String tipoEquipo = "pc";
+
+    @Column(name = "codigo_sbye", length = 120)
     private String codigoSbaiOriginal;
-    
+
+    @Transient
+    private Integer item;
+
     @Column(name = "codigo_megan", length = 120)
     private String codigoMegan;
-    
+
     @Column(name = "descripcion", length = 255)
     private String descripcion;
-    
-    @Column(name = "fecha_ingreso")
-    private Date fechaIngreso;
-    
-    @Column(name = "costo")
-    private BigDecimal costo;
-    
+
+    @Column(name = "ip", table = "pc", length = 45)
+    private String ip;
+
     @Column(name = "marca", length = 120)
     private String marca;
-    
+
     @Column(name = "modelo", length = 200)
     private String modelo;
-    
+
     @Column(name = "sn", length = 150)
     private String numeroSerie;
-    
+
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "id_custodio_actual")
     private Custodio custodioActual;
-    
+
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "id_ubicacion")
     private Ubicacion ubicacion;
-    
+
     @Column(name = "ultima_actualizacion")
+    @Temporal(TemporalType.DATE)
     private Date ultimaActualizacion;
-    
-    @Column(name = "procesador", length = 150)
+
+    @Column(name = "procesador", table = "pc", length = 150)
     private String procesador;
-    
-    @Column(name = "ram", length = 100)
+
+    @Column(name = "ram", table = "pc", length = 60)
     private String ram;
-    
-    @Column(name = "disco_duro", length = 100)
+
+    @Column(name = "disco_duro", table = "pc", length = 60)
     private String discoDuro;
-    
-    @Column(name = "so", length = 100)
+
+    @Column(name = "so", table = "pc", length = 80)
     private String sistemaOperativo;
-    
+
     @Column(name = "estado", length = 100)
-    private String estado;
-    
+    private String estado = "OPERATIVO";
+
     @Column(name = "observacion", columnDefinition = "TEXT")
     private String observacion;
-    
+
     @Column(name = "ultimo_mantenimiento")
+    @Temporal(TemporalType.DATE)
     private Date ultimoMantenimiento;
-    
-    @Column(name = "fila_excel")
+
+    @Transient
     private Integer filaExcel;
 
-    // Getters y Setters
-    public String getCodigoSbai() {
-        return codigoSbai;
+    public PC() {
     }
 
-    public void setCodigoSbai(String codigoSbai) {
-        this.codigoSbai = codigoSbai;
+    public PC(String codigoSbaiOriginal, Integer item) {
+        this.codigoSbaiOriginal = codigoSbaiOriginal;
+        this.item = item;
+    }
+
+    public Integer getIdEquipo() {
+        return idEquipo;
+    }
+
+    public void setIdEquipo(Integer idEquipo) {
+        this.idEquipo = idEquipo;
+    }
+
+    public String getTipoEquipo() {
+        return tipoEquipo;
+    }
+
+    public void setTipoEquipo(String tipoEquipo) {
+        this.tipoEquipo = tipoEquipo;
     }
 
     public String getCodigoSbaiOriginal() {
@@ -89,6 +113,14 @@ public class PC {
 
     public void setCodigoSbaiOriginal(String codigoSbaiOriginal) {
         this.codigoSbaiOriginal = codigoSbaiOriginal;
+    }
+
+    public Integer getItem() {
+        return item;
+    }
+
+    public void setItem(Integer item) {
+        this.item = item;
     }
 
     public String getCodigoMegan() {
@@ -107,20 +139,12 @@ public class PC {
         this.descripcion = descripcion;
     }
 
-    public Date getFechaIngreso() {
-        return fechaIngreso;
+    public String getIp() {
+        return ip;
     }
 
-    public void setFechaIngreso(Date fechaIngreso) {
-        this.fechaIngreso = fechaIngreso;
-    }
-
-    public BigDecimal getCosto() {
-        return costo;
-    }
-
-    public void setCosto(BigDecimal costo) {
-        this.costo = costo;
+    public void setIp(String ip) {
+        this.ip = ip;
     }
 
     public String getMarca() {

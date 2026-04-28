@@ -7,7 +7,7 @@ import java.util.List;
 /**
  * DAO para la entidad Laptop
  */
-public class LaptopDAO extends DAOGenerico<Laptop, String> {
+public class LaptopDAO extends DAOGenerico<Laptop, Integer> {
     
     public LaptopDAO() {
         super(Laptop.class);
@@ -33,8 +33,9 @@ public class LaptopDAO extends DAOGenerico<Laptop, String> {
     public Laptop buscarPorCodigoSbai(String codigoSbai) {
         EntityManager em = getEM();
         try {
-            return (Laptop) em.createQuery("FROM Laptop WHERE codigoSbai = :codigo")
+            return (Laptop) em.createQuery("FROM Laptop WHERE codigoSbaiOriginal = :codigo ORDER BY idEquipo ASC")
                     .setParameter("codigo", codigoSbai)
+                    .setMaxResults(1)
                     .getSingleResult();
         } catch (javax.persistence.NoResultException e) {
             return null;

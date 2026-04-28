@@ -3,25 +3,30 @@
     const page = body.dataset.page || "login";
     const role = body.dataset.role || null;
     const currentPath = window.location.pathname;
-    const isUserRole = role === "usuario";
+    const isUserRole = role === "usuario" || role === "tecnico" || role === "custodio";
     const pathDepth = currentPath.split("/").filter(Boolean).length;
     const basePrefix = page === "login" || pathDepth <= 2 ? "." : (isUserRole ? "../.." : "..");
     const API_BASE = `${basePrefix}/resources`;
     const STORAGE_SESSION = "inventario.session.demo";
-    const STORAGE_REPORTS = "inventario.reports.recent";
     const PAGE_SIZE = 10;
-    const state = {
-        session: null,
-        inventory: [],
-        filteredInventory: [],
-        inventoryPage: 1,
-        inventorySort: { key: "codigoSbai", direction: "asc" },
-        searchCriteria: [],
-        searchResults: [],
-        recentReports: [],
-        sidebarOpen: false
+    const VALID_STATES = [
+        "OPERATIVO",
+        "NO OPERATIVO",
+        "REPORTADO PARA DAR DE BAJA"
+    ];
+    const TYPE_CONFIG = {
+        pc: { label: "PC" },
+        laptop: { label: "Laptop" },
+        periferico: { label: "Periférico" },
+        impresora: { label: "Impresora" },
+        escaner: { label: "Escáner" },
+        telefono: { label: "Teléfono" },
+        proyector: { label: "Proyector" },
+        infraestructura: { label: "Infraestructura" },
+        licencia: { label: "Licencia" },
+        modem: { label: "Modem" },
+        bien_control_admin: { label: "Control admin." }
     };
-
     const CATEGORY_CONFIG = {
         laptops: {
             label: "Laptop",
@@ -53,31 +58,60 @@
             hint: "Accesorios como teclados, mouse, bases o monitores auxiliares.",
             fields: ["numeroSerie", "conexion", "compatibilidad"]
         },
-        cables: {
-            label: "Cables",
-            hint: "Elementos de conectividad con control de tipo y longitud.",
-            fields: ["tipoCable", "longitud", "estadoFisico"]
-        },
         proyectores: {
             label: "Proyector",
             hint: "Equipo audiovisual con datos de resolución y brillo.",
             fields: ["numeroSerie", "resolucion", "lumenes"]
+        },
+        infraestructura: {
+            label: "Infraestructura",
+            hint: "Equipamiento de red, comunicaciones o soporte tecnolÃ³gico institucional.",
+            fields: ["numeroSerie", "ip", "caracteristicas"]
+        },
+        licencias: {
+            label: "Licencia",
+            hint: "Activos lÃ³gicos o licencias de software asociadas al inventario.",
+            fields: ["numeroSerie", "caracteristicas"]
+        },
+        modem: {
+            label: "Modem",
+            hint: "Equipos de conectividad mÃ³vil o fija con plan y servicio asociado.",
+            fields: ["numeroSerie", "ip", "caracteristicas"]
         }
     };
-
-    const INVENTORY_QUICK_FILTERS = [
-        { label: "Solo activos", type: "status", value: "Activo" },
-        { label: "Solo desktop", type: "type", value: "pcs" },
-        { label: "Solo laptop", type: "type", value: "laptops" },
-        { label: "Limpiar filtros", type: "reset", value: "" }
-    ];
-
     const SEARCH_QUICK_PRESETS = [
-        { label: "Activos", criteria: [{ field: "estado", value: "Activo" }] },
-        { label: "Reportados", criteria: [{ field: "estado", value: "Reportado para baja" }] },
-        { label: "Dell", criteria: [{ field: "marca", value: "Dell" }] },
-        { label: "Intel", criteria: [{ field: "procesador", value: "Intel" }] }
+        { label: "Operativos", criteria: [{ field: "estado", value: "OPERATIVO" }] },
+        { label: "No operativos", criteria: [{ field: "estado", value: "NO OPERATIVO" }] },
+        { label: "PC", criteria: [{ field: "tipo", value: "pc" }] },
+        { label: "Dell", criteria: [{ field: "marca", value: "Dell" }] }
     ];
+    const NAV_ICONS = {
+        dashboard: iconMarkup("dashboard"),
+        inventario: iconMarkup("inventory"),
+        busqueda: iconMarkup("search"),
+        "nuevo-equipo": iconMarkup("plusBox")
+    };
+    const INVENTORY_AUTOCOMPLETE = {
+        filterCodigoSbai: "codigoSbai",
+        filterCodigoMegan: "codigoMegan",
+        filterDescripcion: "descripcion",
+        filterMarca: "marca",
+        filterModelo: "modelo",
+        filterSerie: "numeroSerie",
+        filterCustodio: "custodio",
+        filterUbicacion: "ubicacion"
+    };
+    const state = {
+        session: null,
+        inventory: [],
+        filteredInventory: [],
+        inventoryPage: 1,
+        inventorySort: { key: "codigoSbai", direction: "asc" },
+        searchCriteria: [],
+        searchResults: [],
+        equipmentFieldCatalog: {},
+        sidebarOpen: false
+    };
 
     document.addEventListener("DOMContentLoaded", () => {
         if (page === "login") {
@@ -113,8 +147,7 @@
             username: data.usuario || data.username || "usuario",
             displayName: data.nombreCompleto || data.usuario || "Usuario",
             role: rol === "ADMINISTRADOR" ? "admin" : "usuario",
-            roleLabel: rol === "ADMINISTRADOR" ? "Administrador" : "Usuario técnico",
-            permissions: data.permisos || {}
+            roleLabel: rol === "ADMINISTRADOR" ? "Administrador" : "Usuario técnico"
         };
     }
 
@@ -126,10 +159,6 @@
     function initLogin() {
         startClock();
         document.getElementById("loginForm")?.addEventListener("submit", handleLogin);
-        restoreDemoLoginSession();
-    }
-
-    function restoreDemoLoginSession() {
         const demo = getDemoSession();
         if (demo) {
             redirectForRole(demo);
@@ -172,20 +201,21 @@
 
     function buildDemoSession(username, password) {
         if (username === "admin" && password === "admin123") {
-            return { username: "admin", displayName: "admin", role: "admin", roleLabel: "Administrador", permissions: {} };
+            return { username: "admin", displayName: "admin", role: "admin", roleLabel: "Administrador" };
         }
         if ((username === "tecnico" || username === "usuario") && password === "tecnico123") {
-            return { username: "tecnico", displayName: "tecnico", role: "usuario", roleLabel: "Usuario técnico", permissions: {} };
+            return { username: "tecnico", displayName: "tecnico", role: "usuario", roleLabel: "Usuario técnico" };
         }
         return null;
     }
 
     function showLoginError(message) {
         const error = document.getElementById("loginError");
+        if (!error) {
+            return;
+        }
         error.textContent = message;
         error.classList.remove("is-hidden");
-        document.querySelector(".login-card")?.classList.add("shake");
-        setTimeout(() => document.querySelector(".login-card")?.classList.remove("shake"), 400);
     }
 
     function hideLoginError() {
@@ -200,7 +230,12 @@
         }
         const refresh = () => {
             const now = new Date();
-            dateEl.textContent = now.toLocaleDateString("es-EC", { weekday: "short", day: "2-digit", month: "short", year: "numeric" });
+            dateEl.textContent = now.toLocaleDateString("es-EC", {
+                weekday: "short",
+                day: "2-digit",
+                month: "short",
+                year: "numeric"
+            });
             clockEl.textContent = now.toLocaleTimeString("es-EC");
         };
         refresh();
@@ -208,7 +243,6 @@
     }
 
     async function initShell() {
-        state.recentReports = loadRecentReports();
         state.session = await resolveSession();
         if (!state.session) {
             window.location.href = `${basePrefix}/index.html`.replace("/pages/index.html", "/index.html");
@@ -269,7 +303,7 @@
                             <button class="topbar__toggle" id="sidebarToggle">☰</button>
                             <div class="topbar__title">
                                 <h1>${pageTitle(page)}</h1>
-                                <p>${pageDescription(page, role)}</p>
+                                <p>${pageDescription(page)}</p>
                             </div>
                         </div>
                         <div class="user-chip">${escapeHtml(state.session.displayName)} · ${state.session.roleLabel}</div>
@@ -289,35 +323,33 @@
                 ["dashboard", "Dashboard", `${basePrefix}/pages/dashboard.html`],
                 ["inventario", "Inventario", `${basePrefix}/pages/inventario.html`],
                 ["busqueda", "Búsqueda", `${basePrefix}/pages/busqueda.html`],
-                ["reportes", "Reportes", `${basePrefix}/pages/reportes.html`],
                 ["nuevo-equipo", "Nuevo Equipo", `${basePrefix}/pages/nuevo-equipo.html`]
             ]
             : [
                 ["dashboard", "Dashboard", `${basePrefix}/pages/usuario/dashboard.html`],
                 ["inventario", "Inventario", `${basePrefix}/pages/usuario/inventario.html`],
-                ["busqueda", "Búsqueda", `${basePrefix}/pages/usuario/busqueda.html`],
-                ["reportes", "Reportes", `${basePrefix}/pages/usuario/reportes.html`]
+                ["busqueda", "Búsqueda", `${basePrefix}/pages/usuario/busqueda.html`]
             ];
-        return nav.map(([key, label, href]) => `<a href="${href}" class="${key === page ? "is-active" : ""}"><span>•</span><span>${label}</span></a>`).join("");
+        return nav
+            .map(([key, label, href]) => `<a href="${href}" class="${key === page ? "is-active" : ""}"><span>•</span><span>${label}</span></a>`)
+            .join("");
     }
 
     function pageTitle(pageName) {
         const titles = {
             dashboard: "Bienvenido",
-            inventario: "Inventario completo",
+            inventario: "Inventario",
             busqueda: "Búsqueda avanzada",
-            reportes: "Reportes",
             "nuevo-equipo": "Nuevo equipo"
         };
         return titles[pageName] || "Sistema de Inventario";
     }
 
-    function pageDescription(pageName, currentRole) {
+    function pageDescription(pageName) {
         const descriptions = {
-            dashboard: currentRole === "admin" ? "Accesos rápidos y vista general del sistema." : "Accesos directos para consulta y reportes.",
-            inventario: currentRole === "admin" ? "Filtro, edición, histórico y cambio de estado." : "Consulta completa con edición limitada de custodio.",
-            busqueda: "Búsqueda multi-criterio client-side con tags.",
-            reportes: "Generación PDF/Excel y lista de reportes recientes.",
+            dashboard: "Accesos rápidos y vista general del sistema.",
+            inventario: "Filtros combinables, tabla dinámica y exportación del resultado filtrado.",
+            busqueda: "Búsqueda multi-criterio en cliente sobre el inventario cargado.",
             "nuevo-equipo": "Formulario dinámico por categoría con guardado simulado."
         };
         return descriptions[pageName] || "";
@@ -333,9 +365,6 @@
         if (page === "busqueda") {
             return renderSearchPage();
         }
-        if (page === "reportes") {
-            return renderReportsPage();
-        }
         if (page === "nuevo-equipo") {
             return renderNewEquipmentPage();
         }
@@ -347,14 +376,12 @@
             <section class="hero">
                 <div class="hero__grid">
                     <div>
-                        <h2>${role === "admin" ? "Control centralizado del inventario institucional." : "Consulta técnica del inventario institucional."}</h2>
-                        <p>${role === "admin"
-                            ? "Gestiona equipos, revisa cambios recientes y entra directo a registro, búsqueda o reportes."
-                            : "Accede al inventario, aplica búsquedas avanzadas y descarga reportes con una interfaz verde dedicada al rol técnico."}</p>
+                        <h2>Inventario institucional conectado a la base real.</h2>
+                        <p>Consulta equipos tecnológicos, aplica filtros por varios campos y exporta el resultado actual desde el mismo módulo de inventario.</p>
                     </div>
                     <div class="stats-grid">
                         <article class="stat-card"><span>Total cargado</span><strong id="statTotal">--</strong></article>
-                        <article class="stat-card"><span>Activos</span><strong id="statActive">--</strong></article>
+                        <article class="stat-card"><span>Operativos</span><strong id="statActive">--</strong></article>
                         <article class="stat-card"><span>Ubicaciones</span><strong id="statLocations">--</strong></article>
                     </div>
                 </div>
@@ -362,7 +389,7 @@
             <div class="section-heading">
                 <div>
                     <h2>Accesos rápidos</h2>
-                    <p>${role === "admin" ? "Nuevo Equipo, Búsqueda y Reportes." : "Ver Inventario, Búsqueda y Descargar Reporte."}</p>
+                    <p>Inventario, búsqueda y herramientas principales del sistema.</p>
                 </div>
             </div>
             <section class="quick-grid">${dashboardCards().join("")}</section>
@@ -372,14 +399,13 @@
     function dashboardCards() {
         const cards = role === "admin"
             ? [
-                ["Nuevo Equipo", "Registrar equipos por categoría con formulario dinámico.", `${basePrefix}/pages/nuevo-equipo.html`],
-                ["Búsqueda", "Filtrar por código, custodio, ubicación, estado o procesador.", `${basePrefix}/pages/busqueda.html`],
-                ["Reportes", "Generar salidas PDF o Excel y revisar descargas recientes.", `${basePrefix}/pages/reportes.html`]
+                ["Inventario", "Filtra, revisa y exporta el inventario visible.", `${basePrefix}/pages/inventario.html`],
+                ["Búsqueda", "Aplica múltiples criterios sobre la data cargada.", `${basePrefix}/pages/busqueda.html`],
+                ["Nuevo Equipo", "Formulario dinámico de registro simulado.", `${basePrefix}/pages/nuevo-equipo.html`]
             ]
             : [
-                ["Ver Inventario", "Consultar el inventario y actualizar solo custodio.", `${basePrefix}/pages/usuario/inventario.html`],
-                ["Búsqueda", "Aplicar criterios múltiples y revisar resultados sin acciones.", `${basePrefix}/pages/usuario/busqueda.html`],
-                ["Descargar Reporte", "Generar reportes PDF o Excel desde la vista técnica.", `${basePrefix}/pages/usuario/reportes.html`]
+                ["Inventario", "Filtra, revisa y exporta el inventario visible.", `${basePrefix}/pages/usuario/inventario.html`],
+                ["Búsqueda", "Aplica múltiples criterios sobre la data cargada.", `${basePrefix}/pages/usuario/busqueda.html`]
             ];
         return cards.map(([title, text, href]) => `<a class="mini-card" href="${href}"><strong>${title}</strong><span>${text}</span></a>`);
     }
@@ -387,46 +413,69 @@
     function renderInventoryPage() {
         return `
             <section class="panel">
-                <div class="stats-grid" id="inventoryStats">
-                    <article class="stat-card"><span>Total</span><strong id="inventoryStatTotal">--</strong></article>
-                    <article class="stat-card"><span>Activos</span><strong id="inventoryStatActive">--</strong></article>
-                    <article class="stat-card"><span>Inactivos</span><strong id="inventoryStatInactive">--</strong></article>
-                    <article class="stat-card"><span>Baja</span><strong id="inventoryStatLow">--</strong></article>
+                <div class="stats-grid">
+                    <article class="stat-card"><span>Total de equipos</span><strong id="inventoryStatTotal">--</strong></article>
                 </div>
                 <div class="filters-grid">
                     <div class="field-group">
-                        <label for="filterStatus">Estado</label>
-                        <select id="filterStatus">
+                        <label for="filterTipo">Tipo</label>
+                        <select id="filterTipo">
                             <option value="">Todos</option>
-                            <option value="Activo">Activo</option>
-                            <option value="Inactivo">Inactivo</option>
-                            <option value="Reportado para baja">Reportado para baja</option>
+                            ${buildTypeOptions()}
                         </select>
                     </div>
                     <div class="field-group">
-                        <label for="filterLocation">Ubicación</label>
-                        <input id="filterLocation" type="text" placeholder="Edificio, piso o detalle">
+                        <label for="filterCodigoSbai">Código SBYE</label>
+                        <input id="filterCodigoSbai" type="text" placeholder="Filtrar por código SBYE">
                     </div>
                     <div class="field-group">
-                        <label for="filterType">Categoría</label>
-                        <select id="filterType">
-                            <option value="">Todas</option>
-                            <option value="pcs">Desktop</option>
-                            <option value="laptops">Laptop</option>
+                        <label for="filterCodigoMegan">Código Megan</label>
+                        <input id="filterCodigoMegan" type="text" placeholder="Filtrar por código Megan">
+                    </div>
+                    <div class="field-group">
+                        <label for="filterDescripcion">Descripción</label>
+                        <input id="filterDescripcion" type="text" placeholder="Filtrar por descripción">
+                    </div>
+                    <div class="field-group">
+                        <label for="filterMarca">Marca</label>
+                        <input id="filterMarca" type="text" placeholder="Filtrar por marca">
+                    </div>
+                    <div class="field-group">
+                        <label for="filterModelo">Modelo</label>
+                        <input id="filterModelo" type="text" placeholder="Filtrar por modelo">
+                    </div>
+                    <div class="field-group">
+                        <label for="filterSerie">Serie</label>
+                        <input id="filterSerie" type="text" placeholder="Filtrar por serie">
+                    </div>
+                    <div class="field-group">
+                        <label for="filterCustodio">Custodio</label>
+                        <input id="filterCustodio" type="text" placeholder="Filtrar por custodio">
+                    </div>
+                    <div class="field-group">
+                        <label for="filterUbicacion">Ubicación</label>
+                        <input id="filterUbicacion" type="text" placeholder="Filtrar por ubicación">
+                    </div>
+                    <div class="field-group">
+                        <label for="filterEstado">Estado</label>
+                        <select id="filterEstado">
+                            <option value="">Todos</option>
+                            ${VALID_STATES.map((item) => `<option value="${item}">${item}</option>`).join("")}
                         </select>
                     </div>
                 </div>
-                <div class="search-tags" id="inventoryQuickFilters">
-                    ${INVENTORY_QUICK_FILTERS.map((item) => `<button class="search-tag search-tag--button" type="button" data-quick-filter="${item.type}" data-value="${item.value}">${item.label}</button>`).join("")}
+                <div class="toolbar" style="margin-top:16px;">
+                    <button class="btn btn-primary" id="applyInventoryFilters">Filtrar</button>
+                    <button class="btn btn-secondary" id="clearInventoryFilters">Limpiar</button>
+                    <button class="btn btn-success" id="exportInventoryExcel">Exportar a Excel</button>
+                    <button class="btn btn-secondary" id="exportInventoryPdf">Exportar a PDF</button>
                 </div>
-                ${role === "usuario" ? '<div class="helper-banner">Como usuario técnico, solo puede modificar el campo Actual Custodio.</div>' : ""}
                 <div id="inventoryMeta" class="search-results-meta"></div>
                 <div class="table-wrap">
                     <table>
                         <thead>
                             <tr>
-                                ${["codigoSbai", "codigoMegan", "tipo", "marca", "modelo", "numeroSerie", "custodio", "ubicacion", "procesador", "estado"].map((key) => `<th><button class="table-sort" data-sort="${key}">${labelForColumn(key)}</button></th>`).join("")}
-                                <th>Acciones</th>
+                                ${["codigoSbai", "codigoMegan", "descripcion", "tipo", "marca", "modelo", "numeroSerie", "custodio", "ubicacion", "procesador", "estado"].map((key) => `<th><button class="table-sort" data-sort="${key}">${labelForColumn(key)}</button></th>`).join("")}
                             </tr>
                         </thead>
                         <tbody id="inventoryBody"></tbody>
@@ -445,7 +494,7 @@
     }
 
     function renderSearchPage() {
-        const criteriaOptions = ["codigoMegan", "codigoSbai", "numeroSerie", "marca", "modelo", "custodio", "ubicacion", "estado", "procesador"];
+        const criteriaOptions = ["tipo", "codigoMegan", "codigoSbai", "descripcion", "numeroSerie", "marca", "modelo", "custodio", "ubicacion", "estado", "procesador", "caracteristicas"];
         return `
             <section class="panel">
                 <div class="tag-builder">
@@ -477,113 +526,20 @@
                             <tr>
                                 <th>Código Megan</th>
                                 <th>Código SBYE</th>
-                                <th>S/N</th>
+                                <th>Descripción</th>
                                 <th>Marca</th>
                                 <th>Modelo</th>
                                 <th>Custodio</th>
                                 <th>Ubicación</th>
                                 <th>Estado</th>
-                                <th>Procesador</th>
-                                ${role === "admin" ? "<th>Acciones</th>" : ""}
+                                <th>Detalle</th>
                             </tr>
                         </thead>
                         <tbody id="searchBody"></tbody>
                     </table>
                 </div>
                 <div class="mobile-cards" id="searchMobile"></div>
-                <div class="empty-state hidden" id="searchEmpty">Carga los datos y aplica uno o varios criterios para filtrar en cliente.</div>
-            </section>
-        `;
-    }
-
-    function renderReportsPage() {
-        return `
-            <section class="panel">
-                <div class="stats-grid">
-                    <article class="stat-card"><span>Registros elegibles</span><strong id="reportStatTotal">--</strong></article>
-                    <article class="stat-card"><span>Desktop</span><strong id="reportStatPcs">--</strong></article>
-                    <article class="stat-card"><span>Laptop</span><strong id="reportStatLaptops">--</strong></article>
-                    <article class="stat-card"><span>Con criterio activo</span><strong id="reportStatFiltered">--</strong></article>
-                </div>
-                <div class="report-filters">
-                    <div class="field-group">
-                        <label for="reportFormat">Formato</label>
-                        <select id="reportFormat">
-                            <option value="pdf">PDF</option>
-                            <option value="excel">Excel</option>
-                        </select>
-                    </div>
-                    <div class="field-group">
-                        <label for="reportScope">Cobertura</label>
-                        <select id="reportScope">
-                            <option value="completo">Completo</option>
-                            <option value="pcs">Desktop</option>
-                            <option value="laptops">Laptop</option>
-                        </select>
-                    </div>
-                    <div class="field-group">
-                        <label for="reportCriteria">Criterio</label>
-                        <select id="reportCriteria">
-                            <option value="codigos">Códigos</option>
-                            <option value="marca">Marca</option>
-                            <option value="modelo">Modelo</option>
-                            <option value="custodio">Custodio</option>
-                            <option value="caracteristicas">Características</option>
-                            <option value="observaciones">Observaciones</option>
-                            <option value="completo">Completo</option>
-                        </select>
-                    </div>
-                    <div class="field-group">
-                        <label for="reportValue">Valor opcional</label>
-                        <input id="reportValue" type="text" placeholder="Filtro informativo">
-                    </div>
-                </div>
-                <div class="helper-banner">${role === "admin"
-                    ? "Admin puede generar salidas por criterio y revisar una vista previa antes de descargar."
-                    : "Usuario técnico usa la misma generación de reportes y la descarga Excel sale por el API disponible."}</div>
-                <div class="report-grid" style="margin-top:18px;">
-                    <article class="report-card">
-                        <strong>Generar PDF</strong>
-                        <p class="muted">Prepara una vista imprimible con el criterio seleccionado.</p>
-                        <button class="btn btn-primary" id="downloadPdf">Generar PDF</button>
-                    </article>
-                    <article class="report-card">
-                        <strong>Generar Excel</strong>
-                        <p class="muted">Usa el endpoint real disponible para descargas `.xlsx`.</p>
-                        <button class="btn btn-success" id="downloadExcel">Generar Excel</button>
-                    </article>
-                </div>
-                <div class="section-heading">
-                    <div>
-                        <h2>Vista previa</h2>
-                        <p>Resumen dinámico de los equipos que entrarían en el reporte.</p>
-                    </div>
-                </div>
-                <div id="reportPreviewMeta" class="search-results-meta"></div>
-                <div class="table-wrap">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Código</th>
-                                <th>Marca</th>
-                                <th>Modelo</th>
-                                <th>Custodio</th>
-                                <th>Ubicación</th>
-                                <th>Estado</th>
-                            </tr>
-                        </thead>
-                        <tbody id="reportPreviewBody"></tbody>
-                    </table>
-                </div>
-                <div class="mobile-cards" id="reportPreviewMobile"></div>
-                <div class="section-heading">
-                    <div>
-                        <h2>Reportes recientes</h2>
-                        <p>Se conservan en memoria local del navegador.</p>
-                    </div>
-                    <button class="btn btn-secondary" id="clearRecentReports">Limpiar recientes</button>
-                </div>
-                <div class="report-history" id="recentReports"></div>
+                <div class="empty-state hidden" id="searchEmpty">Carga los datos y aplica uno o varios criterios para filtrar.</div>
             </section>
         `;
     }
@@ -600,10 +556,9 @@
                                 <option value="desktop">Desktop</option>
                                 <option value="telefonos">Teléfonos</option>
                                 <option value="escaners">Escáner</option>
-                                <option value="impresoras">Impresoras</option>
-                                <option value="perifericos">Periféricos</option>
-                                <option value="cables">Cables</option>
-                                <option value="proyectores">Proyectores</option>
+                                <option value="impresoras">Impresora</option>
+                                <option value="perifericos">Periférico</option>
+                                <option value="proyectores">Proyector</option>
                             </select>
                         </div>
                         <div class="helper-banner" id="equipmentCategoryHint"></div>
@@ -617,7 +572,7 @@
                     </div>
                     <div class="panel" style="margin-top:0;">
                         <h3>Comportamiento</h3>
-                        <p class="muted">Esta pantalla replica el frontend perdido: cambia dinámicamente por categoría y usa guardado simulado con setTimeout, sin conexión al API.</p>
+                        <p class="muted">Esta pantalla mantiene el formulario dinámico de registro simulado del proyecto.</p>
                         <div class="report-history" id="equipmentFieldSummary"></div>
                     </div>
                 </div>
@@ -643,16 +598,13 @@
         if (page === "busqueda") {
             bindSearchEvents();
         }
-        if (page === "reportes") {
-            bindReportEvents();
-        }
         if (page === "nuevo-equipo") {
             bindNewEquipmentEvents();
         }
     }
 
     async function loadInitialData() {
-        if (page === "dashboard" || page === "inventario" || page === "busqueda" || page === "reportes") {
+        if (page === "dashboard" || page === "inventario" || page === "busqueda") {
             await loadInventory();
             updateDashboardStats();
         }
@@ -663,18 +615,14 @@
             renderSearchTags();
             renderSearchResults([]);
         }
-        if (page === "reportes") {
-            renderRecentReports();
-            renderReportPreview();
-        }
         if (page === "nuevo-equipo") {
             renderDynamicFields(document.getElementById("equipmentCategory").value);
         }
     }
 
     async function loadInventory() {
-        const [pcs, laptops] = await Promise.all([fetchInventoryType("pcs"), fetchInventoryType("laptops")]);
-        state.inventory = normalizeItems(pcs, "pcs").concat(normalizeItems(laptops, "laptops"));
+        const items = await fetchInventoryType("todos");
+        state.inventory = normalizeItems(items);
         state.filteredInventory = state.inventory.slice();
     }
 
@@ -687,22 +635,26 @@
             const payload = await response.json();
             return Array.isArray(payload.data) ? payload.data : [];
         } catch (error) {
+            showToast("Error", "No se pudo cargar el inventario desde el backend.", "danger");
             return [];
         }
     }
 
-    function normalizeItems(items, type) {
+    function normalizeItems(items) {
         return items.map((item) => ({
-            tipo: type,
+            id: item.id,
+            tipo: item.tipo || "",
             codigoSbai: item.codigoSbai || "",
             codigoMegan: item.codigoMegan || "",
+            descripcion: item.descripcion || "",
             numeroSerie: item.numeroSerie || "",
             marca: item.marca || "",
             modelo: item.modelo || "",
-            custodio: item.custodioActual?.nombre || "",
-            ubicacion: [item.ubicacion?.edificio, item.ubicacion?.piso, item.ubicacion?.detalle].filter(Boolean).join(" - "),
-            estado: item.estado || "Activo",
+            custodio: item.custodio || "",
+            ubicacion: item.ubicacion || "",
+            estado: normalizeState(item.estado || ""),
             procesador: item.procesador || "",
+            caracteristicas: item.caracteristicas || "",
             observacion: item.observacion || "",
             raw: item
         }));
@@ -713,7 +665,7 @@
             return;
         }
         const total = state.inventory.length;
-        const active = state.inventory.filter((item) => item.estado === "Activo").length;
+        const active = state.inventory.filter((item) => item.estado === "OPERATIVO").length;
         const locations = new Set(state.inventory.map((item) => item.ubicacion).filter(Boolean)).size;
         setText("statTotal", total);
         setText("statActive", active);
@@ -721,28 +673,81 @@
     }
 
     function bindInventoryEvents() {
-        ["filterStatus", "filterLocation", "filterType"].forEach((id) => {
+        inventoryFilterIds().forEach((id) => {
             document.getElementById(id)?.addEventListener("input", applyInventoryFilters);
             document.getElementById(id)?.addEventListener("change", applyInventoryFilters);
         });
+        document.getElementById("applyInventoryFilters")?.addEventListener("click", applyInventoryFilters);
+        document.getElementById("clearInventoryFilters")?.addEventListener("click", clearInventoryFilters);
+        document.getElementById("exportInventoryExcel")?.addEventListener("click", exportInventoryToExcel);
+        document.getElementById("exportInventoryPdf")?.addEventListener("click", exportInventoryToPdf);
         document.querySelectorAll("[data-sort]").forEach((button) => button.addEventListener("click", () => sortInventory(button.dataset.sort)));
         document.getElementById("prevPage")?.addEventListener("click", () => changePage(-1));
         document.getElementById("nextPage")?.addEventListener("click", () => changePage(1));
-        document.querySelectorAll("[data-quick-filter]").forEach((button) => button.addEventListener("click", () => applyQuickInventoryFilter(button.dataset.quickFilter, button.dataset.value)));
+    }
+
+    function inventoryFilterIds() {
+        return [
+            "filterTipo",
+            "filterCodigoSbai",
+            "filterCodigoMegan",
+            "filterDescripcion",
+            "filterMarca",
+            "filterModelo",
+            "filterSerie",
+            "filterCustodio",
+            "filterUbicacion",
+            "filterEstado"
+        ];
+    }
+
+    function readInventoryFilters() {
+        return {
+            tipo: document.getElementById("filterTipo")?.value.trim().toLowerCase() || "",
+            codigoSbai: document.getElementById("filterCodigoSbai")?.value.trim().toLowerCase() || "",
+            codigoMegan: document.getElementById("filterCodigoMegan")?.value.trim().toLowerCase() || "",
+            descripcion: document.getElementById("filterDescripcion")?.value.trim().toLowerCase() || "",
+            marca: document.getElementById("filterMarca")?.value.trim().toLowerCase() || "",
+            modelo: document.getElementById("filterModelo")?.value.trim().toLowerCase() || "",
+            numeroSerie: document.getElementById("filterSerie")?.value.trim().toLowerCase() || "",
+            custodio: document.getElementById("filterCustodio")?.value.trim().toLowerCase() || "",
+            ubicacion: document.getElementById("filterUbicacion")?.value.trim().toLowerCase() || "",
+            estado: document.getElementById("filterEstado")?.value.trim().toLowerCase() || ""
+        };
     }
 
     function applyInventoryFilters() {
-        const status = document.getElementById("filterStatus").value.trim().toLowerCase();
-        const location = document.getElementById("filterLocation").value.trim().toLowerCase();
-        const type = document.getElementById("filterType").value;
+        const filters = readInventoryFilters();
         state.inventoryPage = 1;
         state.filteredInventory = state.inventory.filter((item) => {
-            const matchesStatus = !status || item.estado.toLowerCase().includes(status);
-            const matchesLocation = !location || item.ubicacion.toLowerCase().includes(location);
-            const matchesType = !type || item.tipo === type;
-            return matchesStatus && matchesLocation && matchesType;
+            return matchesFilter(item.tipo, filters.tipo)
+                && matchesFilter(item.codigoSbai, filters.codigoSbai)
+                && matchesFilter(item.codigoMegan, filters.codigoMegan)
+                && matchesFilter(item.descripcion, filters.descripcion)
+                && matchesFilter(item.marca, filters.marca)
+                && matchesFilter(item.modelo, filters.modelo)
+                && matchesFilter(item.numeroSerie, filters.numeroSerie)
+                && matchesFilter(item.custodio, filters.custodio)
+                && matchesFilter(item.ubicacion, filters.ubicacion)
+                && matchesFilter(item.estado, filters.estado);
         });
         sortInventory(state.inventorySort.key, false);
+    }
+
+    function clearInventoryFilters() {
+        inventoryFilterIds().forEach((id) => {
+            const element = document.getElementById(id);
+            if (element) {
+                element.value = "";
+            }
+        });
+        state.filteredInventory = state.inventory.slice();
+        state.inventoryPage = 1;
+        sortInventory(state.inventorySort.key, false);
+    }
+
+    function matchesFilter(value, filter) {
+        return !filter || String(value || "").toLowerCase().includes(filter);
     }
 
     function sortInventory(key, toggleDirection = true) {
@@ -767,43 +772,34 @@
         state.inventoryPage = Math.min(state.inventoryPage, totalPages);
         const start = (state.inventoryPage - 1) * PAGE_SIZE;
         const pageItems = state.filteredInventory.slice(start, start + PAGE_SIZE);
+
         updateInventoryStats();
-        setText("inventoryMeta", `${total} resultados · página ${state.inventoryPage} de ${totalPages}`);
+        setText("inventoryMeta", `${total} resultados filtrados · página ${state.inventoryPage} de ${totalPages}`);
         setText("inventoryPaginationMeta", pageItems.length ? `Mostrando ${start + 1}-${start + pageItems.length}` : "Sin resultados");
-        tbody.innerHTML = pageItems.length ? pageItems.map(renderInventoryRow).join("") : `<tr><td colspan="11">No hay equipos para los filtros aplicados.</td></tr>`;
+        tbody.innerHTML = pageItems.length
+            ? pageItems.map(renderInventoryRow).join("")
+            : `<tr><td colspan="11">No hay equipos para los filtros aplicados.</td></tr>`;
         mobile.innerHTML = pageItems.map(renderMobileInventoryCard).join("");
-        tbody.querySelectorAll("[data-action]").forEach((button) => button.addEventListener("click", handleInventoryAction));
-        mobile.querySelectorAll("[data-action]").forEach((button) => button.addEventListener("click", handleInventoryAction));
     }
 
     function updateInventoryStats() {
-        if (page !== "inventario") {
-            return;
-        }
-        const total = state.filteredInventory.length;
-        const active = state.filteredInventory.filter((item) => item.estado === "Activo").length;
-        const inactive = state.filteredInventory.filter((item) => item.estado === "Inactivo").length;
-        const low = state.filteredInventory.filter((item) => item.estado === "Reportado para baja").length;
-        setText("inventoryStatTotal", total);
-        setText("inventoryStatActive", active);
-        setText("inventoryStatInactive", inactive);
-        setText("inventoryStatLow", low);
+        setText("inventoryStatTotal", state.filteredInventory.length);
     }
 
     function renderInventoryRow(item) {
         return `
             <tr>
-                <td>${escapeHtml(item.codigoSbai)}</td>
-                <td>${escapeHtml(item.codigoMegan)}</td>
-                <td>${item.tipo === "pcs" ? "Desktop" : "Laptop"}</td>
-                <td>${escapeHtml(item.marca)}</td>
-                <td>${escapeHtml(item.modelo)}</td>
-                <td>${escapeHtml(item.numeroSerie)}</td>
+                <td>${escapeHtml(item.codigoSbai || "-")}</td>
+                <td>${escapeHtml(item.codigoMegan || "-")}</td>
+                <td>${escapeHtml(item.descripcion || "-")}</td>
+                <td>${escapeHtml(typeLabel(item.tipo))}</td>
+                <td>${escapeHtml(item.marca || "-")}</td>
+                <td>${escapeHtml(item.modelo || "-")}</td>
+                <td>${escapeHtml(item.numeroSerie || "-")}</td>
                 <td>${escapeHtml(item.custodio || "-")}</td>
                 <td>${escapeHtml(item.ubicacion || "-")}</td>
-                <td>${escapeHtml(item.procesador || "-")}</td>
+                <td>${escapeHtml(item.procesador || item.caracteristicas || "-")}</td>
                 <td>${stateBadge(item.estado)}</td>
-                <td>${renderInventoryActions(item)}</td>
             </tr>
         `;
     }
@@ -811,212 +807,109 @@
     function renderMobileInventoryCard(item) {
         return `
             <article class="mobile-card">
-                <strong>${escapeHtml(item.codigoSbai)} · ${escapeHtml(item.marca)} ${escapeHtml(item.modelo)}</strong>
+                <strong>${escapeHtml(item.codigoSbai || "-")} · ${escapeHtml(typeLabel(item.tipo))}</strong>
                 <span>Megan: ${escapeHtml(item.codigoMegan || "-")}</span>
+                <span>Descripción: ${escapeHtml(item.descripcion || "-")}</span>
+                <span>Marca / Modelo: ${escapeHtml(item.marca || "-")} ${escapeHtml(item.modelo || "")}</span>
                 <span>Custodio: ${escapeHtml(item.custodio || "-")}</span>
                 <span>Ubicación: ${escapeHtml(item.ubicacion || "-")}</span>
+                <span>Detalle: ${escapeHtml(item.procesador || item.caracteristicas || "-")}</span>
                 <span>Estado: ${stripHtml(stateBadge(item.estado))}</span>
-                <div class="action-row" style="margin-top:12px;">${renderInventoryActions(item)}</div>
             </article>
         `;
     }
 
-    function renderInventoryActions(item) {
-        const buttons = [];
-        if (role === "admin") {
-            buttons.push(`<button class="icon-btn" data-action="edit" data-id="${item.codigoSbai}" title="Editar">✎</button>`);
-        } else {
-            buttons.push(`<button class="icon-btn" data-action="custodian" data-id="${item.codigoSbai}" title="Editar custodio">👤</button>`);
-        }
-        buttons.push(`<button class="icon-btn" data-action="history" data-id="${item.codigoSbai}" title="Historial">🕘</button>`);
-        if (role === "admin") {
-            buttons.push(`<button class="icon-btn" data-action="status" data-id="${item.codigoSbai}" title="Cambiar estado">⇄</button>`);
-        }
-        return `<div class="action-row">${buttons.join("")}</div>`;
-    }
-
-    async function handleInventoryAction(event) {
-        const id = event.currentTarget.dataset.id;
-        const action = event.currentTarget.dataset.action;
-        const item = state.inventory.find((entry) => entry.codigoSbai === id);
-        if (!item) {
+    function exportInventoryToExcel() {
+        const rows = state.filteredInventory;
+        if (!rows.length) {
+            showToast("Sin datos", "No hay resultados filtrados para exportar.", "info");
             return;
         }
-        if (action === "history") {
-            await showHistoryModal(item);
-        } else if (action === "status") {
-            showStatusModal(item);
-        } else if (action === "edit") {
-            showEditModal(item);
-        } else if (action === "custodian") {
-            showCustodianModal(item);
-        }
+        const header = ["Código SBYE", "Código Megan", "Descripción", "Tipo", "Marca", "Modelo", "Serie", "Custodio", "Ubicación", "Detalle", "Estado"];
+        const bodyRows = rows.map((item) => [
+            item.codigoSbai,
+            item.codigoMegan,
+            item.descripcion,
+            typeLabel(item.tipo),
+            item.marca,
+            item.modelo,
+            item.numeroSerie,
+            item.custodio,
+            item.ubicacion,
+            item.procesador || item.caracteristicas,
+            item.estado
+        ]);
+        const table = `
+            <table>
+                <thead><tr>${header.map((cell) => `<th>${escapeHtml(cell)}</th>`).join("")}</tr></thead>
+                <tbody>${bodyRows.map((row) => `<tr>${row.map((cell) => `<td>${escapeHtml(cell || "")}</td>`).join("")}</tr>`).join("")}</tbody>
+            </table>`;
+        downloadBlob(
+            new Blob([`\ufeff<html><head><meta charset="UTF-8"></head><body>${table}</body></html>`], { type: "application/vnd.ms-excel" }),
+            `inventario_filtrado_${timestampForFile()}.xls`
+        );
     }
 
-    async function showHistoryModal(item) {
-        let history = [];
-        try {
-            const response = await apiFetch(`/historico/bien/${item.tipo}/${encodeURIComponent(item.codigoSbai)}`);
-            const payload = await response.json();
-            history = Array.isArray(payload.data) ? payload.data : [];
-        } catch (error) {
-            history = [];
+    function exportInventoryToPdf() {
+        const rows = state.filteredInventory;
+        if (!rows.length) {
+            showToast("Sin datos", "No hay resultados filtrados para exportar.", "info");
+            return;
         }
-        const fallbackHistory = history.length ? history : [
-            { fechaCambio: new Date().toISOString(), usuario: "sistema", campo: "custodio", valorAnterior: "Sin dato", valorNuevo: item.custodio || "Sin dato", tipoOperacion: "CONSULTA" }
-        ];
-        openModal("Historial del equipo", `
-            <div class="table-wrap">
-                <table>
-                    <thead><tr><th>Fecha</th><th>Usuario</th><th>Campo</th><th>Anterior</th><th>Nuevo</th><th>Operación</th></tr></thead>
-                    <tbody>${fallbackHistory.map((row) => `
-                        <tr>
-                            <td>${formatDate(row.fechaCambio)}</td>
-                            <td>${escapeHtml(row.usuario || "-")}</td>
-                            <td>${escapeHtml(row.campo || "-")}</td>
-                            <td>${escapeHtml(row.valorAnterior || "-")}</td>
-                            <td>${escapeHtml(row.valorNuevo || "-")}</td>
-                            <td>${escapeHtml(row.tipoOperacion || "-")}</td>
-                        </tr>
-                    `).join("")}</tbody>
-                </table>
-            </div>
+        const win = window.open("", "_blank");
+        if (!win) {
+            showToast("Bloqueado", "Permite ventanas emergentes para generar el PDF.", "info");
+            return;
+        }
+        win.document.write(`
+            <html>
+                <head>
+                    <title>Inventario filtrado</title>
+                    <style>
+                        body { font-family: Arial, sans-serif; padding: 24px; }
+                        table { width: 100%; border-collapse: collapse; font-size: 12px; }
+                        th, td { border: 1px solid #ccc; padding: 6px; text-align: left; }
+                        h1 { margin-bottom: 10px; }
+                    </style>
+                </head>
+                <body>
+                    <h1>Inventario filtrado</h1>
+                    <p>Total exportado: ${rows.length}</p>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Código SBYE</th>
+                                <th>Código Megan</th>
+                                <th>Descripción</th>
+                                <th>Tipo</th>
+                                <th>Marca</th>
+                                <th>Modelo</th>
+                                <th>Custodio</th>
+                                <th>Ubicación</th>
+                                <th>Estado</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${rows.map((item) => `
+                                <tr>
+                                    <td>${escapeHtml(item.codigoSbai || "-")}</td>
+                                    <td>${escapeHtml(item.codigoMegan || "-")}</td>
+                                    <td>${escapeHtml(item.descripcion || "-")}</td>
+                                    <td>${escapeHtml(typeLabel(item.tipo))}</td>
+                                    <td>${escapeHtml(item.marca || "-")}</td>
+                                    <td>${escapeHtml(item.modelo || "-")}</td>
+                                    <td>${escapeHtml(item.custodio || "-")}</td>
+                                    <td>${escapeHtml(item.ubicacion || "-")}</td>
+                                    <td>${escapeHtml(item.estado || "-")}</td>
+                                </tr>
+                            `).join("")}
+                        </tbody>
+                    </table>
+                    <script>window.onload = function(){ window.print(); }<\/script>
+                </body>
+            </html>
         `);
-    }
-
-    function showEditModal(item) {
-        openModal("Editar equipo", `
-            <form id="editItemForm" class="form-grid">
-                ${editField("codigoSbai", "Código SBYE", item.codigoSbai, true)}
-                ${editField("codigoMegan", "Código Megan", item.codigoMegan)}
-                ${editField("marca", "Marca", item.marca)}
-                ${editField("modelo", "Modelo", item.modelo)}
-                ${editField("numeroSerie", "Número de serie", item.numeroSerie)}
-                ${editField("procesador", "Procesador", item.procesador)}
-                ${editField("estado", "Estado", item.estado, false, "select")}
-                ${editField("observacion", "Observaciones", item.observacion, false, "textarea")}
-            </form>
-        `, [
-            { label: "Cancelar", className: "btn btn-secondary", onClick: closeModal },
-            { label: "Guardar cambios", className: "btn btn-primary", onClick: () => saveAdminEdit(item) }
-        ]);
-        const select = document.querySelector('#editItemForm select[name="estado"]');
-        if (select) {
-            select.value = item.estado;
-        }
-    }
-
-    function showCustodianModal(item) {
-        openModal("Editar custodio", `
-            <div class="helper-banner">Como usuario técnico, solo puede modificar el campo Actual Custodio.</div>
-            <form id="custodianForm" class="form-grid" style="margin-top:16px;">
-                ${editField("codigoSbai", "Código SBYE", item.codigoSbai, true)}
-                ${editField("marca", "Marca", item.marca, true)}
-                ${editField("modelo", "Modelo", item.modelo, true)}
-                ${editField("estado", "Estado", item.estado, true)}
-                ${editField("custodio", "Actual Custodio", item.custodio)}
-            </form>
-        `, [
-            { label: "Cancelar", className: "btn btn-secondary", onClick: closeModal },
-            { label: "Guardar", className: "btn btn-primary", onClick: () => saveCustodianEdit(item) }
-        ]);
-    }
-
-    function showStatusModal(item) {
-        openModal("Cambiar estado", `
-            <div class="field-group">
-                <label for="statusSelect">Nuevo estado</label>
-                <select id="statusSelect">
-                    <option value="Activo">Activo</option>
-                    <option value="Inactivo">Inactivo</option>
-                    <option value="Reportado para baja">Reportado para baja</option>
-                </select>
-            </div>
-        `, [
-            { label: "Cancelar", className: "btn btn-secondary", onClick: closeModal },
-            { label: "Actualizar", className: "btn btn-primary", onClick: () => saveStatus(item) }
-        ]);
-        document.getElementById("statusSelect").value = item.estado;
-    }
-
-    async function saveAdminEdit(item) {
-        const form = document.getElementById("editItemForm");
-        const formData = new FormData(form);
-        const raw = Object.assign({}, item.raw);
-        formData.forEach((value, key) => {
-            raw[key] = value;
-        });
-        try {
-            const response = await apiFetch(`/inventario/${item.tipo}/${encodeURIComponent(item.codigoSbai)}`, {
-                method: "PUT",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(raw)
-            });
-            const payload = await response.json();
-            if (!response.ok || !payload.success) {
-                throw new Error(payload.message || "No fue posible guardar");
-            }
-            showToast("Guardado", "Equipo actualizado correctamente.", "success");
-            closeModal();
-            await loadInventory();
-            renderInventory();
-        } catch (error) {
-            showToast("Sin cambios", "La edición administrativa depende de los endpoints completos del backend actual.", "info");
-        }
-    }
-
-    function saveCustodianEdit(item) {
-        const newCustodian = document.querySelector('#custodianForm [name="custodio"]').value.trim();
-        item.custodio = newCustodian;
-        item.raw.custodioActual = Object.assign({}, item.raw.custodioActual || {}, { nombre: newCustodian });
-        state.filteredInventory = state.inventory.slice();
-        applyInventoryFilters();
-        closeModal();
-        showToast("Custodio actualizado", "El cambio se aplicó en la interfaz actual.", "success");
-    }
-
-    async function saveStatus(item) {
-        const status = document.getElementById("statusSelect").value;
-        const raw = Object.assign({}, item.raw, { estado: status });
-        try {
-            const response = await apiFetch(`/inventario/${item.tipo}/${encodeURIComponent(item.codigoSbai)}`, {
-                method: "PUT",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(raw)
-            });
-            const payload = await response.json();
-            if (!response.ok || !payload.success) {
-                throw new Error(payload.message || "No fue posible guardar");
-            }
-        } catch (error) {
-            showToast("Aviso", "Se reflejó el cambio visual aunque el backend actual es más limitado.", "info");
-        }
-        item.estado = status;
-        item.raw.estado = status;
-        applyInventoryFilters();
-        closeModal();
-        showToast("Estado actualizado", "El estado del equipo se actualizó.", "success");
-    }
-
-    function changePage(step) {
-        const totalPages = Math.max(1, Math.ceil(state.filteredInventory.length / PAGE_SIZE));
-        state.inventoryPage = Math.max(1, Math.min(totalPages, state.inventoryPage + step));
-        renderInventory();
-    }
-
-    function applyQuickInventoryFilter(type, value) {
-        if (type === "reset") {
-            document.getElementById("filterStatus").value = "";
-            document.getElementById("filterLocation").value = "";
-            document.getElementById("filterType").value = "";
-        }
-        if (type === "status") {
-            document.getElementById("filterStatus").value = value;
-        }
-        if (type === "type") {
-            document.getElementById("filterType").value = value;
-        }
-        applyInventoryFilters();
+        win.document.close();
     }
 
     function bindSearchEvents() {
@@ -1030,19 +923,15 @@
             document.getElementById("criteriaValue").value = "";
             renderSearchTags();
         });
-        document.getElementById("criteriaValue")?.addEventListener("keydown", (event) => {
-            if (event.key === "Enter") {
-                event.preventDefault();
-                document.getElementById("addCriteria")?.click();
-            }
-        });
         document.getElementById("runSearch")?.addEventListener("click", runSearch);
         document.getElementById("clearSearch")?.addEventListener("click", () => {
             state.searchCriteria = [];
             renderSearchTags();
             renderSearchResults([]);
         });
-        document.querySelectorAll("[data-search-preset]").forEach((button) => button.addEventListener("click", () => applySearchPreset(Number(button.dataset.searchPreset))));
+        document.querySelectorAll("[data-search-preset]").forEach((button) =>
+            button.addEventListener("click", () => applySearchPreset(Number(button.dataset.searchPreset)))
+        );
     }
 
     function renderSearchTags() {
@@ -1060,7 +949,9 @@
     }
 
     function runSearch() {
-        state.searchResults = state.inventory.filter((item) => state.searchCriteria.every((criteria) => String(item[criteria.field] || "").toLowerCase().includes(criteria.value.toLowerCase())));
+        state.searchResults = state.inventory.filter((item) => state.searchCriteria.every((criteria) =>
+            String(item[criteria.field] || "").toLowerCase().includes(String(criteria.value || "").toLowerCase())
+        ));
         renderSearchResults(state.searchResults);
     }
 
@@ -1081,28 +972,26 @@
         }
         tbody.innerHTML = results.length ? results.map((item) => `
             <tr>
-                <td>${escapeHtml(item.codigoMegan)}</td>
-                <td>${escapeHtml(item.codigoSbai)}</td>
-                <td>${escapeHtml(item.numeroSerie || "-")}</td>
+                <td>${escapeHtml(item.codigoMegan || "-")}</td>
+                <td>${escapeHtml(item.codigoSbai || "-")}</td>
+                <td>${escapeHtml(item.descripcion || "-")}</td>
                 <td>${escapeHtml(item.marca || "-")}</td>
                 <td>${escapeHtml(item.modelo || "-")}</td>
                 <td>${escapeHtml(item.custodio || "-")}</td>
                 <td>${escapeHtml(item.ubicacion || "-")}</td>
                 <td>${stateBadge(item.estado)}</td>
-                <td>${escapeHtml(item.procesador || "-")}</td>
-                ${role === "admin" ? `<td><div class="action-row"><button class="icon-btn" data-action="edit" data-id="${item.codigoSbai}">✎</button><button class="icon-btn" data-action="history" data-id="${item.codigoSbai}">🕘</button></div></td>` : ""}
+                <td>${escapeHtml(item.procesador || item.caracteristicas || "-")}</td>
             </tr>
-        `).join("") : `<tr><td colspan="${role === "admin" ? 10 : 9}">No se encontraron coincidencias.</td></tr>`;
+        `).join("") : '<tr><td colspan="9">No se encontraron coincidencias.</td></tr>';
         mobile.innerHTML = results.map((item) => `
             <article class="mobile-card">
-                <strong>${escapeHtml(item.codigoSbai)}</strong>
-                <span>Marca: ${escapeHtml(item.marca || "-")}</span>
-                <span>Modelo: ${escapeHtml(item.modelo || "-")}</span>
+                <strong>${escapeHtml(item.codigoSbai || "-")}</strong>
+                <span>Descripción: ${escapeHtml(item.descripcion || "-")}</span>
+                <span>Marca / Modelo: ${escapeHtml(item.marca || "-")} ${escapeHtml(item.modelo || "")}</span>
                 <span>Custodio: ${escapeHtml(item.custodio || "-")}</span>
                 <span>Estado: ${stripHtml(stateBadge(item.estado))}</span>
             </article>
         `).join("");
-        tbody.querySelectorAll("[data-action]").forEach((button) => button.addEventListener("click", handleInventoryAction));
     }
 
     function applySearchPreset(index) {
@@ -1113,180 +1002,6 @@
         state.searchCriteria = preset.criteria.map((item) => Object.assign({}, item));
         renderSearchTags();
         runSearch();
-    }
-
-    function bindReportEvents() {
-        document.getElementById("downloadPdf")?.addEventListener("click", generatePdfReport);
-        document.getElementById("downloadExcel")?.addEventListener("click", generateExcelReport);
-        ["reportFormat", "reportScope", "reportCriteria", "reportValue"].forEach((id) => {
-            document.getElementById(id)?.addEventListener("input", renderReportPreview);
-            document.getElementById(id)?.addEventListener("change", renderReportPreview);
-        });
-        document.getElementById("clearRecentReports")?.addEventListener("click", clearRecentReports);
-    }
-
-    function getReportConfig() {
-        return {
-            format: document.getElementById("reportFormat").value,
-            scope: document.getElementById("reportScope").value,
-            criteria: document.getElementById("reportCriteria").value,
-            value: document.getElementById("reportValue").value.trim()
-        };
-    }
-
-    function generatePdfReport() {
-        const config = getReportConfig();
-        const dataset = filterReportDataset(config);
-        const win = window.open("", "_blank");
-        if (!win) {
-            showToast("Bloqueado", "Permite ventanas emergentes para generar el PDF.", "info");
-            return;
-        }
-        win.document.write(`
-            <html><head><title>Reporte PDF</title><style>body{font-family:Arial;padding:24px}table{border-collapse:collapse;width:100%}th,td{border:1px solid #ccc;padding:8px;text-align:left}</style></head>
-            <body>
-                <h1>Reporte de Inventario</h1>
-                <p>Cobertura: ${config.scope} | Criterio: ${config.criteria}${config.value ? ` | Valor: ${escapeHtml(config.value)}` : ""}</p>
-                <table>
-                    <thead><tr><th>Código</th><th>Marca</th><th>Modelo</th><th>Custodio</th><th>Estado</th></tr></thead>
-                    <tbody>${dataset.map((item) => `<tr><td>${escapeHtml(item.codigoSbai)}</td><td>${escapeHtml(item.marca)}</td><td>${escapeHtml(item.modelo)}</td><td>${escapeHtml(item.custodio)}</td><td>${escapeHtml(item.estado)}</td></tr>`).join("")}</tbody>
-                </table>
-                <script>window.onload = function(){ window.print(); }<\/script>
-            </body></html>
-        `);
-        win.document.close();
-        saveRecentReport(config, dataset.length);
-        renderRecentReports();
-        renderReportPreview();
-        showToast("PDF preparado", "Se abrió una vista imprimible para guardar como PDF.", "success");
-    }
-
-    function generateExcelReport() {
-        const config = getReportConfig();
-        const endpointMap = {
-            pcs: "/reportes/pcs/excel",
-            laptops: "/reportes/laptops/excel",
-            completo: "/reportes/inventario/excel"
-        };
-        window.open(`${API_BASE}${endpointMap[config.scope] || endpointMap.completo}`, "_blank");
-        saveRecentReport(config, filterReportDataset(config).length);
-        renderRecentReports();
-        renderReportPreview();
-        showToast("Excel solicitado", "Se inició la descarga desde el endpoint disponible.", "success");
-    }
-
-    function filterReportDataset(config) {
-        return state.inventory.filter((item) => {
-            const matchesScope = config.scope === "completo" || item.tipo === config.scope;
-            if (!matchesScope) {
-                return false;
-            }
-            if (!config.value) {
-                return true;
-            }
-            const value = config.value.toLowerCase();
-            if (config.criteria === "codigos") {
-                return item.codigoSbai.toLowerCase().includes(value) || item.codigoMegan.toLowerCase().includes(value);
-            }
-            if (config.criteria === "completo") {
-                return JSON.stringify(item).toLowerCase().includes(value);
-            }
-            if (config.criteria === "observaciones") {
-                return item.observacion.toLowerCase().includes(value);
-            }
-            if (config.criteria === "caracteristicas") {
-                return `${item.procesador} ${item.modelo}`.toLowerCase().includes(value);
-            }
-            return String(item[config.criteria] || "").toLowerCase().includes(value);
-        });
-    }
-
-    function loadRecentReports() {
-        try {
-            return JSON.parse(localStorage.getItem(STORAGE_REPORTS) || "[]");
-        } catch (error) {
-            return [];
-        }
-    }
-
-    function saveRecentReport(config, total) {
-        const updated = [
-            {
-                timestamp: new Date().toISOString(),
-                format: config.format,
-                scope: config.scope,
-                criteria: config.criteria,
-                value: config.value,
-                total: total
-            }
-        ].concat(state.recentReports).slice(0, 8);
-        state.recentReports = updated;
-        localStorage.setItem(STORAGE_REPORTS, JSON.stringify(updated));
-    }
-
-    function clearRecentReports() {
-        state.recentReports = [];
-        localStorage.removeItem(STORAGE_REPORTS);
-        renderRecentReports();
-        showToast("Historial limpio", "Se vació la lista local de reportes recientes.", "info");
-    }
-
-    function renderRecentReports() {
-        const container = document.getElementById("recentReports");
-        if (!container) {
-            return;
-        }
-        container.innerHTML = state.recentReports.length
-            ? state.recentReports.map((item) => `
-                <article class="report-history__item">
-                    <strong>${item.format.toUpperCase()} · ${item.scope}</strong>
-                    <div class="muted">${item.criteria}${item.value ? ` · ${escapeHtml(item.value)}` : ""} · ${item.total} registros · ${formatDate(item.timestamp)}</div>
-                </article>
-            `).join("")
-            : '<div class="empty-state">Aún no hay reportes generados en esta sesión local.</div>';
-    }
-
-    function renderReportPreview() {
-        if (page !== "reportes") {
-            return;
-        }
-        const config = getReportConfig();
-        const results = filterReportDataset(config);
-        const tbody = document.getElementById("reportPreviewBody");
-        const mobile = document.getElementById("reportPreviewMobile");
-        if (!tbody || !mobile) {
-            return;
-        }
-
-        setText("reportStatTotal", state.inventory.length);
-        setText("reportStatPcs", state.inventory.filter((item) => item.tipo === "pcs").length);
-        setText("reportStatLaptops", state.inventory.filter((item) => item.tipo === "laptops").length);
-        setText("reportStatFiltered", results.length);
-        setText("reportPreviewMeta", `${results.length} registros coinciden con la selección actual. Se muestran hasta 5 en la vista previa.`);
-
-        const previewItems = results.slice(0, 5);
-        tbody.innerHTML = previewItems.length
-            ? previewItems.map((item) => `
-                <tr>
-                    <td>${escapeHtml(item.codigoSbai)}</td>
-                    <td>${escapeHtml(item.marca || "-")}</td>
-                    <td>${escapeHtml(item.modelo || "-")}</td>
-                    <td>${escapeHtml(item.custodio || "-")}</td>
-                    <td>${escapeHtml(item.ubicacion || "-")}</td>
-                    <td>${stateBadge(item.estado)}</td>
-                </tr>
-            `).join("")
-            : '<tr><td colspan="6">No hay registros para la configuración elegida.</td></tr>';
-
-        mobile.innerHTML = previewItems.map((item) => `
-            <article class="mobile-card">
-                <strong>${escapeHtml(item.codigoSbai)}</strong>
-                <span>Marca: ${escapeHtml(item.marca || "-")}</span>
-                <span>Modelo: ${escapeHtml(item.modelo || "-")}</span>
-                <span>Custodio: ${escapeHtml(item.custodio || "-")}</span>
-                <span>Estado: ${stripHtml(stateBadge(item.estado))}</span>
-            </article>
-        `).join("");
     }
 
     function bindNewEquipmentEvents() {
@@ -1317,13 +1032,13 @@
         const fields = ["codigoMegan", "codigoSbai", "descripcion", "marca", "modelo", "custodio", "ubicacion", "estado"].concat(categoryConfig.fields || []);
         container.innerHTML = fields.map((field) => {
             if (field === "estado") {
-                return editField(field, labelForColumn(field), "Activo", false, "select");
+                return editField(field, labelForColumn(field), "OPERATIVO", false, "select");
             }
             return editField(field, labelForColumn(field), "");
         }).join("");
         const select = container.querySelector('select[name="estado"]');
         if (select) {
-            select.value = "Activo";
+            select.value = "OPERATIVO";
         }
         setText("equipmentCategoryHint", categoryConfig.hint || "");
         renderEquipmentSummary(categoryConfig, fields);
@@ -1340,7 +1055,7 @@
                 <div class="muted">${categoryConfig.hint || ""}</div>
             </article>
             <article class="report-history__item">
-                <strong>Campos incluidos</strong>
+                <strong>Detalle de campos</strong>
                 <div class="muted">${fields.map((field) => labelForColumn(field)).join(" · ")}</div>
             </article>
         `;
@@ -1400,18 +1115,47 @@
         setTimeout(() => toast.remove(), 3200);
     }
 
+    function buildTypeOptions() {
+        return Object.keys(TYPE_CONFIG)
+            .map((key) => `<option value="${key}">${TYPE_CONFIG[key].label}</option>`)
+            .join("");
+    }
+
+    function typeLabel(type) {
+        return TYPE_CONFIG[type]?.label || type || "-";
+    }
+
+    function normalizeState(value) {
+        const normalized = String(value || "").trim().toUpperCase();
+        if (VALID_STATES.includes(normalized)) {
+            return normalized;
+        }
+        if (normalized === "ACTIVO") {
+            return "OPERATIVO";
+        }
+        if (normalized === "INACTIVO" || normalized === "DAÑADO" || normalized === "DANADO") {
+            return "NO OPERATIVO";
+        }
+        if (normalized === "REPORTADO PARA BAJA" || normalized === "BAJA") {
+            return "REPORTADO PARA DAR DE BAJA";
+        }
+        return "NO OPERATIVO";
+    }
+
     function labelForColumn(key) {
         const labels = {
             codigoSbai: "Código SBYE",
             codigoMegan: "Código Megan",
-            tipo: "Categoría",
+            descripcion: "Descripción",
+            tipo: "Tipo",
             marca: "Marca",
             modelo: "Modelo",
             numeroSerie: "S/N",
             custodio: "Custodio",
             ubicacion: "Ubicación",
             estado: "Estado",
-            procesador: "Procesador",
+            procesador: "Detalle",
+            caracteristicas: "Características",
             observacion: "Observaciones",
             sistemaOperativo: "Sistema Operativo",
             ram: "RAM",
@@ -1422,23 +1166,20 @@
             conexion: "Conexión",
             tecnologia: "Tecnología",
             compatibilidad: "Compatibilidad",
-            tipoCable: "Tipo de cable",
-            longitud: "Longitud",
-            estadoFisico: "Estado físico",
-            lumenes: "Lúmenes",
-            descripcion: "Descripción"
+            lumenes: "Lúmenes"
         };
         return labels[key] || key;
     }
 
     function stateBadge(status) {
-        if (status === "Activo") {
-            return '<span class="badge badge-success">Activo</span>';
+        const label = normalizeState(status);
+        if (label === "OPERATIVO") {
+            return `<span class="badge badge-success">${label}</span>`;
         }
-        if (status === "Inactivo") {
-            return '<span class="badge badge-warning">Inactivo</span>';
+        if (label === "REPORTADO PARA DAR DE BAJA") {
+            return `<span class="badge badge-danger">${label}</span>`;
         }
-        return '<span class="badge badge-danger">Reportado para baja</span>';
+        return `<span class="badge badge-warning">${label}</span>`;
     }
 
     function editField(name, label, value, disabled, type) {
@@ -1447,9 +1188,7 @@
         }
         if (type === "select") {
             return `<label class="field-group"><span>${label}</span><select name="${name}" ${disabled ? "disabled" : ""}>
-                <option value="Activo">Activo</option>
-                <option value="Inactivo">Inactivo</option>
-                <option value="Reportado para baja">Reportado para baja</option>
+                ${VALID_STATES.map((item) => `<option value="${item}">${item}</option>`).join("")}
             </select></label>`;
         }
         return `<label class="field-group"><span>${label}</span><input name="${name}" value="${escapeHtml(value || "")}" ${disabled ? "readonly" : ""}></label>`;
@@ -1479,5 +1218,1607 @@
         if (el) {
             el.textContent = value;
         }
+    }
+
+    function timestampForFile() {
+        const now = new Date();
+        return [
+            now.getFullYear(),
+            String(now.getMonth() + 1).padStart(2, "0"),
+            String(now.getDate()).padStart(2, "0"),
+            String(now.getHours()).padStart(2, "0"),
+            String(now.getMinutes()).padStart(2, "0")
+        ].join("");
+    }
+
+    function downloadBlob(blob, filename) {
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = filename;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+    }
+
+    function iconMarkup(type) {
+        const icons = {
+            dashboard: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="8" rx="2"></rect><rect x="14" y="3" width="7" height="5" rx="2"></rect><rect x="14" y="12" width="7" height="9" rx="2"></rect><rect x="3" y="15" width="7" height="6" rx="2"></rect></svg>',
+            inventory: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7.5 12 4l8 3.5-8 3.5L4 7.5Z"></path><path d="M4 12.5 12 16l8-3.5"></path><path d="M4 17.5 12 21l8-3.5"></path><path d="M4 7.5v10"></path><path d="M20 7.5v10"></path></svg>',
+            search: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="6"></circle><path d="m20 20-4.2-4.2"></path></svg>',
+            plusBox: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="3"></rect><path d="M12 8v8"></path><path d="M8 12h8"></path></svg>',
+            spark: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3 1.7 5.3L19 10l-5.3 1.7L12 17l-1.7-5.3L5 10l5.3-1.7L12 3Z"></path><path d="M19 17l.8 2.2L22 20l-2.2.8L19 23l-.8-2.2L16 20l2.2-.8L19 17Z"></path></svg>',
+            edit: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"></path><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5Z"></path></svg>',
+            repeat: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17 1l4 4-4 4"></path><path d="M3 11V9a4 4 0 0 1 4-4h14"></path><path d="M7 23l-4-4 4-4"></path><path d="M21 13v2a4 4 0 0 1-4 4H3"></path></svg>',
+            history: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v5h5"></path><path d="M3.05 13a9 9 0 1 0 .5-4.5"></path><path d="M12 7v5l4 2"></path></svg>',
+            circle: '<svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="5"></circle></svg>'
+        };
+        return icons[type] || icons.circle;
+    }
+
+    function renderAutocompleteField(id, label, placeholder) {
+        const listId = `${id}List`;
+        return `
+            <div class="field-group">
+                <label for="${id}">${label}</label>
+                <input id="${id}" type="text" list="${listId}" autocomplete="off" placeholder="${placeholder}">
+                <datalist id="${listId}"></datalist>
+                <small class="helper-text">Puedes escribir manualmente o elegir una coincidencia sugerida.</small>
+            </div>
+        `;
+    }
+
+    function collectAutocompleteValues(itemKey, term) {
+        const values = state.inventory
+            .map((item) => String(item[itemKey] || "").trim())
+            .filter(Boolean)
+            .filter((value) => !term || value.toLowerCase().includes(term));
+        return Array.from(new Set(values))
+            .sort((a, b) => a.localeCompare(b, "es", { numeric: true, sensitivity: "base" }))
+            .slice(0, 12);
+    }
+
+    function updateAutocompleteForInput(fieldId) {
+        const input = document.getElementById(fieldId);
+        const list = document.getElementById(`${fieldId}List`);
+        const itemKey = INVENTORY_AUTOCOMPLETE[fieldId];
+        if (!input || !list || !itemKey) {
+            return;
+        }
+        const term = input.value.trim().toLowerCase();
+        const options = collectAutocompleteValues(itemKey, term);
+        list.innerHTML = options.map((value) => `<option value="${escapeHtml(value)}"></option>`).join("");
+    }
+
+    function refreshInventoryAutocompletes() {
+        Object.keys(INVENTORY_AUTOCOMPLETE).forEach((fieldId) => updateAutocompleteForInput(fieldId));
+    }
+
+    function buildNav() {
+        const nav = role === "admin"
+            ? [
+                ["dashboard", "Dashboard", `${basePrefix}/pages/dashboard.html`],
+                ["inventario", "Inventario", `${basePrefix}/pages/inventario.html`],
+                ["busqueda", "Búsqueda", `${basePrefix}/pages/busqueda.html`],
+                ["nuevo-equipo", "Nuevo Equipo", `${basePrefix}/pages/nuevo-equipo.html`]
+            ]
+            : [
+                ["dashboard", "Dashboard", `${basePrefix}/pages/usuario/dashboard.html`],
+                ["inventario", "Inventario", `${basePrefix}/pages/usuario/inventario.html`],
+                ["busqueda", "Búsqueda", `${basePrefix}/pages/usuario/busqueda.html`]
+            ];
+        return nav
+            .map(([key, label, href]) => `
+                <a href="${href}" class="${key === page ? "is-active" : ""}">
+                    <span class="nav-icon" aria-hidden="true">${NAV_ICONS[key] || iconMarkup("circle")}</span>
+                    <span>${label}</span>
+                </a>
+            `)
+            .join("");
+    }
+
+    function pageDescription(pageName) {
+        const descriptions = {
+            dashboard: "Resumen visual del sistema y accesos directos por rol.",
+            inventario: "Consulta, escribe, filtra y exporta el inventario con sugerencias en vivo.",
+            busqueda: "Búsqueda multi-criterio en cliente sobre el inventario cargado.",
+            "nuevo-equipo": "Formulario guiado por categoría para preparar nuevos registros."
+        };
+        return descriptions[pageName] || "";
+    }
+
+    function renderDashboard() {
+        return `
+            <section class="hero hero--dashboard">
+                <div class="hero__grid">
+                    <div class="hero-copy">
+                        <div class="eyebrow">Centro de control</div>
+                        <h2>Inventario institucional conectado a la base real.</h2>
+                        <p>Consulta equipos tecnológicos, filtra por varios campos escribiendo manualmente y aprovecha sugerencias basadas en registros ya guardados en la base.</p>
+                        <div class="hero-pills">
+                            <span class="hero-pill">Inventario operativo</span>
+                            <span class="hero-pill">Filtros con sugerencias</span>
+                            <span class="hero-pill">Exportación inmediata</span>
+                        </div>
+                    </div>
+                    <div class="hero-panel">
+                        <div class="hero-panel__label">Vista rápida</div>
+                        <div class="stats-grid stats-grid--compact">
+                            <article class="stat-card"><span>Total cargado</span><strong id="statTotal">--</strong></article>
+                            <article class="stat-card"><span>Operativos</span><strong id="statActive">--</strong></article>
+                            <article class="stat-card"><span>Ubicaciones</span><strong id="statLocations">--</strong></article>
+                            <article class="stat-card"><span>Rol activo</span><strong>${role === "admin" ? "Admin" : "Técnico"}</strong></article>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            <section class="spotlight-strip">
+                <article class="spotlight-card">
+                    <span class="spotlight-card__icon">${iconMarkup("inventory")}</span>
+                    <div>
+                        <strong>Inventario listo para filtrar</strong>
+                        <p>Los filtros del módulo muestran coincidencias mientras escribes y siguen permitiendo ingreso manual libre.</p>
+                    </div>
+                </article>
+                <article class="spotlight-card">
+                    <span class="spotlight-card__icon">${iconMarkup("search")}</span>
+                    <div>
+                        <strong>Búsqueda más ágil</strong>
+                        <p>Combina criterios y revisa rápidamente custodios, ubicaciones, marcas y estados.</p>
+                    </div>
+                </article>
+            </section>
+            <div class="section-heading">
+                <div>
+                    <h2>Navegación rápida</h2>
+                    <p>Accesos principales del sistema con iconografía más clara y lectura más limpia.</p>
+                </div>
+            </div>
+            <section class="quick-grid">${dashboardCards().join("")}</section>
+        `;
+    }
+
+    function dashboardCards() {
+        const cards = role === "admin"
+            ? [
+                ["Inventario", "Filtra, revisa y exporta el inventario visible.", `${basePrefix}/pages/inventario.html`, "inventory"],
+                ["Búsqueda", "Aplica múltiples criterios sobre la data cargada.", `${basePrefix}/pages/busqueda.html`, "search"],
+                ["Nuevo Equipo", "Completa el formulario guiado por categoría.", `${basePrefix}/pages/nuevo-equipo.html`, "plusBox"]
+            ]
+            : [
+                ["Inventario", "Filtra, revisa y exporta el inventario visible.", `${basePrefix}/pages/usuario/inventario.html`, "inventory"],
+                ["Búsqueda", "Aplica múltiples criterios sobre la data cargada.", `${basePrefix}/pages/usuario/busqueda.html`, "search"]
+            ];
+        return cards.map(([title, text, href, icon]) => `
+            <a class="mini-card mini-card--action" href="${href}">
+                <span class="mini-card__icon" aria-hidden="true">${iconMarkup(icon)}</span>
+                <strong>${title}</strong>
+                <span>${text}</span>
+                <small>Abrir módulo</small>
+            </a>
+        `);
+    }
+
+    function renderInventoryPage() {
+        return `
+            <section class="panel inventory-panel">
+                <div class="inventory-header">
+                    <div>
+                        <div class="eyebrow">Módulo de inventario</div>
+                        <h2>Inventario institucional</h2>
+                        <p>Escribe libremente en los campos del filtro. Mientras avanzas, el sistema te sugiere coincidencias ya registradas en la base para acelerar la selección.</p>
+                    </div>
+                    <div class="inventory-header__badge">
+                        <span>${iconMarkup("spark")}</span>
+                        <strong>Inventario</strong>
+                    </div>
+                </div>
+                <div class="stats-grid stats-grid--compact">
+                    <article class="stat-card"><span>Total filtrado</span><strong id="inventoryStatTotal">--</strong></article>
+                    <article class="stat-card"><span>Rol en uso</span><strong>${role === "admin" ? "Administrador" : "Técnico"}</strong></article>
+                </div>
+                <div class="filters-grid filters-grid--inventory">
+                    <div class="field-group">
+                        <label for="filterTipo">Tipo</label>
+                        <select id="filterTipo">
+                            <option value="">Todos</option>
+                            ${buildTypeOptions()}
+                        </select>
+                        <small class="helper-text">Selecciona una familia de equipos para acotar la consulta.</small>
+                    </div>
+                    ${renderAutocompleteField("filterCodigoSbai", "Código SBYE", "Filtrar por código SBYE")}
+                    ${renderAutocompleteField("filterCodigoMegan", "Código Megan", "Filtrar por código Megan")}
+                    ${renderAutocompleteField("filterDescripcion", "Descripción", "Filtrar por descripción")}
+                    ${renderAutocompleteField("filterMarca", "Marca", "Filtrar por marca")}
+                    ${renderAutocompleteField("filterModelo", "Modelo", "Filtrar por modelo")}
+                    ${renderAutocompleteField("filterSerie", "Número de serie", "Filtrar por número de serie")}
+                    ${renderAutocompleteField("filterCustodio", "Custodio", "Filtrar por custodio")}
+                    ${renderAutocompleteField("filterUbicacion", "Ubicación", "Filtrar por ubicación")}
+                    <div class="field-group">
+                        <label for="filterEstado">Estado</label>
+                        <select id="filterEstado">
+                            <option value="">Todos</option>
+                            ${VALID_STATES.map((item) => `<option value="${item}">${item}</option>`).join("")}
+                        </select>
+                        <small class="helper-text">Mantén “Todos” para combinarlo con otros filtros libres.</small>
+                    </div>
+                </div>
+                <div class="toolbar" style="margin-top:16px;">
+                    <button class="btn btn-primary" id="applyInventoryFilters">Filtrar</button>
+                    <button class="btn btn-secondary" id="clearInventoryFilters">Limpiar</button>
+                    <button class="btn btn-success" id="exportInventoryExcel">Exportar a Excel</button>
+                    <button class="btn btn-secondary" id="exportInventoryPdf">Exportar a PDF</button>
+                </div>
+                <div id="inventoryMeta" class="search-results-meta"></div>
+                <div class="table-wrap">
+                    <table>
+                        <thead>
+                            <tr>
+                                ${["codigoSbai", "codigoMegan", "descripcion", "tipo", "marca", "modelo", "numeroSerie", "custodio", "ubicacion", "procesador", "estado"].map((key) => `<th><button class="table-sort" data-sort="${key}">${labelForColumn(key)}</button></th>`).join("")}
+                            </tr>
+                        </thead>
+                        <tbody id="inventoryBody"></tbody>
+                    </table>
+                </div>
+                <div class="mobile-cards" id="inventoryMobile"></div>
+                <div class="pagination">
+                    <span id="inventoryPaginationMeta"></span>
+                    <div class="toolbar">
+                        <button class="btn btn-secondary" id="prevPage">Anterior</button>
+                        <button class="btn btn-secondary" id="nextPage">Siguiente</button>
+                    </div>
+                </div>
+            </section>
+        `;
+    }
+
+    function renderNewEquipmentPage() {
+        return `
+            <section class="panel panel--narrow">
+                <div class="inventory-header inventory-header--form">
+                    <div>
+                        <div class="eyebrow">Nuevo equipo</div>
+                        <h2>Registro guiado por categoría</h2>
+                        <p>Selecciona el tipo de equipo y completa los campos visibles. La vista se adapta según la categoría elegida para mantener el formulario ordenado.</p>
+                    </div>
+                </div>
+                <div class="field-group">
+                    <label for="equipmentCategory">Categoría</label>
+                    <select id="equipmentCategory">
+                        <option value="laptops">Laptop</option>
+                        <option value="desktop">Desktop</option>
+                        <option value="telefonos">Teléfonos</option>
+                        <option value="escaners">Escáner</option>
+                        <option value="impresoras">Impresora</option>
+                        <option value="perifericos">Periférico</option>
+                        <option value="proyectores">Proyector</option>
+                    </select>
+                </div>
+                <div class="helper-banner" id="equipmentCategoryHint"></div>
+                <form id="newEquipmentForm">
+                    <div class="form-grid" id="dynamicEquipmentFields"></div>
+                    <div class="form-actions" style="margin-top:18px;">
+                        <button class="btn btn-primary" type="submit">Guardar equipo</button>
+                        <button class="btn btn-secondary" type="reset">Limpiar</button>
+                    </div>
+                </form>
+            </section>
+        `;
+    }
+
+    async function loadInitialData() {
+        if (page === "dashboard" || page === "inventario" || page === "busqueda") {
+            await loadInventory();
+            updateDashboardStats();
+        }
+        if (page === "inventario") {
+            renderInventory();
+            refreshInventoryAutocompletes();
+        }
+        if (page === "busqueda") {
+            renderSearchTags();
+            renderSearchResults([]);
+        }
+        if (page === "nuevo-equipo") {
+            renderDynamicFields(document.getElementById("equipmentCategory").value);
+        }
+    }
+
+    function bindInventoryEvents() {
+        inventoryFilterIds().forEach((id) => {
+            document.getElementById(id)?.addEventListener("input", () => {
+                updateAutocompleteForInput(id);
+                applyInventoryFilters();
+            });
+            document.getElementById(id)?.addEventListener("change", applyInventoryFilters);
+        });
+        document.getElementById("applyInventoryFilters")?.addEventListener("click", applyInventoryFilters);
+        document.getElementById("clearInventoryFilters")?.addEventListener("click", clearInventoryFilters);
+        document.getElementById("exportInventoryExcel")?.addEventListener("click", exportInventoryToExcel);
+        document.getElementById("exportInventoryPdf")?.addEventListener("click", exportInventoryToPdf);
+        document.querySelectorAll("[data-sort]").forEach((button) => button.addEventListener("click", () => sortInventory(button.dataset.sort)));
+        document.getElementById("prevPage")?.addEventListener("click", () => changePage(-1));
+        document.getElementById("nextPage")?.addEventListener("click", () => changePage(1));
+    }
+
+    function clearInventoryFilters() {
+        inventoryFilterIds().forEach((id) => {
+            const element = document.getElementById(id);
+            if (element) {
+                element.value = "";
+            }
+        });
+        state.filteredInventory = state.inventory.slice();
+        state.inventoryPage = 1;
+        refreshInventoryAutocompletes();
+        sortInventory(state.inventorySort.key, false);
+    }
+
+    function renderInventory() {
+        const tbody = document.getElementById("inventoryBody");
+        const mobile = document.getElementById("inventoryMobile");
+        if (!tbody || !mobile) {
+            return;
+        }
+        const total = state.filteredInventory.length;
+        const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+        state.inventoryPage = Math.min(state.inventoryPage, totalPages);
+        const start = (state.inventoryPage - 1) * PAGE_SIZE;
+        const pageItems = state.filteredInventory.slice(start, start + PAGE_SIZE);
+
+        updateInventoryStats();
+        setText("inventoryMeta", `${total} resultados filtrados · página ${state.inventoryPage} de ${totalPages}`);
+        setText("inventoryPaginationMeta", pageItems.length ? `Mostrando ${start + 1}-${start + pageItems.length}` : "Sin resultados");
+        tbody.innerHTML = pageItems.length
+            ? pageItems.map(renderInventoryRow).join("")
+            : `<tr><td colspan="11">No hay equipos para los filtros aplicados.</td></tr>`;
+        mobile.innerHTML = pageItems.map(renderMobileInventoryCard).join("");
+        refreshInventoryAutocompletes();
+    }
+
+    function renderDynamicFields(category) {
+        const container = document.getElementById("dynamicEquipmentFields");
+        if (!container) {
+            return;
+        }
+        const categoryConfig = CATEGORY_CONFIG[category] || CATEGORY_CONFIG.laptops;
+        const fields = ["codigoMegan", "codigoSbai", "descripcion", "marca", "modelo", "custodio", "ubicacion", "estado"].concat(categoryConfig.fields || []);
+        container.innerHTML = fields.map((field) => {
+            if (field === "estado") {
+                return editField(field, labelForColumn(field), "OPERATIVO", false, "select");
+            }
+            return editField(field, labelForColumn(field), "");
+        }).join("");
+        const select = container.querySelector('select[name="estado"]');
+        if (select) {
+            select.value = "OPERATIVO";
+        }
+        setText("equipmentCategoryHint", categoryConfig.hint || "");
+    }
+
+    function labelForColumn(key) {
+        const labels = {
+            codigoSbai: "Código SBYE",
+            codigoMegan: "Código Megan",
+            descripcion: "Descripción",
+            tipo: "Tipo",
+            marca: "Marca",
+            modelo: "Modelo",
+            numeroSerie: "Número de serie",
+            custodio: "Custodio",
+            ubicacion: "Ubicación",
+            estado: "Estado",
+            procesador: "Detalle",
+            caracteristicas: "Características",
+            observacion: "Observaciones",
+            sistemaOperativo: "Sistema Operativo",
+            ram: "RAM",
+            discoDuro: "Disco Duro",
+            linea: "Línea",
+            imei: "IMEI",
+            resolucion: "Resolución",
+            conexion: "Conexión",
+            tecnologia: "Tecnología",
+            compatibilidad: "Compatibilidad",
+            lumenes: "Lúmenes"
+        };
+        return labels[key] || key;
+    }
+
+    function pageDescription(pageName) {
+        const descriptions = {
+            dashboard: "Resumen visual del sistema y accesos directos por rol.",
+            inventario: "",
+            busqueda: "Busqueda multi-criterio en cliente sobre el inventario cargado.",
+            "nuevo-equipo": "Formulario preparado con los campos definidos en la base de datos."
+        };
+        return descriptions[pageName] || "";
+    }
+
+    function renderAutocompleteField(id, label, placeholder) {
+        const listId = `${id}List`;
+        return `
+            <div class="field-group">
+                <label for="${id}">${label}</label>
+                <input id="${id}" type="text" list="${listId}" autocomplete="off" placeholder="${placeholder}">
+                <datalist id="${listId}"></datalist>
+            </div>
+        `;
+    }
+
+    function renderInventoryPage() {
+        return `
+            <section class="panel inventory-panel">
+                <div class="inventory-header">
+                    <div>
+                        <div class="eyebrow">Modulo de inventario</div>
+                        <h2>Inventario institucional</h2>
+                        <p id="inventoryIntroText">Utiliza los filtros para localizar equipos por codigo, custodio, ubicacion, marca, modelo y estado. Los resultados pueden descargarse en formatos formales.</p>
+                    </div>
+                    <div class="inventory-header__badge">
+                        <span>${iconMarkup("spark")}</span>
+                        <strong>Inventario</strong>
+                    </div>
+                </div>
+                <div class="stats-grid stats-grid--compact">
+                    <article class="stat-card"><span>Total filtrado</span><strong id="inventoryStatTotal">--</strong></article>
+                    <article class="stat-card"><span>Rol en uso</span><strong>${role === "admin" ? "Administrador" : "Tecnico"}</strong></article>
+                </div>
+                <div class="filters-grid filters-grid--inventory">
+                    <div class="field-group">
+                        <label for="filterTipo">Tipo</label>
+                        <select id="filterTipo">
+                            <option value="">Todos</option>
+                            ${buildTypeOptions()}
+                        </select>
+                    </div>
+                    ${renderAutocompleteField("filterCodigoSbai", "Codigo SBYE", "Filtrar por codigo")}
+                    ${renderAutocompleteField("filterCodigoMegan", "Codigo Megan", "Filtrar por codigo")}
+                    ${renderAutocompleteField("filterDescripcion", "Descripcion", "Filtrar por descripcion")}
+                    ${renderAutocompleteField("filterMarca", "Marca", "Filtrar por marca")}
+                    ${renderAutocompleteField("filterModelo", "Modelo", "Filtrar por modelo")}
+                    ${renderAutocompleteField("filterSerie", "Numero de serie", "Filtrar por numero")}
+                    ${renderAutocompleteField("filterCustodio", "Custodio", "Filtrar por custodio")}
+                    ${renderAutocompleteField("filterUbicacion", "Ubicacion", "Filtrar por ubicacion")}
+                    <div class="field-group">
+                        <label for="filterEstado">Estado</label>
+                        <select id="filterEstado">
+                            <option value="">Todos</option>
+                            ${VALID_STATES.map((item) => `<option value="${item}">${item}</option>`).join("")}
+                        </select>
+                    </div>
+                </div>
+                <div class="toolbar" style="margin-top:16px;">
+                    <button class="btn btn-primary" id="applyInventoryFilters">Filtrar</button>
+                    <button class="btn btn-secondary" id="clearInventoryFilters">Limpiar</button>
+                    <button class="btn btn-success" id="exportInventoryExcel">Exportar a Excel</button>
+                    <button class="btn btn-secondary" id="exportInventoryPdf">Exportar a PDF</button>
+                </div>
+                <div id="inventoryMeta" class="search-results-meta"></div>
+                <div class="table-wrap">
+                    <table>
+                        <thead>
+                            <tr>
+                                ${["codigoSbai", "codigoMegan", "descripcion", "tipo", "marca", "modelo", "numeroSerie", "custodio", "ubicacion", "procesador", "estado"].map((key) => `<th><button class="table-sort" data-sort="${key}">${labelForColumn(key)}</button></th>`).join("")}
+                            </tr>
+                        </thead>
+                        <tbody id="inventoryBody"></tbody>
+                    </table>
+                </div>
+                <div class="mobile-cards" id="inventoryMobile"></div>
+                <div class="pagination">
+                    <span id="inventoryPaginationMeta"></span>
+                    <div class="toolbar">
+                        <button class="btn btn-secondary" id="prevPage">Anterior</button>
+                        <button class="btn btn-secondary" id="nextPage">Siguiente</button>
+                    </div>
+                </div>
+            </section>
+        `;
+    }
+
+    function renderNewEquipmentPage() {
+        return `
+            <section class="panel panel--narrow">
+                <div class="inventory-header inventory-header--form">
+                    <div>
+                        <div class="eyebrow">Nuevo equipo</div>
+                        <h2>Registro por tipo de activo</h2>
+                        <p>Selecciona el tipo de equipo y completa todos los campos definidos para ese activo segun la estructura actual de la base de datos.</p>
+                    </div>
+                </div>
+                <div class="field-group">
+                    <label for="equipmentCategory">Categoria</label>
+                    <select id="equipmentCategory">
+                        <option value="">Cargando tipos...</option>
+                    </select>
+                </div>
+                <div class="helper-banner" id="equipmentCategoryHint">Cargando campos desde la base de datos...</div>
+                <form id="newEquipmentForm">
+                    <div class="form-grid" id="dynamicEquipmentFields"></div>
+                    <div class="form-actions" style="margin-top:18px;">
+                        <button class="btn btn-primary" type="submit">Guardar equipo</button>
+                        <button class="btn btn-secondary" type="reset">Limpiar</button>
+                    </div>
+                </form>
+                <div class="report-history" id="equipmentFieldSummary" style="margin-top:18px;"></div>
+            </section>
+        `;
+    }
+
+    async function loadInitialData() {
+        if (page === "dashboard" || page === "inventario" || page === "busqueda") {
+            await loadInventory();
+            updateDashboardStats();
+        }
+        if (page === "inventario") {
+            renderInventory();
+            refreshInventoryAutocompletes();
+            document.querySelectorAll(".filters-grid--inventory .helper-text").forEach((item) => item.remove());
+            const topbarDescription = document.querySelector(".topbar__title p");
+            if (topbarDescription) {
+                topbarDescription.textContent = "";
+            }
+        }
+        if (page === "busqueda") {
+            renderSearchTags();
+            renderSearchResults([]);
+        }
+        if (page === "nuevo-equipo") {
+            await loadEquipmentFieldCatalog();
+            populateEquipmentCategoryOptions();
+            renderDynamicFields(document.getElementById("equipmentCategory").value);
+        }
+    }
+
+    async function loadEquipmentFieldCatalog() {
+        try {
+            const response = await apiFetch("/inventario/campos");
+            if (!response.ok) {
+                throw new Error("catalogo");
+            }
+            const payload = await response.json();
+            state.equipmentFieldCatalog = payload.data || {};
+        } catch (error) {
+            state.equipmentFieldCatalog = {};
+            showToast("Campos no disponibles", "No se pudo cargar el catalogo de campos desde la base de datos.", "danger");
+        }
+    }
+
+    function populateEquipmentCategoryOptions() {
+        const select = document.getElementById("equipmentCategory");
+        if (!select) {
+            return;
+        }
+        const tipos = Object.keys(state.equipmentFieldCatalog);
+        select.innerHTML = tipos.length
+            ? tipos.map((tipo) => `<option value="${tipo}">${escapeHtml(state.equipmentFieldCatalog[tipo].label || typeLabel(tipo))}</option>`).join("")
+            : '<option value="">Sin tipos disponibles</option>';
+    }
+
+    function bindNewEquipmentEvents() {
+        document.getElementById("equipmentCategory")?.addEventListener("change", (event) => renderDynamicFields(event.target.value));
+        document.getElementById("newEquipmentForm")?.addEventListener("submit", async (event) => {
+            event.preventDefault();
+            const form = event.currentTarget;
+            const category = document.getElementById("equipmentCategory").value;
+            const button = form.querySelector('button[type="submit"]');
+            button.disabled = true;
+            try {
+                const payload = collectEquipmentFormPayload(form);
+                const response = await apiFetch(`/inventario/${category}`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(payload)
+                });
+                const result = await response.json();
+                if (!response.ok || !result.success) {
+                    throw new Error(result.message || "No se pudo guardar el equipo.");
+                }
+                await loadInventory();
+                button.disabled = false;
+                form.reset();
+                document.getElementById("equipmentCategory").value = category;
+                renderDynamicFields(category);
+                showToast("Equipo guardado", "El equipo se registro correctamente en la base de datos.", "success");
+            } catch (error) {
+                button.disabled = false;
+                showToast("Error al guardar", error.message || "No se pudo registrar el equipo.", "danger");
+            }
+        });
+        document.getElementById("newEquipmentForm")?.addEventListener("reset", () => {
+            const category = document.getElementById("equipmentCategory")?.value;
+            setTimeout(() => renderDynamicFields(category), 0);
+        });
+    }
+
+    function collectEquipmentFormPayload(form) {
+        const payload = {};
+        Array.from(form.elements).forEach((element) => {
+            if (!element.name) {
+                return;
+            }
+            const value = (element.value || "").trim();
+            payload[element.name] = value;
+        });
+        return payload;
+    }
+
+    function renderDynamicFields(category) {
+        const container = document.getElementById("dynamicEquipmentFields");
+        const hint = document.getElementById("equipmentCategoryHint");
+        const summary = document.getElementById("equipmentFieldSummary");
+        if (!container || !hint || !summary) {
+            return;
+        }
+        const categoryConfig = state.equipmentFieldCatalog[category];
+        if (!categoryConfig) {
+            container.innerHTML = "";
+            hint.textContent = "No hay definicion de campos disponible para este tipo.";
+            summary.innerHTML = "";
+            return;
+        }
+        const fields = Array.isArray(categoryConfig.fields) ? categoryConfig.fields : [];
+        container.innerHTML = fields.map((field) => renderDynamicDbField(field)).join("");
+        hint.textContent = categoryConfig.hint || "";
+        summary.innerHTML = `
+            <article class="report-history__item">
+                <strong>${escapeHtml(categoryConfig.label || typeLabel(category))}</strong>
+                <div class="muted">${escapeHtml(categoryConfig.hint || "")}</div>
+            </article>
+            <article class="report-history__item">
+                <strong>Detalle de campos</strong>
+                <div class="muted">${fields.map((field) => escapeHtml(field.label || field.name)).join(" · ")}</div>
+            </article>
+        `;
+    }
+
+    function renderDynamicDbField(field) {
+        const name = field.name;
+        const label = field.label || name;
+        const required = field.required ? "required" : "";
+        if (field.inputType === "textarea") {
+            return `<label class="field-group"><span>${escapeHtml(label)}</span><textarea name="${escapeHtml(name)}" ${required}></textarea></label>`;
+        }
+        if (name === "estado" || field.inputType === "select") {
+            return `<label class="field-group"><span>${escapeHtml(label)}</span><select name="${escapeHtml(name)}" ${required}>${VALID_STATES.map((item) => `<option value="${item}">${item}</option>`).join("")}</select></label>`;
+        }
+        const htmlType = field.inputType === "number" ? "number" : (field.inputType === "date" ? "date" : "text");
+        return `<label class="field-group"><span>${escapeHtml(label)}</span><input type="${htmlType}" name="${escapeHtml(name)}" ${required}></label>`;
+    }
+
+    function exportInventoryToExcel() {
+        const rows = state.filteredInventory;
+        if (!rows.length) {
+            showToast("Sin datos", "No hay resultados filtrados para exportar.", "info");
+            return;
+        }
+        const header = ["Codigo SBYE", "Codigo Megan", "Descripcion", "Tipo", "Marca", "Modelo", "Serie", "Custodio", "Ubicacion", "Detalle", "Estado"];
+        const bodyRows = rows.map((item) => [
+            item.codigoSbai,
+            item.codigoMegan,
+            item.descripcion,
+            typeLabel(item.tipo),
+            item.marca,
+            item.modelo,
+            item.numeroSerie,
+            item.custodio,
+            item.ubicacion,
+            item.procesador || item.caracteristicas,
+            item.estado
+        ]);
+        const generatedAt = new Date().toLocaleString("es-EC");
+        const documentHtml = `
+            <html>
+                <head>
+                    <meta charset="UTF-8">
+                    <style>
+                        body { font-family: Calibri, Arial, sans-serif; color: #16324f; margin: 24px; }
+                        .sheet-header { margin-bottom: 18px; }
+                        .sheet-header h1 { margin: 0 0 4px; font-size: 24px; }
+                        .sheet-header p { margin: 2px 0; font-size: 12px; color: #4d6480; }
+                        table { width: 100%; border-collapse: collapse; }
+                        th { background: #d9e8f6; color: #16324f; font-weight: 700; border: 1px solid #9eb6ce; padding: 9px 8px; text-align: left; }
+                        td { border: 1px solid #c7d6e5; padding: 8px; vertical-align: top; }
+                        tbody tr:nth-child(even) { background: #f7fbff; }
+                    </style>
+                </head>
+                <body>
+                    <div class="sheet-header">
+                        <h1>Reporte de Inventario Institucional</h1>
+                        <p>Sistema de Inventario DTIC</p>
+                        <p>Fecha de emision: ${escapeHtml(generatedAt)}</p>
+                        <p>Total exportado: ${rows.length}</p>
+                    </div>
+                    <table>
+                        <thead><tr>${header.map((cell) => `<th>${escapeHtml(cell)}</th>`).join("")}</tr></thead>
+                        <tbody>${bodyRows.map((row) => `<tr>${row.map((cell) => `<td>${escapeHtml(cell || "")}</td>`).join("")}</tr>`).join("")}</tbody>
+                    </table>
+                </body>
+            </html>`;
+        downloadBlob(new Blob([`\ufeff${documentHtml}`], { type: "application/vnd.ms-excel" }), `reporte_inventario_${timestampForFile()}.xls`);
+    }
+
+    function exportInventoryToPdf() {
+        const rows = state.filteredInventory;
+        if (!rows.length) {
+            showToast("Sin datos", "No hay resultados filtrados para exportar.", "info");
+            return;
+        }
+        downloadBlob(buildInventoryPdfBlob(rows), `reporte_inventario_${timestampForFile()}.pdf`);
+    }
+
+    function buildInventoryPdfBlob(rows) {
+        const pageWidth = 842;
+        const pageHeight = 595;
+        const margin = 36;
+        const columns = [
+            { key: "codigoSbai", title: "SBYE", x: 36, width: 70 },
+            { key: "codigoMegan", title: "MEGAN", x: 108, width: 70 },
+            { key: "descripcion", title: "DESCRIPCION", x: 180, width: 210 },
+            { key: "tipo", title: "TIPO", x: 392, width: 80 },
+            { key: "custodio", title: "CUSTODIO", x: 474, width: 150 },
+            { key: "estado", title: "ESTADO", x: 626, width: 110 },
+            { key: "ubicacion", title: "UBICACION", x: 738, width: 68 }
+        ];
+        const rowsPerPage = 24;
+        const objects = [];
+        const pageRefs = [];
+
+        function addObject(content) {
+            objects.push(content);
+            return objects.length;
+        }
+
+        const fontId = addObject("<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>");
+        const fontBoldId = addObject("<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold >>");
+
+        for (let start = 0; start < rows.length; start += rowsPerPage) {
+            const pageRows = rows.slice(start, start + rowsPerPage);
+            const content = [];
+            content.push("0.2 w");
+            content.push(`${margin} ${pageHeight - 42} ${pageWidth - margin * 2} 24 re S`);
+            content.push("BT /F2 16 Tf 40 565 Td (Reporte de Inventario Institucional) Tj ET");
+            content.push(`BT /F1 9 Tf 40 548 Td (Emitido: ${escapePdfText(new Date().toLocaleString("es-EC"))}) Tj ET`);
+            content.push(`BT /F1 9 Tf 260 548 Td (Total exportado: ${rows.length}) Tj ET`);
+            let currentY = 520;
+            content.push(`${margin} ${currentY - 14} ${pageWidth - margin * 2} 18 re f`);
+            content.push("0 g");
+            columns.forEach((column) => {
+                content.push(`BT /F2 8 Tf ${column.x} ${currentY - 2} Td (${escapePdfText(column.title)}) Tj ET`);
+            });
+            currentY -= 24;
+            pageRows.forEach((item, index) => {
+                const rowY = currentY - (index * 18);
+                if (index % 2 === 0) {
+                    content.push("0.96 0.98 1 rg");
+                    content.push(`${margin} ${rowY - 11} ${pageWidth - margin * 2} 16 re f`);
+                    content.push("0 g");
+                }
+                columns.forEach((column) => {
+                    const rawValue = column.key === "tipo" ? typeLabel(item[column.key]) : (item[column.key] || "");
+                    const finalValue = fitPdfText(String(rawValue || "-"), Math.max(8, Math.floor(column.width / 4.9)));
+                    content.push(`BT /F1 7 Tf ${column.x} ${rowY} Td (${escapePdfText(finalValue)}) Tj ET`);
+                });
+            });
+            const stream = content.join("\n");
+            const streamId = addObject(`<< /Length ${stream.length} >>\nstream\n${stream}\nendstream`);
+            const pageId = addObject(`<< /Type /Page /Parent PAGES_REF 0 R /MediaBox [0 0 ${pageWidth} ${pageHeight}] /Contents ${streamId} 0 R /Resources << /Font << /F1 ${fontId} 0 R /F2 ${fontBoldId} 0 R >> >> >>`);
+            pageRefs.push(pageId);
+        }
+
+        const pagesId = addObject(`<< /Type /Pages /Count ${pageRefs.length} /Kids [${pageRefs.map((id) => `${id} 0 R`).join(" ")}] >>`);
+        const catalogId = addObject(`<< /Type /Catalog /Pages ${pagesId} 0 R >>`);
+
+        const normalizedObjects = objects.map((object, index) => {
+            const objectId = index + 1;
+            return `${objectId} 0 obj\n${object.replace(/PAGES_REF 0 R/g, `${pagesId} 0 R`)}\nendobj\n`;
+        });
+        let pdf = "%PDF-1.4\n";
+        const offsets = [0];
+        normalizedObjects.forEach((object) => {
+            offsets.push(pdf.length);
+            pdf += object;
+        });
+        const xrefStart = pdf.length;
+        pdf += `xref\n0 ${normalizedObjects.length + 1}\n`;
+        pdf += "0000000000 65535 f \n";
+        for (let i = 1; i < offsets.length; i += 1) {
+            pdf += `${String(offsets[i]).padStart(10, "0")} 00000 n \n`;
+        }
+        pdf += `trailer\n<< /Size ${normalizedObjects.length + 1} /Root ${catalogId} 0 R >>\nstartxref\n${xrefStart}\n%%EOF`;
+        return new Blob([pdf], { type: "application/pdf" });
+    }
+
+    function escapePdfText(value) {
+        return String(value || "")
+            .normalize("NFD")
+            .replace(/[\u0300-\u036f]/g, "")
+            .replace(/\\/g, "\\\\")
+            .replace(/\(/g, "\\(")
+            .replace(/\)/g, "\\)")
+            .replace(/\r|\n/g, " ");
+    }
+
+    function fitPdfText(value, maxLength) {
+        const clean = String(value || "").replace(/\s+/g, " ").trim();
+        if (clean.length <= maxLength) {
+            return clean;
+        }
+        return `${clean.slice(0, Math.max(0, maxLength - 3))}...`;
+    }
+
+    function labelForColumn(key) {
+        const labels = {
+            codigoSbai: "Codigo SBYE",
+            codigoMegan: "Codigo Megan",
+            descripcion: "Descripcion",
+            tipo: "Tipo",
+            marca: "Marca",
+            modelo: "Modelo",
+            numeroSerie: "Numero de serie",
+            custodio: "Custodio",
+            ubicacion: "Ubicacion",
+            estado: "Estado",
+            procesador: "Detalle",
+            caracteristicas: "Caracteristicas",
+            observacion: "Observaciones",
+            sistemaOperativo: "Sistema operativo",
+            ram: "RAM",
+            discoDuro: "Disco duro",
+            linea: "Linea",
+            imei: "IMEI",
+            resolucion: "Resolucion",
+            conexion: "Conexion",
+            tecnologia: "Tecnologia",
+            compatibilidad: "Compatibilidad",
+            lumenes: "Lumenes",
+            codigo_megan: "Codigo Megan",
+            codigo_sbye: "Codigo SBYE",
+            sn: "Numero de serie",
+            fecha_ingreso: "Fecha de ingreso",
+            costo: "Costo",
+            ultima_actualizacion: "Ultima actualizacion",
+            ultimo_mantenimiento: "Ultimo mantenimiento",
+            id_custodio_actual: "Custodio actual (ID)",
+            id_ubicacion: "Ubicacion (ID)",
+            tipo_periferico: "Tipo de periferico",
+            tipo_impresora: "Tipo de impresora",
+            codigo_anterior: "Codigo anterior",
+            numero_contrato: "Numero de contrato",
+            numero_servicio: "Numero de servicio",
+            plan_comercial: "Plan comercial",
+            estado_servicio: "Estado del servicio",
+            anterior_custodio: "Custodio anterior",
+            subtipo: "Subtipo",
+            megas: "Megas",
+            acreditacion: "Acreditacion",
+            anotaciones: "Anotaciones",
+            acta_ugdt: "Acta UGDT",
+            acta_ugad: "Acta UGAD"
+        };
+        return labels[key] || key;
+    }
+
+    // ---------- Overrides de roles y acciones ----------
+
+    function defaultPermissionsByRole(roleName) {
+        if (roleName === "admin") {
+            return {
+                puedeEditarTodos: true,
+                puedeActualizarEstado: true,
+                puedeVer: true,
+                puedeCrearEquipo: true,
+                puedeEditarCustodio: true,
+                puedeExportarInventario: true,
+                puedeVerHistorial: true
+            };
+        }
+        if (roleName === "custodio") {
+            return {
+                puedeEditarTodos: false,
+                puedeActualizarEstado: false,
+                puedeVer: true,
+                puedeCrearEquipo: false,
+                puedeEditarCustodio: false,
+                puedeExportarInventario: false,
+                puedeVerHistorial: true
+            };
+        }
+        return {
+            puedeEditarTodos: false,
+            puedeActualizarEstado: false,
+            puedeVer: true,
+            puedeCrearEquipo: false,
+            puedeEditarCustodio: true,
+            puedeExportarInventario: true,
+            puedeVerHistorial: true
+        };
+    }
+
+    function mapSession(data) {
+        const rolRaw = String(data?.rol || "").trim().toUpperCase();
+        const role = rolRaw === "ADMINISTRADOR" || rolRaw === "ADMIN"
+            ? "admin"
+            : (rolRaw === "CUSTODIO" ? "custodio" : "tecnico");
+
+        const roleLabel = role === "admin"
+            ? "Administrador"
+            : (role === "custodio" ? "Custodio" : "Tecnico");
+
+        const fallbackName = data?.nombreCompleto || data?.usuario || data?.username || "Usuario";
+        const permissions = Object.assign({}, defaultPermissionsByRole(role), data?.permisos || {});
+
+        return {
+            username: data?.usuario || data?.username || "usuario",
+            displayName: fallbackName,
+            role,
+            roleLabel,
+            accessRole: role === "admin" ? "ADMINISTRADOR" : (role === "custodio" ? "CUSTODIO" : "TECNICO"),
+            idCustodio: data?.idCustodio ?? null,
+            permissions
+        };
+    }
+
+    function buildDemoSession() {
+        return null;
+    }
+
+    function initLogin() {
+        startClock();
+        clearDemoSession();
+        document.getElementById("loginForm")?.addEventListener("submit", handleLogin);
+    }
+
+    async function resolveSession() {
+        try {
+            const response = await apiFetch("/login/actual");
+            if (!response.ok) {
+                clearDemoSession();
+                return null;
+            }
+            const payload = await response.json();
+            if (payload.success && payload.data) {
+                const session = mapSession(payload.data);
+                setDemoSession(session);
+                return session;
+            }
+        } catch (error) {
+            clearDemoSession();
+            return null;
+        }
+        clearDemoSession();
+        return null;
+    }
+
+    function redirectForRole(session) {
+        const roleName = session?.role || "tecnico";
+        let target;
+        if (roleName === "admin") {
+            target = `${basePrefix}/pages/dashboard.html`;
+        } else if (roleName === "custodio") {
+            target = `${basePrefix}/pages/custodio/dashboard.html`;
+        } else {
+            target = `${basePrefix}/pages/usuario/dashboard.html`;
+        }
+        window.location.href = target.replace("/pages/pages/", "/pages/");
+    }
+
+    function isRoleAllowedForPage(pageRole, sessionRole) {
+        if (pageRole === "admin") {
+            return sessionRole === "admin";
+        }
+        if (pageRole === "tecnico") {
+            return sessionRole === "tecnico";
+        }
+        if (pageRole === "custodio") {
+            return sessionRole === "custodio";
+        }
+        if (pageRole === "usuario") {
+            return sessionRole === "tecnico" || sessionRole === "custodio";
+        }
+        return true;
+    }
+
+    async function initShell() {
+        state.session = await resolveSession();
+        if (!state.session) {
+            window.location.href = `${basePrefix}/index.html`.replace("/pages/index.html", "/index.html");
+            return;
+        }
+        if (!isRoleAllowedForPage(role, state.session.role)) {
+            redirectForRole(state.session);
+            return;
+        }
+        if (page === "nuevo-equipo" && !canCreateEquipment()) {
+            redirectForRole(state.session);
+            return;
+        }
+        renderShell();
+        bindShellEvents();
+        await loadInitialData();
+    }
+
+    function buildNav() {
+        const roleName = state.session?.role || role;
+        let nav;
+        if (roleName === "admin") {
+            nav = [
+                ["dashboard", "Dashboard", `${basePrefix}/pages/dashboard.html`],
+                ["inventario", "Inventario", `${basePrefix}/pages/inventario.html`],
+                ["busqueda", "Busqueda", `${basePrefix}/pages/busqueda.html`],
+                ["nuevo-equipo", "Nuevo Equipo", `${basePrefix}/pages/nuevo-equipo.html`]
+            ];
+        } else if (roleName === "custodio") {
+            nav = [
+                ["dashboard", "Dashboard", `${basePrefix}/pages/custodio/dashboard.html`],
+                ["inventario", "Inventario", `${basePrefix}/pages/custodio/inventario.html`],
+                ["busqueda", "Busqueda", `${basePrefix}/pages/custodio/busqueda.html`]
+            ];
+        } else {
+            nav = [
+                ["dashboard", "Dashboard", `${basePrefix}/pages/usuario/dashboard.html`],
+                ["inventario", "Inventario", `${basePrefix}/pages/usuario/inventario.html`],
+                ["busqueda", "Busqueda", `${basePrefix}/pages/usuario/busqueda.html`]
+            ];
+        }
+
+        return nav
+            .map(([key, label, href]) => `
+                <a href="${href}" class="${key === page ? "is-active" : ""}">
+                    <span class="nav-icon" aria-hidden="true">${NAV_ICONS[key] || iconMarkup("circle")}</span>
+                    <span>${label}</span>
+                </a>
+            `)
+            .join("");
+    }
+
+    function renderShell() {
+        const appShell = document.getElementById("appShell");
+        const roleName = state.session?.role || role;
+        const panelLabel = roleName === "admin"
+            ? "Panel administrativo"
+            : (roleName === "custodio" ? "Panel custodio" : "Panel tecnico");
+
+        appShell.innerHTML = `
+            <div class="app-shell role-${roleName}">
+                <aside class="sidebar" id="sidebar">
+                    <div class="sidebar__brand">
+                        <div class="brand-mark">SI</div>
+                        <div>
+                            <strong>Sistema Inventario</strong>
+                            <span>${panelLabel}</span>
+                        </div>
+                    </div>
+                    <div class="sidebar__user">
+                        <div class="avatar">${state.session.displayName.charAt(0).toUpperCase()}</div>
+                        <div>
+                            <strong>${escapeHtml(state.session.displayName)}</strong>
+                            <span>${state.session.roleLabel}</span>
+                        </div>
+                    </div>
+                    <nav class="sidebar__nav">${buildNav()}</nav>
+                    <button class="sidebar__logout" id="logoutButton">Cerrar sesion</button>
+                </aside>
+                <div class="app-main">
+                    <header class="topbar">
+                        <div class="topbar__actions">
+                            <button class="topbar__toggle" id="sidebarToggle">☰</button>
+                            <div class="topbar__title">
+                                <h1>${pageTitle(page)}</h1>
+                                <p>${pageDescription(page)}</p>
+                            </div>
+                        </div>
+                        <div class="user-chip">${escapeHtml(state.session.displayName)} · ${state.session.roleLabel}</div>
+                    </header>
+                    <main class="content" id="pageContent"></main>
+                </div>
+            </div>
+            <div class="modal-root" id="modalRoot"></div>
+            <div class="toast-stack" id="toastStack"></div>
+        `;
+        document.getElementById("pageContent").innerHTML = renderPage();
+    }
+
+    function pageDescription(pageName) {
+        const descriptions = {
+            dashboard: "Resumen visual del sistema y accesos directos por rol.",
+            inventario: "Consulta y gestion del inventario con control por rol.",
+            busqueda: "Busqueda multi-criterio en cliente sobre el inventario cargado.",
+            "nuevo-equipo": "Formulario preparado con los campos definidos en la base de datos."
+        };
+        return descriptions[pageName] || "";
+    }
+
+    function canEditCustodio() {
+        return Boolean(state.session?.permissions?.puedeEditarCustodio);
+    }
+
+    function canChangeState() {
+        return Boolean(state.session?.permissions?.puedeActualizarEstado);
+    }
+
+    function canExportInventory() {
+        return Boolean(state.session?.permissions?.puedeExportarInventario);
+    }
+
+    function canCreateEquipment() {
+        return Boolean(state.session?.permissions?.puedeCrearEquipo);
+    }
+
+    function canViewHistory() {
+        if (!state.session?.permissions) {
+            return true;
+        }
+        return state.session.permissions.puedeVerHistorial !== false;
+    }
+
+    function renderInventoryPage() {
+        const canExport = canExportInventory();
+        return `
+            <section class="panel inventory-panel">
+                <div class="inventory-header">
+                    <div>
+                        <div class="eyebrow">Modulo de inventario</div>
+                        <h2>Inventario institucional</h2>
+                        <p id="inventoryIntroText">Utiliza los filtros para localizar equipos por codigo, custodio, ubicacion, marca, modelo y estado.</p>
+                    </div>
+                </div>
+                <div class="stats-grid stats-grid--compact">
+                    <article class="stat-card"><span>Total filtrado</span><strong id="inventoryStatTotal">--</strong></article>
+                    <article class="stat-card"><span>Rol en uso</span><strong>${escapeHtml(state.session?.roleLabel || "-")}</strong></article>
+                </div>
+                <div class="filters-grid filters-grid--inventory">
+                    <div class="field-group">
+                        <label for="filterTipo">Tipo</label>
+                        <select id="filterTipo">
+                            <option value="">Todos</option>
+                            ${buildTypeOptions()}
+                        </select>
+                    </div>
+                    ${renderAutocompleteField("filterCodigoSbai", "Codigo SBYE", "Filtrar por codigo")}
+                    ${renderAutocompleteField("filterCodigoMegan", "Codigo Megan", "Filtrar por codigo")}
+                    ${renderAutocompleteField("filterDescripcion", "Descripcion", "Filtrar por descripcion")}
+                    ${renderAutocompleteField("filterMarca", "Marca", "Filtrar por marca")}
+                    ${renderAutocompleteField("filterModelo", "Modelo", "Filtrar por modelo")}
+                    ${renderAutocompleteField("filterSerie", "Numero de serie", "Filtrar por numero")}
+                    ${renderAutocompleteField("filterCustodio", "Custodio", "Filtrar por custodio")}
+                    ${renderAutocompleteField("filterUbicacion", "Ubicacion", "Filtrar por ubicacion")}
+                    <div class="field-group">
+                        <label for="filterEstado">Estado</label>
+                        <select id="filterEstado">
+                            <option value="">Todos</option>
+                            ${VALID_STATES.map((item) => `<option value="${item}">${item}</option>`).join("")}
+                        </select>
+                    </div>
+                </div>
+                <div class="toolbar" style="margin-top:16px;">
+                    <button class="btn btn-primary" id="applyInventoryFilters">Filtrar</button>
+                    <button class="btn btn-secondary" id="clearInventoryFilters">Limpiar</button>
+                    ${canExport ? '<button class="btn btn-success" id="exportInventoryExcel">Exportar a Excel</button>' : ""}
+                    ${canExport ? '<button class="btn btn-secondary" id="exportInventoryPdf">Exportar a PDF</button>' : ""}
+                </div>
+                <div id="inventoryMeta" class="search-results-meta"></div>
+                <div class="table-wrap">
+                    <table>
+                        <thead>
+                            <tr>
+                                ${["codigoSbai", "codigoMegan", "descripcion", "tipo", "marca", "modelo", "numeroSerie", "custodio", "ubicacion", "procesador", "estado"]
+                .map((key) => `<th><button class="table-sort" data-sort="${key}">${labelForColumn(key)}</button></th>`).join("")}
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="inventoryBody"></tbody>
+                    </table>
+                </div>
+                <div class="mobile-cards" id="inventoryMobile"></div>
+                <div class="pagination">
+                    <span id="inventoryPaginationMeta"></span>
+                    <div class="toolbar">
+                        <button class="btn btn-secondary" id="prevPage">Anterior</button>
+                        <button class="btn btn-secondary" id="nextPage">Siguiente</button>
+                    </div>
+                </div>
+            </section>
+        `;
+    }
+
+    function buildInventoryActionButtons(item, options) {
+        const buttons = [];
+        const wrap = options?.wrap !== false;
+        if (canEditCustodio()) {
+            buttons.push(`<button class="icon-btn" type="button" data-inv-action="editar" data-id="${item.id}" aria-label="Editar custodio" title="Editar custodio">${iconMarkup("edit")}</button>`);
+        }
+        if (canChangeState()) {
+            buttons.push(`<button class="icon-btn" type="button" data-inv-action="estado" data-id="${item.id}" aria-label="Cambiar estado" title="Cambiar estado">${iconMarkup("repeat")}</button>`);
+        }
+        if (canViewHistory()) {
+            buttons.push(`<button class="icon-btn" type="button" data-inv-action="historial" data-id="${item.id}" aria-label="Ver historial" title="Ver historial">${iconMarkup("history")}</button>`);
+        }
+        if (!buttons.length) {
+            return '<span class="muted">Sin acciones</span>';
+        }
+        const body = buttons.join("");
+        return wrap ? `<div class="action-row">${body}</div>` : body;
+    }
+
+    function renderInventoryRow(item) {
+        return `
+            <tr>
+                <td>${escapeHtml(item.codigoSbai || "-")}</td>
+                <td>${escapeHtml(item.codigoMegan || "-")}</td>
+                <td>${escapeHtml(item.descripcion || "-")}</td>
+                <td>${escapeHtml(typeLabel(item.tipo))}</td>
+                <td>${escapeHtml(item.marca || "-")}</td>
+                <td>${escapeHtml(item.modelo || "-")}</td>
+                <td>${escapeHtml(item.numeroSerie || "-")}</td>
+                <td>${escapeHtml(item.custodio || "-")}</td>
+                <td>${escapeHtml(item.ubicacion || "-")}</td>
+                <td>${escapeHtml(item.procesador || item.caracteristicas || "-")}</td>
+                <td>${stateBadge(item.estado)}</td>
+                <td>${buildInventoryActionButtons(item)}</td>
+            </tr>
+        `;
+    }
+
+    function renderMobileInventoryCard(item) {
+        return `
+            <article class="mobile-card">
+                <strong>${escapeHtml(item.codigoSbai || "-")} · ${escapeHtml(typeLabel(item.tipo))}</strong>
+                <span>Megan: ${escapeHtml(item.codigoMegan || "-")}</span>
+                <span>Descripcion: ${escapeHtml(item.descripcion || "-")}</span>
+                <span>Marca / Modelo: ${escapeHtml(item.marca || "-")} ${escapeHtml(item.modelo || "")}</span>
+                <span>Custodio: ${escapeHtml(item.custodio || "-")}</span>
+                <span>Ubicacion: ${escapeHtml(item.ubicacion || "-")}</span>
+                <span>Detalle: ${escapeHtml(item.procesador || item.caracteristicas || "-")}</span>
+                <span>Estado: ${stripHtml(stateBadge(item.estado))}</span>
+                <div class="action-row" style="margin-top:10px;">${buildInventoryActionButtons(item, { wrap: false })}</div>
+            </article>
+        `;
+    }
+
+    function renderInventory() {
+        const tbody = document.getElementById("inventoryBody");
+        const mobile = document.getElementById("inventoryMobile");
+        if (!tbody || !mobile) {
+            return;
+        }
+        const total = state.filteredInventory.length;
+        const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+        state.inventoryPage = Math.min(state.inventoryPage, totalPages);
+        const start = (state.inventoryPage - 1) * PAGE_SIZE;
+        const pageItems = state.filteredInventory.slice(start, start + PAGE_SIZE);
+
+        updateInventoryStats();
+        setText("inventoryMeta", `${total} resultados filtrados · pagina ${state.inventoryPage} de ${totalPages}`);
+        setText("inventoryPaginationMeta", pageItems.length ? `Mostrando ${start + 1}-${start + pageItems.length}` : "Sin resultados");
+        tbody.innerHTML = pageItems.length
+            ? pageItems.map(renderInventoryRow).join("")
+            : `<tr><td colspan="12">No hay equipos para los filtros aplicados.</td></tr>`;
+        mobile.innerHTML = pageItems.map(renderMobileInventoryCard).join("");
+        refreshInventoryAutocompletes();
+    }
+
+    function bindInventoryEvents() {
+        inventoryFilterIds().forEach((id) => {
+            document.getElementById(id)?.addEventListener("input", () => {
+                updateAutocompleteForInput(id);
+                applyInventoryFilters();
+            });
+            document.getElementById(id)?.addEventListener("change", applyInventoryFilters);
+        });
+        document.getElementById("applyInventoryFilters")?.addEventListener("click", applyInventoryFilters);
+        document.getElementById("clearInventoryFilters")?.addEventListener("click", clearInventoryFilters);
+        if (canExportInventory()) {
+            document.getElementById("exportInventoryExcel")?.addEventListener("click", exportInventoryToExcel);
+            document.getElementById("exportInventoryPdf")?.addEventListener("click", exportInventoryToPdf);
+        }
+        document.querySelectorAll("[data-sort]").forEach((button) => button.addEventListener("click", () => sortInventory(button.dataset.sort)));
+        document.getElementById("prevPage")?.addEventListener("click", () => changePage(-1));
+        document.getElementById("nextPage")?.addEventListener("click", () => changePage(1));
+        document.getElementById("inventoryBody")?.addEventListener("click", handleInventoryActionClick);
+        document.getElementById("inventoryMobile")?.addEventListener("click", handleInventoryActionClick);
+    }
+
+    async function handleInventoryActionClick(event) {
+        const button = event.target.closest("[data-inv-action]");
+        if (!button) {
+            return;
+        }
+        const action = button.dataset.invAction;
+        const id = Number(button.dataset.id || 0);
+        const item = state.inventory.find((entry) => Number(entry.id) === id);
+        if (!item) {
+            return;
+        }
+        if (action === "editar") {
+            await openCustodioEditor(item);
+            return;
+        }
+        if (action === "estado") {
+            await openStateEditor(item);
+            return;
+        }
+        if (action === "historial") {
+            await openHistoryViewer(item);
+        }
+    }
+
+    async function loadCustodios(query, limit) {
+        const params = new URLSearchParams();
+        const term = typeof query === "string" ? query.trim() : "";
+        if (term) {
+            params.set("q", term);
+        }
+        const max = Number.isFinite(limit) && limit > 0 ? Math.trunc(limit) : 0;
+        if (max > 0) {
+            params.set("limit", String(max));
+        }
+        const path = params.toString() ? `/inventario/custodios?${params.toString()}` : "/inventario/custodios";
+        const response = await apiFetch(path);
+        const payload = await response.json();
+        if (!response.ok || !payload.success) {
+            throw new Error(payload.message || "No se pudo cargar custodios.");
+        }
+        return Array.isArray(payload.data) ? payload.data : [];
+    }
+
+    async function openCustodioEditor(item) {
+        try {
+            const custodiosIniciales = await loadCustodios(null, 120);
+            if (!custodiosIniciales.length) {
+                showToast("Sin custodios", "No hay custodios disponibles para asignar.", "info");
+                return;
+            }
+            openModal(
+                `Editar custodio (${escapeHtml(item.codigoSbai || item.id)})`,
+                `
+                    <div class="field-group">
+                        <label for="custodioSearchInput">Buscar custodio</label>
+                        <input id="custodioSearchInput" type="text" autocomplete="off" placeholder="Escriba para filtrar por nombre o usuario">
+                        <small class="helper-text">Selecciona un custodio existente para asociarlo al equipo.</small>
+                    </div>
+                    <div class="field-group">
+                        <label for="nuevoCustodioSelect">Custodio</label>
+                        <select id="nuevoCustodioSelect" size="10"></select>
+                        <small id="custodioSearchMeta" class="helper-text"></small>
+                    </div>
+                    <p class="muted">Custodio actual: ${escapeHtml(item.custodio || "-")}</p>
+                `,
+                [
+                    { label: "Cancelar", className: "btn btn-secondary", onClick: closeModal },
+                    {
+                        label: "Guardar",
+                        className: "btn btn-primary",
+                        onClick: async () => {
+                            const select = document.getElementById("nuevoCustodioSelect");
+                            const idCustodio = Number(select?.value || 0);
+                            if (!idCustodio) {
+                                showToast("Dato invalido", "Seleccione un custodio valido.", "danger");
+                                return;
+                            }
+                            await saveCustodioChange(item, idCustodio);
+                        }
+                    }
+                ]
+            );
+
+            const select = document.getElementById("nuevoCustodioSelect");
+            const search = document.getElementById("custodioSearchInput");
+            const meta = document.getElementById("custodioSearchMeta");
+
+            if (!select) {
+                return;
+            }
+
+            const nombreActual = String(item.custodio || "").trim().toLowerCase();
+            const renderOptions = (list) => {
+                const previous = Number(select.value || 0);
+                select.innerHTML = list
+                    .map((custodio) => {
+                        const nombre = String(custodio?.nombre || "");
+                        const username = String(custodio?.username || "").trim();
+                        const label = username ? `${nombre} (${username})` : nombre;
+                        return `<option value="${custodio.id}">${escapeHtml(label)}</option>`;
+                    })
+                    .join("");
+
+                if (meta) {
+                    meta.textContent = `${list.length} coincidencias`;
+                }
+
+                if (previous && list.some((custodio) => Number(custodio.id) === previous)) {
+                    select.value = String(previous);
+                    return;
+                }
+
+                if (nombreActual) {
+                    const match = list.find((custodio) => String(custodio?.nombre || "").trim().toLowerCase() === nombreActual);
+                    if (match) {
+                        select.value = String(match.id);
+                        return;
+                    }
+                }
+
+                if (list.length) {
+                    select.value = String(list[0].id);
+                }
+            };
+
+            renderOptions(custodiosIniciales);
+
+            if (!search) {
+                return;
+            }
+
+            let debounceId;
+            const runSearch = async () => {
+                const term = search.value.trim();
+                const resultados = await loadCustodios(term, 120);
+                renderOptions(resultados);
+            };
+
+            search.addEventListener("input", () => {
+                window.clearTimeout(debounceId);
+                debounceId = window.setTimeout(() => {
+                    runSearch().catch((error) => {
+                        showToast("Error", error.message || "No se pudo buscar custodios.", "danger");
+                    });
+                }, 250);
+            });
+        } catch (error) {
+            showToast("Error", error.message || "No se pudo abrir la edicion de custodio.", "danger");
+        }
+    }
+
+    async function saveCustodioChange(item, idCustodio) {
+        try {
+            const response = await apiFetch(`/inventario/${item.id}/custodio`, {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ idCustodio })
+            });
+            const payload = await response.json();
+            if (!response.ok || !payload.success) {
+                throw new Error(payload.message || "No se pudo actualizar el custodio.");
+            }
+            closeModal();
+            await loadInventory();
+            applyInventoryFilters();
+            showToast("Custodio actualizado", "El cambio se guardo correctamente.", "success");
+        } catch (error) {
+            showToast("Error", error.message || "No se pudo guardar el cambio de custodio.", "danger");
+        }
+    }
+
+    async function openStateEditor(item) {
+        openModal(
+            `Cambiar estado (${escapeHtml(item.codigoSbai || item.id)})`,
+            `
+                <div class="field-group">
+                    <label for="nuevoEstadoSelect">Estado</label>
+                    <select id="nuevoEstadoSelect">
+                        ${VALID_STATES.map((estado) => `<option value="${estado}" ${normalizeState(item.estado) === estado ? "selected" : ""}>${estado}</option>`).join("")}
+                    </select>
+                </div>
+            `,
+            [
+                { label: "Cancelar", className: "btn btn-secondary", onClick: closeModal },
+                {
+                    label: "Guardar",
+                    className: "btn btn-primary",
+                    onClick: async () => {
+                        const estado = document.getElementById("nuevoEstadoSelect")?.value || "";
+                        await saveStateChange(item, estado);
+                    }
+                }
+            ]
+        );
+    }
+
+    async function saveStateChange(item, estado) {
+        try {
+            const response = await apiFetch(`/inventario/${item.id}/estado`, {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ estado })
+            });
+            const payload = await response.json();
+            if (!response.ok || !payload.success) {
+                throw new Error(payload.message || "No se pudo actualizar el estado.");
+            }
+            closeModal();
+            await loadInventory();
+            applyInventoryFilters();
+            showToast("Estado actualizado", "El estado del equipo fue actualizado.", "success");
+        } catch (error) {
+            showToast("Error", error.message || "No se pudo guardar el estado.", "danger");
+        }
+    }
+
+    async function openHistoryViewer(item) {
+        try {
+            const response = await apiFetch(`/inventario/${item.id}/historial`);
+            const payload = await response.json();
+            if (!response.ok || !payload.success) {
+                throw new Error(payload.message || "No se pudo consultar el historial.");
+            }
+            const historial = Array.isArray(payload.data) ? payload.data : [];
+            const bodyHtml = historial.length
+                ? historial.map((registro) => `
+                    <article class="report-history__item">
+                        <strong>${escapeHtml(registro.accion || "Cambio")}</strong>
+                        <div class="muted">Usuario: ${escapeHtml(registro.usuario || "-")} | Rol: ${escapeHtml(registro.rol || "-")}</div>
+                        <div class="muted">Anterior: ${escapeHtml(registro.valorAnterior || "-")}</div>
+                        <div class="muted">Nuevo: ${escapeHtml(registro.valorNuevo || "-")}</div>
+                        <div class="muted">Fecha: ${escapeHtml(formatDate(registro.fecha))}</div>
+                    </article>
+                `).join("")
+                : '<p class="muted">No hay historial registrado para este equipo.</p>';
+
+            openModal(
+                `Historial del equipo ${escapeHtml(item.codigoSbai || item.id)}`,
+                `<div class="report-history">${bodyHtml}</div>`,
+                [{ label: "Cerrar", className: "btn btn-secondary", onClick: closeModal }]
+            );
+        } catch (error) {
+            showToast("Error", error.message || "No se pudo abrir el historial.", "danger");
+        }
+    }
+
+    function renderNewEquipmentPage() {
+        return `
+            <section class="panel panel--narrow">
+                <div class="inventory-header inventory-header--form">
+                    <div>
+                        <div class="eyebrow">Nuevo equipo</div>
+                        <h2>Registro por tipo de activo</h2>
+                    </div>
+                </div>
+                <div class="field-group">
+                    <label for="equipmentCategory">Categoria</label>
+                    <select id="equipmentCategory">
+                        <option value="">Cargando tipos...</option>
+                    </select>
+                </div>
+                <div class="helper-banner" id="equipmentCategoryHint"></div>
+                <form id="newEquipmentForm">
+                    <div class="form-grid" id="dynamicEquipmentFields"></div>
+                    <div class="form-actions" style="margin-top:18px;">
+                        <button class="btn btn-primary" type="submit">Guardar equipo</button>
+                        <button class="btn btn-secondary" type="reset">Limpiar</button>
+                    </div>
+                </form>
+                <div class="report-history" id="equipmentFieldSummary" style="margin-top:18px;"></div>
+            </section>
+        `;
+    }
+
+    function renderDynamicFields(category) {
+        const container = document.getElementById("dynamicEquipmentFields");
+        const hint = document.getElementById("equipmentCategoryHint");
+        const summary = document.getElementById("equipmentFieldSummary");
+        if (!container || !hint || !summary) {
+            return;
+        }
+        const categoryConfig = state.equipmentFieldCatalog[category];
+        if (!categoryConfig) {
+            container.innerHTML = "";
+            hint.textContent = "";
+            summary.innerHTML = "";
+            return;
+        }
+        const fields = Array.isArray(categoryConfig.fields) ? categoryConfig.fields : [];
+        container.innerHTML = fields.map((field) => renderDynamicDbField(field)).join("");
+        hint.textContent = "";
+        summary.innerHTML = "";
+    }
+
+    if (typeof window !== "undefined") {
+        window.openModal = openModal;
+        window.closeModal = closeModal;
+        window.showToast = showToast;
+        window.formatDate = formatDate;
     }
 })();

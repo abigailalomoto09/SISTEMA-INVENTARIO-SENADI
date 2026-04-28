@@ -18,7 +18,7 @@ public class UbicacionDAO extends DAOGenerico<Ubicacion, Integer> {
     public Ubicacion buscarPorClave(String clave) {
         EntityManager em = getEM();
         try {
-            return (Ubicacion) em.createQuery("FROM Ubicacion WHERE claveUbicacion = :clave")
+            return (Ubicacion) em.createQuery("FROM Ubicacion WHERE direccion = :clave")
                     .setParameter("clave", clave)
                     .getSingleResult();
         } catch (javax.persistence.NoResultException e) {

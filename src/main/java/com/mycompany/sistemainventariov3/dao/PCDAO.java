@@ -7,7 +7,7 @@ import java.util.List;
 /**
  * DAO para la entidad PC
  */
-public class PCDAO extends DAOGenerico<PC, String> {
+public class PCDAO extends DAOGenerico<PC, Integer> {
     
     public PCDAO() {
         super(PC.class);
@@ -33,8 +33,9 @@ public class PCDAO extends DAOGenerico<PC, String> {
     public PC buscarPorCodigoSbai(String codigoSbai) {
         EntityManager em = getEM();
         try {
-            return (PC) em.createQuery("FROM PC WHERE codigoSbai = :codigo")
+            return (PC) em.createQuery("FROM PC WHERE codigoSbaiOriginal = :codigo ORDER BY idEquipo ASC")
                     .setParameter("codigo", codigoSbai)
+                    .setMaxResults(1)
                     .getSingleResult();
         } catch (javax.persistence.NoResultException e) {
             return null;

@@ -42,13 +42,13 @@ public class BusquedaResource {
             
             List<?> resultados = new ArrayList<>();
             
-            if ("pcs".equals(tipo)) {
+            if ("pcs".equals(tipo) || "pc".equals(tipo)) {
                 if ("marca".equals(criterio)) {
                     resultados = bienService.buscarPCsPorMarca(valor);
                 } else if ("estado".equals(criterio)) {
                     resultados = bienService.buscarPCsPorEstado(valor);
                 }
-            } else if ("laptops".equals(tipo)) {
+            } else if ("laptops".equals(tipo) || "laptop".equals(tipo)) {
                 if ("marca".equals(criterio)) {
                     resultados = bienService.buscarLaptopsPorMarca(valor);
                 } else if ("estado".equals(criterio)) {

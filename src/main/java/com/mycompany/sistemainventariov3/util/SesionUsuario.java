@@ -63,6 +63,24 @@ public class SesionUsuario {
         return usuario != null && "TECNICO".equals(usuario.getRol());
     }
 
+    public static boolean esCustodio() {
+        Usuario usuario = getUsuarioActual();
+        return usuario != null && "CUSTODIO".equals(usuario.getRol());
+    }
+
+    public static boolean tieneRol(String... roles) {
+        Usuario usuario = getUsuarioActual();
+        if (usuario == null || usuario.getRol() == null || roles == null) {
+            return false;
+        }
+        for (String rol : roles) {
+            if (usuario.getRol().equals(rol)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     public static void limpiar(HttpServletRequest request) {
         if (request != null) {
             HttpSession session = request.getSession(false);

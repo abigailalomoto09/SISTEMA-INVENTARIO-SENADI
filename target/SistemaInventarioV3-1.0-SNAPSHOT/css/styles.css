@@ -56,9 +56,10 @@ textarea {
     min-height: 100vh;
 }
 
-.app-shell.role-usuario {
-    --sidebar-a: var(--sidebar-user-a);
-    --sidebar-b: var(--sidebar-user-b);
+.app-shell.role-usuario,
+.app-shell.role-custodio {
+    --sidebar-a: var(--sidebar-admin-a);
+    --sidebar-b: var(--sidebar-admin-b);
 }
 
 .app-shell.role-admin {
@@ -156,6 +157,29 @@ textarea {
     background: rgba(255, 255, 255, 0.07);
     border: 1px solid transparent;
     font-weight: 600;
+}
+
+.nav-icon,
+.mini-card__icon,
+.spotlight-card__icon,
+.inventory-header__badge span {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.nav-icon {
+    width: 18px;
+    height: 18px;
+    color: rgba(255, 255, 255, 0.92);
+}
+
+.nav-icon svg,
+.mini-card__icon svg,
+.spotlight-card__icon svg,
+.inventory-header__badge span svg {
+    width: 100%;
+    height: 100%;
 }
 
 .sidebar__nav a:hover,
@@ -262,6 +286,13 @@ textarea {
         linear-gradient(135deg, #ffffff, #f6fbff);
 }
 
+.hero--dashboard {
+    background:
+        radial-gradient(circle at top right, rgba(13, 99, 183, 0.16), transparent 28%),
+        radial-gradient(circle at bottom left, rgba(46, 125, 50, 0.08), transparent 22%),
+        linear-gradient(135deg, #ffffff, #eef7ff);
+}
+
 .hero h2,
 .section-heading h2,
 .panel h3 {
@@ -273,6 +304,110 @@ textarea {
     max-width: 740px;
     color: var(--muted);
     line-height: 1.7;
+}
+
+.eyebrow {
+    display: inline-flex;
+    align-items: center;
+    padding: 8px 12px;
+    border-radius: 999px;
+    background: rgba(21, 101, 192, 0.09);
+    color: var(--primary);
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.hero-copy {
+    display: grid;
+    gap: 14px;
+}
+
+.hero-copy h2 {
+    font-size: clamp(1.9rem, 3vw, 2.6rem);
+    line-height: 1.1;
+}
+
+.hero-pills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.hero-pill {
+    padding: 10px 14px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.88);
+    border: 1px solid rgba(21, 101, 192, 0.16);
+    color: #24425f;
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.hero-panel {
+    padding: 20px;
+    border-radius: 24px;
+    background: linear-gradient(180deg, rgba(16, 63, 140, 0.95), rgba(13, 99, 183, 0.9));
+    color: white;
+    box-shadow: var(--shadow-lg);
+}
+
+.hero-panel__label {
+    margin-bottom: 14px;
+    color: rgba(255, 255, 255, 0.76);
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.hero-panel .stat-card {
+    background: rgba(255, 255, 255, 0.12);
+    border-color: rgba(255, 255, 255, 0.14);
+    box-shadow: none;
+}
+
+.hero-panel .stat-card span {
+    color: rgba(255, 255, 255, 0.74);
+}
+
+.spotlight-strip {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 18px;
+    margin-top: 22px;
+}
+
+.spotlight-card {
+    display: flex;
+    gap: 14px;
+    align-items: flex-start;
+    padding: 18px 20px;
+    background: rgba(255, 255, 255, 0.78);
+    border: 1px solid rgba(220, 231, 243, 0.9);
+    border-radius: 22px;
+    box-shadow: var(--shadow-sm);
+}
+
+.spotlight-card strong,
+.spotlight-card p {
+    margin: 0;
+}
+
+.spotlight-card p {
+    margin-top: 6px;
+    color: var(--muted);
+    line-height: 1.6;
+}
+
+.spotlight-card__icon {
+    width: 48px;
+    height: 48px;
+    flex: none;
+    border-radius: 16px;
+    color: var(--primary);
+    background: rgba(21, 101, 192, 0.1);
 }
 
 .hero__grid,
@@ -306,6 +441,10 @@ textarea {
     border-radius: 20px;
 }
 
+.stats-grid--compact {
+    margin-top: 18px;
+}
+
 .stat-card strong {
     display: block;
     margin-top: 8px;
@@ -314,6 +453,30 @@ textarea {
 
 .mini-card {
     cursor: pointer;
+}
+
+.mini-card--action {
+    position: relative;
+    overflow: hidden;
+    display: grid;
+    gap: 10px;
+    min-height: 190px;
+    background:
+        radial-gradient(circle at top right, rgba(21, 101, 192, 0.08), transparent 28%),
+        linear-gradient(180deg, #ffffff, #f7fbff);
+}
+
+.mini-card--action small {
+    color: var(--primary);
+    font-weight: 700;
+}
+
+.mini-card__icon {
+    width: 46px;
+    height: 46px;
+    border-radius: 16px;
+    color: white;
+    background: linear-gradient(135deg, #0d63b7, #1565c0);
 }
 
 .mini-card:hover,
@@ -337,6 +500,63 @@ textarea {
 .panel {
     padding: 22px;
     margin-top: 22px;
+}
+
+.panel--narrow {
+    max-width: 1040px;
+}
+
+.inventory-panel {
+    background:
+        linear-gradient(180deg, rgba(247, 251, 255, 0.96), rgba(255, 255, 255, 0.98));
+}
+
+.inventory-header {
+    display: flex;
+    justify-content: space-between;
+    gap: 18px;
+    align-items: flex-start;
+    margin-bottom: 18px;
+}
+
+.inventory-header h2,
+.inventory-header p {
+    margin: 0;
+}
+
+.inventory-header p {
+    margin-top: 10px;
+    max-width: 760px;
+    color: var(--muted);
+    line-height: 1.7;
+}
+
+.inventory-header__badge {
+    min-width: 240px;
+    padding: 16px 18px;
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    border-radius: 20px;
+    border: 1px solid rgba(21, 101, 192, 0.14);
+    background: rgba(21, 101, 192, 0.06);
+    color: #174372;
+}
+
+.inventory-header__badge span {
+    width: 38px;
+    height: 38px;
+    border-radius: 14px;
+    color: white;
+    background: linear-gradient(135deg, #0d63b7, #1565c0);
+}
+
+.filters-grid--inventory {
+    align-items: start;
+    padding: 18px;
+    border: 1px solid rgba(220, 231, 243, 0.9);
+    border-radius: 22px;
+    background: rgba(255, 255, 255, 0.78);
 }
 
 .toolbar,
@@ -393,6 +613,10 @@ textarea {
     outline: none;
     border-color: var(--primary);
     box-shadow: 0 0 0 4px rgba(21, 101, 192, 0.12);
+}
+
+.field-group small {
+    line-height: 1.45;
 }
 
 .btn {
@@ -528,6 +752,21 @@ th {
     border: 1px solid var(--border);
     background: white;
     cursor: pointer;
+}
+
+.icon-btn svg {
+    width: 18px;
+    height: 18px;
+}
+
+.icon-btn:hover {
+    background: var(--surface-soft);
+    border-color: rgba(15, 31, 56, 0.18);
+}
+
+.icon-btn:focus-visible {
+    outline: 2px solid rgba(21, 101, 192, 0.35);
+    outline-offset: 2px;
 }
 
 .pagination {
@@ -730,6 +969,10 @@ th {
     .split {
         grid-template-columns: 1fr;
     }
+
+    .inventory-header {
+        flex-direction: column;
+    }
 }
 
 @media (max-width: 1024px) {
@@ -773,6 +1016,11 @@ th {
     .pagination {
         flex-direction: column;
         align-items: stretch;
+    }
+
+    .spotlight-card,
+    .inventory-header__badge {
+        width: 100%;
     }
 }
 

@@ -14,12 +14,12 @@
         <section class="login-hero">
             <div class="login-copy">
                 <span class="eyebrow">SENADI</span>
-                <h1>Inventario tecnológico con control por rol y trazabilidad.</h1>
-                <p>Accede como administrador o usuario técnico. El sistema redirige según tu sesión y mantiene un fallback demo si la API no responde.</p>
+                <h1>SISTEMA DE INVENTARIO DE LOS EQUIPOS TECNOLOGICOS</h1>
+                <p>Ingrese sus credenciales institucionales para acceder al sistema</p>
                 <div class="hero-pill-row">
                     <span class="hero-pill">Inventario</span>
-                    <span class="hero-pill">Búsqueda avanzada</span>
-                    <span class="hero-pill">Reportes</span>
+                    <span class="hero-pill">Busqueda avanzada</span>
+                    <span class="hero-pill">Historial</span>
                 </div>
             </div>
         </section>
@@ -29,7 +29,7 @@
                 <div class="login-card__header">
                     <div>
                         <p class="login-kicker">Acceso al sistema</p>
-                        <h2>Iniciar sesión</h2>
+                        <h2>Iniciar sesion</h2>
                     </div>
                     <div class="live-clock">
                         <span id="liveDate">--</span>
@@ -40,26 +40,15 @@
                 <form id="loginForm" class="login-form">
                     <label class="field">
                         <span>Usuario</span>
-                        <input type="text" id="username" name="username" placeholder="admin o tecnico" required>
+                        <input type="text" id="username" name="username" placeholder="Ingrese su usuario" required>
                     </label>
                     <label class="field">
-                        <span>Contraseña</span>
-                        <input type="password" id="password" name="password" placeholder="Ingresa tu contraseña" required>
+                        <span>Contrasena</span>
+                        <input type="password" id="password" name="password" placeholder="Ingrese su contrasena" required>
                     </label>
                     <button type="submit" id="loginSubmit" class="btn-login">Entrar</button>
                     <div id="loginError" class="login-alert is-hidden"></div>
                 </form>
-
-                <div class="demo-access">
-                    <div>
-                        <small>Administrador</small>
-                        <strong>admin / admin123</strong>
-                    </div>
-                    <div>
-                        <small>Usuario técnico</small>
-                        <strong>tecnico / tecnico123</strong>
-                    </div>
-                </div>
             </div>
         </section>
     </main>
