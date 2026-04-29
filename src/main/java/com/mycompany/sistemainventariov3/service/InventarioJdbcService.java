@@ -47,13 +47,10 @@ public class InventarioJdbcService {
             "modelo",
             "sn",
             "fecha_ingreso",
-            "costo",
             "estado",
             "observacion",
             "ultima_actualizacion",
-            "ultimo_mantenimiento",
-            "id_custodio_actual",
-            "id_ubicacion"
+            "ultimo_mantenimiento"
     );
 
     private static final String BASE_QUERY =
@@ -122,6 +119,75 @@ public class InventarioJdbcService {
 
     public List<Map<String, Object>> obtenerCustodiosActivos() throws Exception {
         return obtenerCustodiosActivos(null, null);
+    }
+
+    public List<Map<String, Object>> obtenerUbicaciones(String query, Integer limit) throws Exception {
+        List<Map<String, Object>> ubicaciones = new ArrayList<>();
+        String term = query == null ? "" : query.trim().toLowerCase(Locale.ROOT);
+        boolean tieneFiltro = !term.isEmpty();
+        int limite = limit != null && limit > 0 ? Math.min(limit, 500) : 0;
+
+        StringBuilder sql = new StringBuilder();
+        sql.append("SELECT id_ubicacion, edificio, piso, direccion FROM ubicacion ");
+        if (tieneFiltro) {
+            sql.append("WHERE LOWER(CONCAT_WS(' ', edificio, piso, direccion)) LIKE ? ");
+        }
+        sql.append("ORDER BY edificio, piso, direccion");
+        if (limite > 0) {
+            sql.append(" LIMIT ?");
+        }
+
+        try (Connection conn = DatabaseService.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql.toString())) {
+            int index = 1;
+            if (tieneFiltro) {
+                ps.setString(index++, "%" + term + "%");
+            }
+            if (limite > 0) {
+                ps.setInt(index, limite);
+            }
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    Map<String, Object> item = new LinkedHashMap<>();
+                    item.put("id", rs.getInt("id_ubicacion"));
+                    item.put("edificio", rs.getString("edificio"));
+                    item.put("piso", rs.getString("piso"));
+                    item.put("direccion", rs.getString("direccion"));
+                    item.put("nombre", unirNoVacios(rs.getString("edificio"), rs.getString("piso"), rs.getString("direccion")));
+                    ubicaciones.add(item);
+                }
+            }
+        }
+        return ubicaciones;
+    }
+
+    public List<String> obtenerValoresDistintos(String campo, String query, Integer limit) throws Exception {
+        if (!"marca".equals(campo) && !"modelo".equals(campo)) {
+            throw new IllegalArgumentException("Catalogo no permitido.");
+        }
+        List<String> valores = new ArrayList<>();
+        String term = query == null ? "" : query.trim().toLowerCase(Locale.ROOT);
+        boolean tieneFiltro = !term.isEmpty();
+        int limite = limit != null && limit > 0 ? Math.min(limit, 500) : 50;
+        String sql = "SELECT DISTINCT " + campo + " FROM equipo " +
+                "WHERE " + campo + " IS NOT NULL AND TRIM(" + campo + ") <> '' " +
+                (tieneFiltro ? "AND LOWER(" + campo + ") LIKE ? " : "") +
+                "ORDER BY " + campo + " LIMIT ?";
+
+        try (Connection conn = DatabaseService.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            int index = 1;
+            if (tieneFiltro) {
+                ps.setString(index++, "%" + term + "%");
+            }
+            ps.setInt(index, limite);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    valores.add(rs.getString(1));
+                }
+            }
+        }
+        return valores;
     }
 
     public List<Map<String, Object>> obtenerCustodiosActivos(String query, Integer limit) throws Exception {
@@ -310,6 +376,9 @@ public class InventarioJdbcService {
 
     public InventoryItemDTO crearEquipo(String tipo, Map<String, Object> payload) throws Exception {
         validarTipoFormulario(tipo);
+        if (payload == null) {
+            payload = new LinkedHashMap<>();
+        }
         try (Connection conn = DatabaseService.getConnection()) {
             conn.setAutoCommit(false);
             try {
@@ -318,6 +387,8 @@ public class InventarioJdbcService {
                         "id_equipo", "tipo_equipo", "creado_en", "actualizado_en"
                 )));
                 Set<String> columnasHija = obtenerColumnasPermitidas(conn, schema, tablaHijaPorTipo(tipo), new HashSet<>(Arrays.asList("id_equipo")));
+                payload.remove("costo");
+                resolverRelacionesCatalogo(conn, payload);
 
                 Integer idEquipo = insertarEquipo(conn, tipo, payload, columnasEquipo);
                 insertarTablaHija(conn, tipo, idEquipo, payload, columnasHija);
@@ -392,6 +463,7 @@ public class InventarioJdbcService {
 
         item.setId(rs.getInt("id_equipo"));
         item.setTipo(tipo);
+        item.setSubtipo(valor(rs, "infraestructura_subtipo"));
         item.setCodigoSbai(valor(rs, "codigo_sbye"));
         item.setCodigoMegan(valor(rs, "codigo_megan"));
         item.setDescripcion(valor(rs, "descripcion"));
@@ -481,7 +553,15 @@ public class InventarioJdbcService {
                 }
             }
         }
+        agregarCamposRelacion(campos);
         return campos;
+    }
+
+    private void agregarCamposRelacion(List<Map<String, Object>> campos) {
+        campos.add(crearCampoMeta("custodio_nombre", "varchar", "YES", "custodio"));
+        campos.add(crearCampoMeta("ubicacion_edificio", "varchar", "YES", "ubicacion"));
+        campos.add(crearCampoMeta("ubicacion_piso", "varchar", "YES", "ubicacion"));
+        campos.add(crearCampoMeta("ubicacion_direccion", "varchar", "YES", "ubicacion"));
     }
 
     private List<Map<String, Object>> obtenerCamposTabla(Connection conn, String schema, String tabla, boolean excluirIdEquipo) throws Exception {
@@ -520,6 +600,87 @@ public class InventarioJdbcService {
             }
         }
         return columnas;
+    }
+
+    private void resolverRelacionesCatalogo(Connection conn, Map<String, Object> payload) throws Exception {
+        if (!payload.containsKey("id_custodio_actual")) {
+            String nombreCustodio = texto(payload.get("custodio_nombre"));
+            if (!nombreCustodio.isEmpty()) {
+                payload.put("id_custodio_actual", obtenerOCrearCustodio(conn, nombreCustodio));
+            }
+        }
+
+        if (!payload.containsKey("id_ubicacion")) {
+            String edificio = texto(payload.get("ubicacion_edificio"));
+            String piso = texto(payload.get("ubicacion_piso"));
+            String direccion = texto(payload.get("ubicacion_direccion"));
+            if (!edificio.isEmpty() || !piso.isEmpty() || !direccion.isEmpty()) {
+                payload.put("id_ubicacion", obtenerOCrearUbicacion(conn, edificio, piso, direccion));
+            }
+        }
+    }
+
+    private Integer obtenerOCrearCustodio(Connection conn, String nombre) throws Exception {
+        String select = "SELECT id_custodio FROM custodio WHERE LOWER(TRIM(nombre)) = LOWER(TRIM(?)) LIMIT 1";
+        try (PreparedStatement ps = conn.prepareStatement(select)) {
+            ps.setString(1, nombre);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt("id_custodio");
+                }
+            }
+        }
+
+        String insert = "INSERT INTO custodio (nombre, activo) VALUES (?, 1)";
+        try (PreparedStatement ps = conn.prepareStatement(insert, Statement.RETURN_GENERATED_KEYS)) {
+            ps.setString(1, nombre);
+            ps.executeUpdate();
+            try (ResultSet rs = ps.getGeneratedKeys()) {
+                if (rs.next()) {
+                    return rs.getInt(1);
+                }
+            }
+        }
+        throw new SQLException("No se pudo crear el custodio.");
+    }
+
+    private Integer obtenerOCrearUbicacion(Connection conn, String edificio, String piso, String direccion) throws Exception {
+        String select = "SELECT id_ubicacion FROM ubicacion " +
+                "WHERE COALESCE(LOWER(TRIM(edificio)), '') = LOWER(TRIM(?)) " +
+                "AND COALESCE(LOWER(TRIM(piso)), '') = LOWER(TRIM(?)) " +
+                "AND COALESCE(LOWER(TRIM(direccion)), '') = LOWER(TRIM(?)) LIMIT 1";
+        try (PreparedStatement ps = conn.prepareStatement(select)) {
+            ps.setString(1, edificio);
+            ps.setString(2, piso);
+            ps.setString(3, direccion);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt("id_ubicacion");
+                }
+            }
+        }
+
+        String insert = "INSERT INTO ubicacion (edificio, piso, direccion) VALUES (?, ?, ?)";
+        try (PreparedStatement ps = conn.prepareStatement(insert, Statement.RETURN_GENERATED_KEYS)) {
+            setNullableString(ps, 1, edificio);
+            setNullableString(ps, 2, piso);
+            setNullableString(ps, 3, direccion);
+            ps.executeUpdate();
+            try (ResultSet rs = ps.getGeneratedKeys()) {
+                if (rs.next()) {
+                    return rs.getInt(1);
+                }
+            }
+        }
+        throw new SQLException("No se pudo crear la ubicacion.");
+    }
+
+    private void setNullableString(PreparedStatement ps, int index, String value) throws Exception {
+        if (value == null || value.trim().isEmpty()) {
+            ps.setNull(index, Types.VARCHAR);
+            return;
+        }
+        ps.setString(index, value.trim());
     }
 
     private Integer insertarEquipo(Connection conn, String tipo, Map<String, Object> payload, Set<String> columnasEquipo) throws Exception {
@@ -748,11 +909,12 @@ public class InventarioJdbcService {
             case "codigo_sbye": return "Codigo SBYE";
             case "sn": return "Numero de serie";
             case "fecha_ingreso": return "Fecha de ingreso";
-            case "costo": return "Costo";
             case "ultima_actualizacion": return "Ultima actualizacion";
             case "ultimo_mantenimiento": return "Ultimo mantenimiento";
-            case "id_custodio_actual": return "Custodio actual (ID)";
-            case "id_ubicacion": return "Ubicacion (ID)";
+            case "custodio_nombre": return "Custodio actual";
+            case "ubicacion_edificio": return "Edificio";
+            case "ubicacion_piso": return "Piso";
+            case "ubicacion_direccion": return "Direccion / Area";
             case "tipo_periferico": return "Tipo de periferico";
             case "tipo_impresora": return "Tipo de impresora";
             case "codigo_anterior": return "Codigo anterior";
@@ -800,6 +962,10 @@ public class InventarioJdbcService {
     private String valor(ResultSet rs, String columna) throws Exception {
         String valor = rs.getString(columna);
         return valor != null ? valor.trim() : "";
+    }
+
+    private String texto(Object valor) {
+        return valor == null ? "" : String.valueOf(valor).trim();
     }
 
     private String coalesce(String... valores) {

@@ -581,6 +581,40 @@ textarea {
     flex: 1 1 220px;
 }
 
+.form-grid {
+    align-items: stretch;
+}
+
+.equipment-field-section {
+    flex: 1 1 100%;
+    padding: 16px;
+    border: 1px solid rgba(220, 231, 243, 0.9);
+    border-radius: 14px;
+    background: rgba(255, 255, 255, 0.76);
+}
+
+.equipment-field-section__header {
+    margin-bottom: 12px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid rgba(220, 231, 243, 0.9);
+}
+
+.equipment-field-section__header h3 {
+    margin: 0;
+    font-size: 15px;
+    color: #174372;
+}
+
+.equipment-field-section__grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 14px 16px;
+}
+
+.equipment-field-section__grid .field-group--wide {
+    grid-column: 1 / -1;
+}
+
 .field-group {
     display: grid;
     gap: 8px;

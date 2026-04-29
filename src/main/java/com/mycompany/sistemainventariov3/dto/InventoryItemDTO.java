@@ -7,6 +7,7 @@ public class InventoryItemDTO {
 
     private Integer id;
     private String tipo;
+    private String subtipo;
     private String codigoSbai;
     private String codigoMegan;
     private String descripcion;
@@ -38,6 +39,14 @@ public class InventoryItemDTO {
 
     public void setTipo(String tipo) {
         this.tipo = tipo;
+    }
+
+    public String getSubtipo() {
+        return subtipo;
+    }
+
+    public void setSubtipo(String subtipo) {
+        this.subtipo = subtipo;
     }
 
     public String getCodigoSbai() {

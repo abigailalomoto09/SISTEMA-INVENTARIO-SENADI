@@ -91,6 +91,37 @@ public class InventarioResource {
         }
     }
 
+    @GET
+    @Path("ubicaciones")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response listarUbicaciones(@QueryParam("q") String query, @QueryParam("limit") Integer limit) {
+        try {
+            validarAutenticacion();
+            List<Map<String, Object>> ubicaciones = inventarioJdbcService.obtenerUbicaciones(query, limit);
+            ApiResponse<List<Map<String, Object>>> response = ApiResponse.success("Ubicaciones obtenidas", ubicaciones);
+            return Response.ok(gson.toJson(response)).build();
+        } catch (Exception e) {
+            return errorInterno(e);
+        }
+    }
+
+    @GET
+    @Path("catalogos/{campo}")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response listarCatalogo(@PathParam("campo") String campo, @QueryParam("q") String query, @QueryParam("limit") Integer limit) {
+        try {
+            validarAutenticacion();
+            List<String> valores = inventarioJdbcService.obtenerValoresDistintos(campo, query, limit);
+            ApiResponse<List<String>> response = ApiResponse.success("Catalogo obtenido", valores);
+            return Response.ok(gson.toJson(response)).build();
+        } catch (IllegalArgumentException e) {
+            ApiResponse<?> resp = ApiResponse.error("VALIDATION_ERROR", e.getMessage());
+            return Response.status(Response.Status.BAD_REQUEST).entity(gson.toJson(resp)).build();
+        } catch (Exception e) {
+            return errorInterno(e);
+        }
+    }
+
     @PUT
     @Path("{id}/custodio")
     @Consumes(MediaType.APPLICATION_JSON)

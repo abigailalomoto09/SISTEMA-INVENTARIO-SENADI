@@ -88,7 +88,7 @@
     const NAV_ICONS = {
         dashboard: iconMarkup("dashboard"),
         inventario: iconMarkup("inventory"),
-        busqueda: iconMarkup("search"),
+        // busqueda: iconMarkup("search"),  // COMENTADO: redundante con filtros de inventario
         "nuevo-equipo": iconMarkup("plusBox")
     };
     const INVENTORY_AUTOCOMPLETE = {
@@ -110,6 +110,7 @@
         searchCriteria: [],
         searchResults: [],
         equipmentFieldCatalog: {},
+        exportSelection: null,
         sidebarOpen: false
     };
 
@@ -252,6 +253,13 @@
             redirectForRole(state.session);
             return;
         }
+        if (page === "busqueda") {
+            const target = role === "admin"
+                ? `${basePrefix}/pages/inventario.html`
+                : (role === "custodio" ? `${basePrefix}/pages/custodio/inventario.html` : `${basePrefix}/pages/usuario/inventario.html`);
+            window.location.href = target;
+            return;
+        }
         renderShell();
         bindShellEvents();
         await loadInitialData();
@@ -322,15 +330,18 @@
             ? [
                 ["dashboard", "Dashboard", `${basePrefix}/pages/dashboard.html`],
                 ["inventario", "Inventario", `${basePrefix}/pages/inventario.html`],
-                ["busqueda", "Búsqueda", `${basePrefix}/pages/busqueda.html`],
+                // COMENTADO: redundante con filtros del módulo de inventario
+                // ["busqueda", "Búsqueda", `${basePrefix}/pages/busqueda.html`],
                 ["nuevo-equipo", "Nuevo Equipo", `${basePrefix}/pages/nuevo-equipo.html`]
             ]
             : [
                 ["dashboard", "Dashboard", `${basePrefix}/pages/usuario/dashboard.html`],
                 ["inventario", "Inventario", `${basePrefix}/pages/usuario/inventario.html`],
-                ["busqueda", "Búsqueda", `${basePrefix}/pages/usuario/busqueda.html`]
+                // COMENTADO: redundante con filtros del módulo de inventario
+                // ["busqueda", "Búsqueda", `${basePrefix}/pages/usuario/busqueda.html`]
             ];
         return nav
+            .filter(([key]) => key !== "busqueda")
             .map(([key, label, href]) => `<a href="${href}" class="${key === page ? "is-active" : ""}"><span>•</span><span>${label}</span></a>`)
             .join("");
     }
@@ -400,14 +411,18 @@
         const cards = role === "admin"
             ? [
                 ["Inventario", "Filtra, revisa y exporta el inventario visible.", `${basePrefix}/pages/inventario.html`],
-                ["Búsqueda", "Aplica múltiples criterios sobre la data cargada.", `${basePrefix}/pages/busqueda.html`],
+                // COMENTADO: redundante con filtros del módulo de inventario
+                // ["Búsqueda", "Aplica múltiples criterios sobre la data cargada.", `${basePrefix}/pages/busqueda.html`],
                 ["Nuevo Equipo", "Formulario dinámico de registro simulado.", `${basePrefix}/pages/nuevo-equipo.html`]
             ]
             : [
                 ["Inventario", "Filtra, revisa y exporta el inventario visible.", `${basePrefix}/pages/usuario/inventario.html`],
-                ["Búsqueda", "Aplica múltiples criterios sobre la data cargada.", `${basePrefix}/pages/usuario/busqueda.html`]
+                // COMENTADO: redundante con filtros del módulo de inventario
+                // ["Búsqueda", "Aplica múltiples criterios sobre la data cargada.", `${basePrefix}/pages/usuario/busqueda.html`]
             ];
-        return cards.map(([title, text, href]) => `<a class="mini-card" href="${href}"><strong>${title}</strong><span>${text}</span></a>`);
+        return cards
+            .filter(([title]) => title !== "Búsqueda")
+            .map(([title, text, href]) => `<a class="mini-card" href="${href}"><strong>${title}</strong><span>${text}</span></a>`);
     }
 
     function renderInventoryPage() {
@@ -596,7 +611,13 @@
             bindInventoryEvents();
         }
         if (page === "busqueda") {
-            bindSearchEvents();
+            // COMENTADO: redundante con filtros del módulo de inventario
+            // return renderSearchPage();
+            return renderInventoryPage();
+        }
+        if (page === "busqueda") {
+            // COMENTADO: redundante con filtros del módulo de inventario
+            // bindSearchEvents();
         }
         if (page === "nuevo-equipo") {
             bindNewEquipmentEvents();
@@ -612,8 +633,9 @@
             renderInventory();
         }
         if (page === "busqueda") {
-            renderSearchTags();
-            renderSearchResults([]);
+            // COMENTADO: redundante con filtros del módulo de inventario
+            // renderSearchTags();
+            // renderSearchResults([]);
         }
         if (page === "nuevo-equipo") {
             renderDynamicFields(document.getElementById("equipmentCategory").value);
@@ -644,6 +666,7 @@
         return items.map((item) => ({
             id: item.id,
             tipo: item.tipo || "",
+            subtipo: item.subtipo || "",
             codigoSbai: item.codigoSbai || "",
             codigoMegan: item.codigoMegan || "",
             descripcion: item.descripcion || "",
@@ -734,6 +757,16 @@
         sortInventory(state.inventorySort.key, false);
     }
 
+    function changePage(delta) {
+        const totalPages = Math.max(1, Math.ceil(state.filteredInventory.length / PAGE_SIZE));
+        const nextPage = Math.min(totalPages, Math.max(1, state.inventoryPage + delta));
+        if (nextPage === state.inventoryPage) {
+            return;
+        }
+        state.inventoryPage = nextPage;
+        renderInventory();
+    }
+
     function clearInventoryFilters() {
         inventoryFilterIds().forEach((id) => {
             const element = document.getElementById(id);
@@ -792,7 +825,7 @@
                 <td>${escapeHtml(item.codigoSbai || "-")}</td>
                 <td>${escapeHtml(item.codigoMegan || "-")}</td>
                 <td>${escapeHtml(item.descripcion || "-")}</td>
-                <td>${escapeHtml(typeLabel(item.tipo))}</td>
+                <td>${escapeHtml(displayInventoryType(item))}</td>
                 <td>${escapeHtml(item.marca || "-")}</td>
                 <td>${escapeHtml(item.modelo || "-")}</td>
                 <td>${escapeHtml(item.numeroSerie || "-")}</td>
@@ -807,7 +840,7 @@
     function renderMobileInventoryCard(item) {
         return `
             <article class="mobile-card">
-                <strong>${escapeHtml(item.codigoSbai || "-")} · ${escapeHtml(typeLabel(item.tipo))}</strong>
+                <strong>${escapeHtml(item.codigoSbai || "-")} · ${escapeHtml(displayInventoryType(item))}</strong>
                 <span>Megan: ${escapeHtml(item.codigoMegan || "-")}</span>
                 <span>Descripción: ${escapeHtml(item.descripcion || "-")}</span>
                 <span>Marca / Modelo: ${escapeHtml(item.marca || "-")} ${escapeHtml(item.modelo || "")}</span>
@@ -830,7 +863,7 @@
             item.codigoSbai,
             item.codigoMegan,
             item.descripcion,
-            typeLabel(item.tipo),
+            displayInventoryType(item),
             item.marca,
             item.modelo,
             item.numeroSerie,
@@ -895,7 +928,7 @@
                                     <td>${escapeHtml(item.codigoSbai || "-")}</td>
                                     <td>${escapeHtml(item.codigoMegan || "-")}</td>
                                     <td>${escapeHtml(item.descripcion || "-")}</td>
-                                    <td>${escapeHtml(typeLabel(item.tipo))}</td>
+                                    <td>${escapeHtml(displayInventoryType(item))}</td>
                                     <td>${escapeHtml(item.marca || "-")}</td>
                                     <td>${escapeHtml(item.modelo || "-")}</td>
                                     <td>${escapeHtml(item.custodio || "-")}</td>
@@ -1125,6 +1158,12 @@
         return TYPE_CONFIG[type]?.label || type || "-";
     }
 
+    function displayInventoryType(item) {
+        const base = typeLabel(item?.tipo);
+        const subtipo = String(item?.subtipo || "").trim();
+        return item?.tipo === "infraestructura" && subtipo ? `${base} - ${subtipo}` : base;
+    }
+
     function normalizeState(value) {
         const normalized = String(value || "").trim().toUpperCase();
         if (VALID_STATES.includes(normalized)) {
@@ -1157,7 +1196,7 @@
             procesador: "Detalle",
             caracteristicas: "Características",
             observacion: "Observaciones",
-            sistemaOperativo: "Sistema Operativo",
+            sistemaOperativo: "SO",
             ram: "RAM",
             discoDuro: "Disco Duro",
             linea: "Línea",
@@ -1300,13 +1339,15 @@
             ? [
                 ["dashboard", "Dashboard", `${basePrefix}/pages/dashboard.html`],
                 ["inventario", "Inventario", `${basePrefix}/pages/inventario.html`],
-                ["busqueda", "Búsqueda", `${basePrefix}/pages/busqueda.html`],
+                // COMENTADO: redundante con filtros del módulo de inventario
+                // ["busqueda", "Búsqueda", `${basePrefix}/pages/busqueda.html`],
                 ["nuevo-equipo", "Nuevo Equipo", `${basePrefix}/pages/nuevo-equipo.html`]
             ]
             : [
                 ["dashboard", "Dashboard", `${basePrefix}/pages/usuario/dashboard.html`],
                 ["inventario", "Inventario", `${basePrefix}/pages/usuario/inventario.html`],
-                ["busqueda", "Búsqueda", `${basePrefix}/pages/usuario/busqueda.html`]
+                // COMENTADO: redundante con filtros del módulo de inventario
+                // ["busqueda", "Búsqueda", `${basePrefix}/pages/usuario/busqueda.html`]
             ];
         return nav
             .map(([key, label, href]) => `
@@ -1361,6 +1402,7 @@
                         <p>Los filtros del módulo muestran coincidencias mientras escribes y siguen permitiendo ingreso manual libre.</p>
                     </div>
                 </article>
+                <!--
                 <article class="spotlight-card">
                     <span class="spotlight-card__icon">${iconMarkup("search")}</span>
                     <div>
@@ -1368,6 +1410,7 @@
                         <p>Combina criterios y revisa rápidamente custodios, ubicaciones, marcas y estados.</p>
                     </div>
                 </article>
+                -->
             </section>
             <div class="section-heading">
                 <div>
@@ -1383,14 +1426,18 @@
         const cards = role === "admin"
             ? [
                 ["Inventario", "Filtra, revisa y exporta el inventario visible.", `${basePrefix}/pages/inventario.html`, "inventory"],
-                ["Búsqueda", "Aplica múltiples criterios sobre la data cargada.", `${basePrefix}/pages/busqueda.html`, "search"],
+                // COMENTADO: redundante con filtros del módulo de inventario
+                // ["Búsqueda", "Aplica múltiples criterios sobre la data cargada.", `${basePrefix}/pages/busqueda.html`, "search"],
                 ["Nuevo Equipo", "Completa el formulario guiado por categoría.", `${basePrefix}/pages/nuevo-equipo.html`, "plusBox"]
             ]
             : [
                 ["Inventario", "Filtra, revisa y exporta el inventario visible.", `${basePrefix}/pages/usuario/inventario.html`, "inventory"],
-                ["Búsqueda", "Aplica múltiples criterios sobre la data cargada.", `${basePrefix}/pages/usuario/busqueda.html`, "search"]
+                // COMENTADO: redundante con filtros del módulo de inventario
+                // ["Búsqueda", "Aplica múltiples criterios sobre la data cargada.", `${basePrefix}/pages/usuario/busqueda.html`, "search"]
             ];
-        return cards.map(([title, text, href, icon]) => `
+        return cards
+            .filter(([title]) => title !== "Búsqueda")
+            .map(([title, text, href, icon]) => `
             <a class="mini-card mini-card--action" href="${href}">
                 <span class="mini-card__icon" aria-hidden="true">${iconMarkup(icon)}</span>
                 <strong>${title}</strong>
@@ -1612,7 +1659,7 @@
             procesador: "Detalle",
             caracteristicas: "Características",
             observacion: "Observaciones",
-            sistemaOperativo: "Sistema Operativo",
+            sistemaOperativo: "SO",
             ram: "RAM",
             discoDuro: "Disco Duro",
             linea: "Línea",
@@ -1860,7 +1907,8 @@
             return;
         }
         const fields = Array.isArray(categoryConfig.fields) ? categoryConfig.fields : [];
-        container.innerHTML = fields.map((field) => renderDynamicDbField(field)).join("");
+        container.innerHTML = renderDynamicDbFieldGroups(fields);
+        setupNewEquipmentAutocompletes();
         hint.textContent = categoryConfig.hint || "";
         summary.innerHTML = `
             <article class="report-history__item">
@@ -1876,38 +1924,276 @@
 
     function renderDynamicDbField(field) {
         const name = field.name;
-        const label = field.label || name;
+        const label = displayDbFieldLabel(field);
         const required = field.required ? "required" : "";
+        const autocompleteCatalog = autocompleteCatalogForField(name);
         if (field.inputType === "textarea") {
-            return `<label class="field-group"><span>${escapeHtml(label)}</span><textarea name="${escapeHtml(name)}" ${required}></textarea></label>`;
+            return `<label class="field-group field-group--wide"><span>${escapeHtml(label)}</span><textarea name="${escapeHtml(name)}" ${required}></textarea></label>`;
         }
         if (name === "estado" || field.inputType === "select") {
             return `<label class="field-group"><span>${escapeHtml(label)}</span><select name="${escapeHtml(name)}" ${required}>${VALID_STATES.map((item) => `<option value="${item}">${item}</option>`).join("")}</select></label>`;
         }
         const htmlType = field.inputType === "number" ? "number" : (field.inputType === "date" ? "date" : "text");
+        if (autocompleteCatalog) {
+            const listId = `new_${name}_list`;
+            return `<label class="field-group"><span>${escapeHtml(label)}</span><input type="${htmlType}" name="${escapeHtml(name)}" list="${listId}" autocomplete="off" data-catalog="${autocompleteCatalog}" ${required}><datalist id="${listId}"></datalist></label>`;
+        }
         return `<label class="field-group"><span>${escapeHtml(label)}</span><input type="${htmlType}" name="${escapeHtml(name)}" ${required}></label>`;
     }
 
-    function exportInventoryToExcel() {
+    function displayDbFieldLabel(field) {
+        const name = String(field?.name || "").trim();
+        const label = String(field?.label || name).trim();
+        const normalizedName = name.toLowerCase();
+        const normalizedLabel = label.toLowerCase();
+        if (normalizedName === "ram" || normalizedLabel === "ram") {
+            return "RAM";
+        }
+        if (normalizedName === "so" || normalizedLabel === "so") {
+            return "SO";
+        }
+        if (normalizedName === "ip" || normalizedLabel === "ip") {
+            return "IP";
+        }
+        return label || name;
+    }
+
+    function renderDynamicDbFieldGroups(fields) {
+        const groups = groupDynamicDbFields(fields);
+        return groups.map((group) => `
+            <section class="equipment-field-section">
+                <div class="equipment-field-section__header">
+                    <h3>${escapeHtml(group.title)}</h3>
+                </div>
+                <div class="equipment-field-section__grid">
+                    ${group.fields.map((field) => renderDynamicDbField(field)).join("")}
+                </div>
+            </section>
+        `).join("");
+    }
+
+    function groupDynamicDbFields(fields) {
+        const groupDefinitions = [
+            { title: "Identificacion", names: ["codigo_megan", "codigo_sbye", "codigo_anterior", "descripcion", "marca", "modelo", "sn", "serie", "numero_serie", "estado", "costo"] },
+            { title: "Custodio y ubicacion", names: ["custodio_nombre", "id_custodio_actual", "anterior_custodio", "id_ubicacion", "ubicacion_edificio", "ubicacion_piso", "ubicacion_direccion"] },
+            { title: "Caracteristicas tecnicas", names: ["procesador", "ram", "disco_duro", "so", "ip", "mac", "tipo_periferico", "tipo_impresora", "resolucion", "conexion", "tecnologia", "compatibilidad", "lumenes", "subtipo", "megas"] },
+            { title: "Fechas", names: ["fecha_ingreso", "ultima_actualizacion", "ultimo_mantenimiento"] },
+            { title: "Contrato y servicio", names: ["numero_contrato", "numero_servicio", "plan_comercial", "estado_servicio"] },
+            { title: "Observaciones", names: ["caracteristicas", "anotaciones", "observacion", "observaciones"] }
+        ];
+        const groups = groupDefinitions.map((definition) => ({ title: definition.title, names: definition.names, fields: [] }));
+        const extraGroup = { title: "Datos adicionales", names: [], fields: [] };
+
+        fields.forEach((field) => {
+            const name = String(field.name || "").toLowerCase();
+            const group = groups.find((item) => item.names.includes(name)) || extraGroup;
+            group.fields.push(field);
+        });
+
+        return groups.concat(extraGroup).filter((group) => group.fields.length);
+    }
+
+    function autocompleteCatalogForField(name) {
+        if (name === "marca" || name === "modelo") {
+            return name;
+        }
+        if (name === "custodio_nombre") {
+            return "custodios";
+        }
+        if (name === "ubicacion_edificio" || name === "ubicacion_piso" || name === "ubicacion_direccion") {
+            return "ubicaciones";
+        }
+        return "";
+    }
+
+    function setupNewEquipmentAutocompletes() {
+        document.querySelectorAll("#dynamicEquipmentFields [data-catalog]").forEach((input) => {
+            const load = debounce(() => loadNewEquipmentSuggestions(input), 220);
+            input.addEventListener("input", load);
+            loadNewEquipmentSuggestions(input);
+        });
+    }
+
+    function debounce(callback, delay) {
+        let timerId;
+        return (...args) => {
+            window.clearTimeout(timerId);
+            timerId = window.setTimeout(() => callback(...args), delay);
+        };
+    }
+
+    async function loadNewEquipmentSuggestions(input) {
+        const catalog = input.dataset.catalog;
+        const term = input.value.trim();
+        const params = new URLSearchParams();
+        if (term) {
+            params.set("q", term);
+        }
+        params.set("limit", "80");
+
+        try {
+            let values = [];
+            if (catalog === "marca" || catalog === "modelo") {
+                values = await fetchCatalogStrings(`/inventario/catalogos/${catalog}?${params.toString()}`);
+            } else if (catalog === "custodios") {
+                const rows = await fetchCatalogObjects(`/inventario/custodios?${params.toString()}`);
+                values = rows.map((item) => item.nombre).filter(Boolean);
+            } else if (catalog === "ubicaciones") {
+                const rows = await fetchCatalogObjects(`/inventario/ubicaciones?${params.toString()}`);
+                const key = input.name.replace("ubicacion_", "");
+                values = rows.map((item) => item[key]).filter(Boolean);
+            }
+            fillInputDatalist(input, values);
+        } catch (error) {
+            fillInputDatalist(input, []);
+        }
+    }
+
+    async function fetchCatalogStrings(path) {
+        const response = await apiFetch(path);
+        const payload = await response.json();
+        if (!response.ok || !payload.success) {
+            throw new Error(payload.message || "Catalogo no disponible.");
+        }
+        return Array.isArray(payload.data) ? payload.data : [];
+    }
+
+    async function fetchCatalogObjects(path) {
+        const response = await apiFetch(path);
+        const payload = await response.json();
+        if (!response.ok || !payload.success) {
+            throw new Error(payload.message || "Catalogo no disponible.");
+        }
+        return Array.isArray(payload.data) ? payload.data : [];
+    }
+
+    function fillInputDatalist(input, values) {
+        const listId = input.getAttribute("list");
+        const list = listId ? document.getElementById(listId) : null;
+        if (!list) {
+            return;
+        }
+        const unique = Array.from(new Set(values.map((value) => String(value || "").trim()).filter(Boolean))).slice(0, 80);
+        list.innerHTML = unique.map((value) => `<option value="${escapeHtml(value)}"></option>`).join("");
+    }
+
+    const INVENTORY_EXPORT_COLUMNS = [
+        { key: "codigoSbai", label: "Codigo SBYE", weight: 1.1 },
+        { key: "codigoMegan", label: "Codigo Megan", weight: 1.1 },
+        { key: "descripcion", label: "Descripcion", weight: 3.2 },
+        { key: "tipo", label: "Tipo", weight: 1.2 },
+        { key: "marca", label: "Marca", weight: 1.2 },
+        { key: "modelo", label: "Modelo", weight: 1.6 },
+        { key: "numeroSerie", label: "Numero de serie", weight: 1.6 },
+        { key: "custodio", label: "Custodio", weight: 2.0 },
+        { key: "ubicacion", label: "Ubicacion", weight: 2.2 },
+        { key: "detalle", label: "Detalle", weight: 2.4 },
+        { key: "estado", label: "Estado", weight: 1.4 },
+        { key: "ip", label: "IP", weight: 1.0 },
+        { key: "observacion", label: "Observaciones", weight: 2.0 }
+    ];
+
+    function openExportDialog(format) {
         const rows = state.filteredInventory;
         if (!rows.length) {
             showToast("Sin datos", "No hay resultados filtrados para exportar.", "info");
             return;
         }
-        const header = ["Codigo SBYE", "Codigo Megan", "Descripcion", "Tipo", "Marca", "Modelo", "Serie", "Custodio", "Ubicacion", "Detalle", "Estado"];
-        const bodyRows = rows.map((item) => [
-            item.codigoSbai,
-            item.codigoMegan,
-            item.descripcion,
-            typeLabel(item.tipo),
-            item.marca,
-            item.modelo,
-            item.numeroSerie,
-            item.custodio,
-            item.ubicacion,
-            item.procesador || item.caracteristicas,
-            item.estado
-        ]);
+
+        const selected = new Set((state.exportSelection?.keys || INVENTORY_EXPORT_COLUMNS.map((col) => col.key)));
+        const isPdf = format === "pdf";
+        const title = isPdf ? "Exportar PDF" : "Exportar Excel";
+
+        openModal(
+            title,
+            `
+                <div class="field-group">
+                    <label>Campos a exportar</label>
+                    <div class="toolbar" style="margin-top:8px;">
+                        <button class="btn btn-secondary" type="button" id="exportSelectAll">Todos</button>
+                        <button class="btn btn-secondary" type="button" id="exportSelectNone">Ninguno</button>
+                    </div>
+                    <div style="margin-top:10px; max-height: 260px; overflow:auto; border:1px solid rgba(22,50,79,0.15); padding:10px; border-radius:6px;">
+                        ${INVENTORY_EXPORT_COLUMNS.map((col) => `
+                            <label style="display:flex; align-items:center; gap:10px; padding:6px 2px;">
+                                <input type="checkbox" data-export-col="${escapeHtml(col.key)}" ${selected.has(col.key) ? "checked" : ""}>
+                                <span>${escapeHtml(col.label)}</span>
+                            </label>
+                        `).join("")}
+                    </div>
+                    <small class="helper-text">Se exportan solo los registros filtrados actualmente.</small>
+                </div>
+            `,
+            [
+                { label: "Cancelar", className: "btn btn-secondary", onClick: closeModal },
+                {
+                    label: "Exportar",
+                    className: "btn btn-primary",
+                    onClick: () => {
+                        const keys = readSelectedExportKeys();
+                        state.exportSelection = { keys };
+                        if (!keys.length) {
+                            showToast("Seleccione campos", "Debe seleccionar al menos un campo para exportar.", "info");
+                            return;
+                        }
+                        closeModal();
+                        if (isPdf) {
+                            exportInventoryToPdf(keys);
+                        } else {
+                            exportInventoryToExcel(keys);
+                        }
+                    }
+                }
+            ]
+        );
+
+        document.getElementById("exportSelectAll")?.addEventListener("click", () => {
+            setAllExportCheckboxes(true);
+        });
+        document.getElementById("exportSelectNone")?.addEventListener("click", () => {
+            setAllExportCheckboxes(false);
+        });
+    }
+
+    function setAllExportCheckboxes(checked) {
+        document.querySelectorAll("[data-export-col]").forEach((input) => {
+            input.checked = Boolean(checked);
+        });
+    }
+
+    function readSelectedExportKeys() {
+        return Array.from(document.querySelectorAll("[data-export-col]"))
+            .filter((input) => input.checked)
+            .map((input) => input.dataset.exportCol)
+            .filter(Boolean);
+    }
+
+    function inventoryExportValue(item, key) {
+        if (key === "tipo") {
+            return displayInventoryType(item);
+        }
+        if (key === "detalle") {
+            return item.procesador || item.caracteristicas || "";
+        }
+        if (key === "ip") {
+            return item.raw?.ip || item.ip || "";
+        }
+        if (key === "observacion") {
+            return item.raw?.observacion || item.observacion || "";
+        }
+        return item[key] || "";
+    }
+
+    function exportInventoryToExcel(keys) {
+        const rows = state.filteredInventory;
+        if (!rows.length) {
+            showToast("Sin datos", "No hay resultados filtrados para exportar.", "info");
+            return;
+        }
+
+        const cols = INVENTORY_EXPORT_COLUMNS.filter((col) => keys.includes(col.key));
+        const header = cols.map((col) => col.label);
+        const bodyRows = rows.map((item) => cols.map((col) => inventoryExportValue(item, col.key)));
         const generatedAt = new Date().toLocaleString("es-EC");
         const documentHtml = `
             <html>
@@ -1916,7 +2202,7 @@
                     <style>
                         body { font-family: Calibri, Arial, sans-serif; color: #16324f; margin: 24px; }
                         .sheet-header { margin-bottom: 18px; }
-                        .sheet-header h1 { margin: 0 0 4px; font-size: 24px; }
+                        .sheet-header h1 { margin: 0 0 4px; font-size: 22px; }
                         .sheet-header p { margin: 2px 0; font-size: 12px; color: #4d6480; }
                         table { width: 100%; border-collapse: collapse; }
                         th { background: #d9e8f6; color: #16324f; font-weight: 700; border: 1px solid #9eb6ce; padding: 9px 8px; text-align: left; }
@@ -1926,7 +2212,7 @@
                 </head>
                 <body>
                     <div class="sheet-header">
-                        <h1>Reporte de Inventario Institucional</h1>
+                        <h1>Reporte de Inventario Filtrado</h1>
                         <p>Sistema de Inventario DTIC</p>
                         <p>Fecha de emision: ${escapeHtml(generatedAt)}</p>
                         <p>Total exportado: ${rows.length}</p>
@@ -1940,81 +2226,290 @@
         downloadBlob(new Blob([`\ufeff${documentHtml}`], { type: "application/vnd.ms-excel" }), `reporte_inventario_${timestampForFile()}.xls`);
     }
 
-    function exportInventoryToPdf() {
+    function exportInventoryToPdf(keys) {
         const rows = state.filteredInventory;
         if (!rows.length) {
             showToast("Sin datos", "No hay resultados filtrados para exportar.", "info");
             return;
         }
-        downloadBlob(buildInventoryPdfBlob(rows), `reporte_inventario_${timestampForFile()}.pdf`);
+        downloadBlob(buildInventoryPdfBlob(rows, keys), `reporte_inventario_${timestampForFile()}.pdf`);
     }
 
-    function buildInventoryPdfBlob(rows) {
+    function buildInventoryPdfBlob(rows, keys) {
         const pageWidth = 842;
         const pageHeight = 595;
-        const margin = 36;
-        const columns = [
-            { key: "codigoSbai", title: "SBYE", x: 36, width: 70 },
-            { key: "codigoMegan", title: "MEGAN", x: 108, width: 70 },
-            { key: "descripcion", title: "DESCRIPCION", x: 180, width: 210 },
-            { key: "tipo", title: "TIPO", x: 392, width: 80 },
-            { key: "custodio", title: "CUSTODIO", x: 474, width: 150 },
-            { key: "estado", title: "ESTADO", x: 626, width: 110 },
-            { key: "ubicacion", title: "UBICACION", x: 738, width: 68 }
-        ];
-        const rowsPerPage = 24;
+        const margin = 28;
+        const headerHeight = 64;
+        const footerHeight = 22;
+        const tableTop = pageHeight - headerHeight;
+        const tableBottom = margin + footerHeight;
+        const availableWidth = pageWidth - margin * 2;
+
+        const cols = INVENTORY_EXPORT_COLUMNS.filter((col) => keys.includes(col.key));
+        const totalWeight = cols.reduce((sum, col) => sum + (col.weight || 1), 0) || 1;
+
+        const columns = cols.map((col, idx) => {
+            const width = Math.max(48, Math.floor(availableWidth * ((col.weight || 1) / totalWeight)));
+            const x = margin + cols.slice(0, idx).reduce((sum, prev) => sum + Math.max(48, Math.floor(availableWidth * ((prev.weight || 1) / totalWeight))), 0);
+            return { key: col.key, title: col.label.toUpperCase(), x, width };
+        });
+
+        // Ajuste final de la ultima columna para cubrir el total.
+        if (columns.length) {
+            const used = columns[columns.length - 1].x - margin + columns[columns.length - 1].width;
+            const diff = availableWidth - used;
+            columns[columns.length - 1].width += diff;
+        }
+
         const objects = [];
         const pageRefs = [];
+        const fontId = addObject("<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>");
+        const fontBoldId = addObject("<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold >>");
 
         function addObject(content) {
             objects.push(content);
             return objects.length;
         }
 
-        const fontId = addObject("<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>");
-        const fontBoldId = addObject("<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold >>");
+        function lineCapacity(width, fontSize) {
+            // Aproximacion conservadora: Helvetica ~0.5*fontSize por caracter.
+            return Math.max(6, Math.floor(width / (fontSize * 0.52)));
+        }
 
-        for (let start = 0; start < rows.length; start += rowsPerPage) {
-            const pageRows = rows.slice(start, start + rowsPerPage);
+        function wrapLines(value, maxChars) {
+            const clean = String(value || "-").replace(/\s+/g, " ").trim();
+            if (!clean) {
+                return ["-"];
+            }
+            if (clean.length <= maxChars) {
+                return [clean];
+            }
+            const words = clean.split(" ");
+            const lines = [];
+            let current = "";
+            for (const word of words) {
+                if (!current) {
+                    current = word;
+                    continue;
+                }
+                if ((current + " " + word).length <= maxChars) {
+                    current += " " + word;
+                    continue;
+                }
+                lines.push(current);
+                current = word;
+            }
+            if (current) {
+                lines.push(current);
+            }
+            // Hard-wrap para palabras extremadamente largas
+            const finalLines = [];
+            for (const line of lines) {
+                if (line.length <= maxChars) {
+                    finalLines.push(line);
+                    continue;
+                }
+                for (let i = 0; i < line.length; i += maxChars) {
+                    finalLines.push(line.slice(i, i + maxChars));
+                }
+            }
+            return finalLines;
+        }
+
+        function drawText(content, fontRef, fontSize, x, y, text) {
+            content.push(`BT /${fontRef} ${fontSize} Tf ${x} ${y} Td (${escapePdfText(text)}) Tj ET`);
+        }
+
+        function renderPage(pageRows, pageIndex, totalPages) {
             const content = [];
-            content.push("0.2 w");
-            content.push(`${margin} ${pageHeight - 42} ${pageWidth - margin * 2} 24 re S`);
-            content.push("BT /F2 16 Tf 40 565 Td (Reporte de Inventario Institucional) Tj ET");
-            content.push(`BT /F1 9 Tf 40 548 Td (Emitido: ${escapePdfText(new Date().toLocaleString("es-EC"))}) Tj ET`);
-            content.push(`BT /F1 9 Tf 260 548 Td (Total exportado: ${rows.length}) Tj ET`);
-            let currentY = 520;
-            content.push(`${margin} ${currentY - 14} ${pageWidth - margin * 2} 18 re f`);
+            // Header
             content.push("0 g");
-            columns.forEach((column) => {
-                content.push(`BT /F2 8 Tf ${column.x} ${currentY - 2} Td (${escapePdfText(column.title)}) Tj ET`);
+            drawText(content, "F2", 16, margin, pageHeight - 34, "Reporte de Inventario Filtrado");
+            drawText(content, "F1", 9, margin, pageHeight - 50, `Emitido: ${escapePdfText(new Date().toLocaleString("es-EC"))}`);
+            drawText(content, "F1", 9, margin + 240, pageHeight - 50, `Total: ${rows.length}`);
+            drawText(content, "F1", 9, pageWidth - margin - 110, pageHeight - 50, `Pagina ${pageIndex}/${totalPages}`);
+
+            // Table header background
+            const headerY = tableTop - 18;
+            content.push("0.90 0.94 0.98 rg");
+            content.push(`${margin} ${headerY - 6} ${pageWidth - margin * 2} 18 re f`);
+            content.push("0 g");
+            columns.forEach((col) => {
+                drawText(content, "F2", 7.8, col.x + 2, headerY, col.title);
             });
-            currentY -= 24;
-            pageRows.forEach((item, index) => {
-                const rowY = currentY - (index * 18);
-                if (index % 2 === 0) {
-                    content.push("0.96 0.98 1 rg");
-                    content.push(`${margin} ${rowY - 11} ${pageWidth - margin * 2} 16 re f`);
+
+            // Row rendering with wrapping (no truncation)
+            let cursorY = headerY - 16;
+            const fontSize = 7.2;
+            const lineHeight = 9;
+            const cellPadding = 2;
+
+            for (let i = 0; i < pageRows.length; i += 1) {
+                const item = pageRows[i];
+                const wrapped = columns.map((col) => {
+                    const raw = inventoryExportValue(item, col.key);
+                    const cap = lineCapacity(col.width - cellPadding * 2, fontSize);
+                    return wrapLines(raw || "-", cap);
+                });
+                const maxLines = Math.max(1, ...wrapped.map((lines) => lines.length));
+                const rowHeight = Math.max(14, (maxLines * lineHeight) + 4);
+
+                if (cursorY - rowHeight < tableBottom) {
+                    break;
+                }
+
+                if (i % 2 === 0) {
+                    content.push("0.97 0.98 1 rg");
+                    content.push(`${margin} ${cursorY - rowHeight + 3} ${pageWidth - margin * 2} ${rowHeight} re f`);
                     content.push("0 g");
                 }
-                columns.forEach((column) => {
-                    const rawValue = column.key === "tipo" ? typeLabel(item[column.key]) : (item[column.key] || "");
-                    const finalValue = fitPdfText(String(rawValue || "-"), Math.max(8, Math.floor(column.width / 4.9)));
-                    content.push(`BT /F1 7 Tf ${column.x} ${rowY} Td (${escapePdfText(finalValue)}) Tj ET`);
+
+                columns.forEach((col, colIndex) => {
+                    const lines = wrapped[colIndex];
+                    for (let lineIndex = 0; lineIndex < lines.length; lineIndex += 1) {
+                        drawText(
+                            content,
+                            "F1",
+                            fontSize,
+                            col.x + cellPadding,
+                            cursorY - (lineIndex * lineHeight),
+                            lines[lineIndex]
+                        );
+                    }
                 });
+
+                // Grid lines
+                content.push("0.15 w");
+                content.push(`${margin} ${cursorY - rowHeight + 3} ${pageWidth - margin * 2} ${rowHeight} re S`);
+                columns.forEach((col) => {
+                    content.push(`${col.x} ${cursorY - rowHeight + 3} 0 ${rowHeight} re S`);
+                });
+                cursorY -= rowHeight;
+            }
+
+            return content.join("\n");
+        }
+
+        // Paginacion real con wrapping (sin truncar)
+        const fontSize = 7.2;
+        const lineHeight = 9;
+        const cellPadding = 2;
+        const headerY = tableTop - 18;
+        const startY = headerY - 16;
+
+        const preparedRows = rows.map((item) => {
+            const wrapped = columns.map((col) => {
+                const raw = inventoryExportValue(item, col.key);
+                const cap = lineCapacity(col.width - cellPadding * 2, fontSize);
+                return wrapLines(raw || "-", cap);
             });
+            const maxLines = Math.max(1, ...wrapped.map((lines) => lines.length));
+            const rowHeight = Math.max(14, (maxLines * lineHeight) + 4);
+            return { item, wrapped, rowHeight };
+        });
+
+        const realizedPages2 = [];
+        let cursor = 0;
+        while (cursor < preparedRows.length) {
+            let y = startY;
+            const page = [];
+            while (cursor < preparedRows.length) {
+                const next = preparedRows[cursor];
+                if (y - next.rowHeight < tableBottom) {
+                    break;
+                }
+                page.push(next);
+                y -= next.rowHeight;
+                cursor += 1;
+            }
+            if (!page.length) {
+                page.push(preparedRows[cursor]);
+                cursor += 1;
+            }
+            realizedPages2.push(page);
+        }
+
+        // Render final: recalcula cortando por espacio disponible real
+        if (false) {
+        const realizedPages = [];
+        let index = 0;
+        while (index < rows.length) {
+            let end = Math.min(rows.length, index + 20);
+            while (end > index + 1) {
+                const attempt = rows.slice(index, end);
+                const streamText = renderPage(attempt, 1, 1);
+                // Si el stream no incluye cortes, se asume OK (el corte real lo hace por bottom).
+                // Ajuste: renderPage se detiene por bottom sin señal, asi que medimos con un truco:
+                // contamos cuantas filas entraron buscando "re S" de cada fila (aprox).
+                const renderedRows = (streamText.match(/ re S/g) || []).length;
+                // Header agrega 1 rect; cada fila agrega 1 rect, entonces filas ~= renderedRows-1.
+                const rowsFit = Math.max(0, renderedRows - 1);
+                if (rowsFit >= attempt.length) {
+                    break;
+                }
+                end = index + rowsFit;
+            }
+            if (end <= index) {
+                end = index + 1;
+            }
+            realizedPages.push(rows.slice(index, end));
+            index = end;
+        }
+
+        }
+        const totalPages = realizedPages2.length || 1;
+        realizedPages2.forEach((pageRows, pageIdx) => {
+            const content = [];
+            content.push("0 g");
+            drawText(content, "F2", 16, margin, pageHeight - 34, "Reporte de Inventario Filtrado");
+            drawText(content, "F1", 9, margin, pageHeight - 50, `Emitido: ${escapePdfText(new Date().toLocaleString("es-EC"))}`);
+            drawText(content, "F1", 9, margin + 240, pageHeight - 50, `Total: ${rows.length}`);
+            drawText(content, "F1", 9, pageWidth - margin - 110, pageHeight - 50, `Pagina ${pageIdx + 1}/${totalPages}`);
+
+            content.push("0.90 0.94 0.98 rg");
+            content.push(`${margin} ${headerY - 6} ${pageWidth - margin * 2} 18 re f`);
+            content.push("0 g");
+            columns.forEach((col) => {
+                drawText(content, "F2", 7.8, col.x + 2, headerY, col.title);
+            });
+
+            let cursorY = startY;
+            pageRows.forEach((row, stripeIndex) => {
+                if (stripeIndex % 2 === 0) {
+                    content.push("0.97 0.98 1 rg");
+                    content.push(`${margin} ${cursorY - row.rowHeight + 3} ${pageWidth - margin * 2} ${row.rowHeight} re f`);
+                    content.push("0 g");
+                }
+
+                columns.forEach((col, colIndex) => {
+                    const lines = row.wrapped[colIndex];
+                    for (let lineIndex = 0; lineIndex < lines.length; lineIndex += 1) {
+                        drawText(content, "F1", fontSize, col.x + cellPadding, cursorY - (lineIndex * lineHeight), lines[lineIndex]);
+                    }
+                });
+
+                content.push("0.15 w");
+                content.push(`${margin} ${cursorY - row.rowHeight + 3} ${pageWidth - margin * 2} ${row.rowHeight} re S`);
+                columns.forEach((col) => {
+                    content.push(`${col.x} ${cursorY - row.rowHeight + 3} 0 ${row.rowHeight} re S`);
+                });
+                cursorY -= row.rowHeight;
+            });
+
             const stream = content.join("\n");
             const streamId = addObject(`<< /Length ${stream.length} >>\nstream\n${stream}\nendstream`);
             const pageId = addObject(`<< /Type /Page /Parent PAGES_REF 0 R /MediaBox [0 0 ${pageWidth} ${pageHeight}] /Contents ${streamId} 0 R /Resources << /Font << /F1 ${fontId} 0 R /F2 ${fontBoldId} 0 R >> >> >>`);
             pageRefs.push(pageId);
-        }
+        });
 
         const pagesId = addObject(`<< /Type /Pages /Count ${pageRefs.length} /Kids [${pageRefs.map((id) => `${id} 0 R`).join(" ")}] >>`);
         const catalogId = addObject(`<< /Type /Catalog /Pages ${pagesId} 0 R >>`);
 
-        const normalizedObjects = objects.map((object, index) => {
-            const objectId = index + 1;
+        const normalizedObjects = objects.map((object, idx) => {
+            const objectId = idx + 1;
             return `${objectId} 0 obj\n${object.replace(/PAGES_REF 0 R/g, `${pagesId} 0 R`)}\nendobj\n`;
         });
+
         let pdf = "%PDF-1.4\n";
         const offsets = [0];
         normalizedObjects.forEach((object) => {
@@ -2064,7 +2559,7 @@
             procesador: "Detalle",
             caracteristicas: "Caracteristicas",
             observacion: "Observaciones",
-            sistemaOperativo: "Sistema operativo",
+            sistemaOperativo: "SO",
             ram: "RAM",
             discoDuro: "Disco duro",
             linea: "Linea",
@@ -2139,9 +2634,9 @@
 
     function mapSession(data) {
         const rolRaw = String(data?.rol || "").trim().toUpperCase();
-        const role = rolRaw === "ADMINISTRADOR" || rolRaw === "ADMIN"
+        const role = rolRaw.includes("ADMIN")
             ? "admin"
-            : (rolRaw === "CUSTODIO" ? "custodio" : "tecnico");
+            : (rolRaw.includes("CUSTODIO") ? "custodio" : "tecnico");
 
         const roleLabel = role === "admin"
             ? "Administrador"
@@ -2231,6 +2726,15 @@
             redirectForRole(state.session);
             return;
         }
+        if (page === "busqueda") {
+            const target = state.session?.role === "admin"
+                ? `${basePrefix}/pages/inventario.html`
+                : (state.session?.role === "custodio"
+                    ? `${basePrefix}/pages/custodio/inventario.html`
+                    : `${basePrefix}/pages/usuario/inventario.html`);
+            window.location.href = target;
+            return;
+        }
         if (page === "nuevo-equipo" && !canCreateEquipment()) {
             redirectForRole(state.session);
             return;
@@ -2247,24 +2751,28 @@
             nav = [
                 ["dashboard", "Dashboard", `${basePrefix}/pages/dashboard.html`],
                 ["inventario", "Inventario", `${basePrefix}/pages/inventario.html`],
-                ["busqueda", "Busqueda", `${basePrefix}/pages/busqueda.html`],
+                // COMENTADO: redundante con filtros del módulo de inventario
+                // ["busqueda", "Busqueda", `${basePrefix}/pages/busqueda.html`],
                 ["nuevo-equipo", "Nuevo Equipo", `${basePrefix}/pages/nuevo-equipo.html`]
             ];
         } else if (roleName === "custodio") {
             nav = [
                 ["dashboard", "Dashboard", `${basePrefix}/pages/custodio/dashboard.html`],
                 ["inventario", "Inventario", `${basePrefix}/pages/custodio/inventario.html`],
-                ["busqueda", "Busqueda", `${basePrefix}/pages/custodio/busqueda.html`]
+                // COMENTADO: redundante con filtros del módulo de inventario
+                // ["busqueda", "Busqueda", `${basePrefix}/pages/custodio/busqueda.html`]
             ];
         } else {
             nav = [
                 ["dashboard", "Dashboard", `${basePrefix}/pages/usuario/dashboard.html`],
                 ["inventario", "Inventario", `${basePrefix}/pages/usuario/inventario.html`],
-                ["busqueda", "Busqueda", `${basePrefix}/pages/usuario/busqueda.html`]
+                // COMENTADO: redundante con filtros del módulo de inventario
+                // ["busqueda", "Busqueda", `${basePrefix}/pages/usuario/busqueda.html`]
             ];
         }
 
         return nav
+            .filter(([key]) => key !== "busqueda")
             .map(([key, label, href]) => `
                 <a href="${href}" class="${key === page ? "is-active" : ""}">
                     <span class="nav-icon" aria-hidden="true">${NAV_ICONS[key] || iconMarkup("circle")}</span>
@@ -2365,10 +2873,6 @@
                         <p id="inventoryIntroText">Utiliza los filtros para localizar equipos por codigo, custodio, ubicacion, marca, modelo y estado.</p>
                     </div>
                 </div>
-                <div class="stats-grid stats-grid--compact">
-                    <article class="stat-card"><span>Total filtrado</span><strong id="inventoryStatTotal">--</strong></article>
-                    <article class="stat-card"><span>Rol en uso</span><strong>${escapeHtml(state.session?.roleLabel || "-")}</strong></article>
-                </div>
                 <div class="filters-grid filters-grid--inventory">
                     <div class="field-group">
                         <label for="filterTipo">Tipo</label>
@@ -2449,7 +2953,7 @@
                 <td>${escapeHtml(item.codigoSbai || "-")}</td>
                 <td>${escapeHtml(item.codigoMegan || "-")}</td>
                 <td>${escapeHtml(item.descripcion || "-")}</td>
-                <td>${escapeHtml(typeLabel(item.tipo))}</td>
+                <td>${escapeHtml(displayInventoryType(item))}</td>
                 <td>${escapeHtml(item.marca || "-")}</td>
                 <td>${escapeHtml(item.modelo || "-")}</td>
                 <td>${escapeHtml(item.numeroSerie || "-")}</td>
@@ -2465,7 +2969,7 @@
     function renderMobileInventoryCard(item) {
         return `
             <article class="mobile-card">
-                <strong>${escapeHtml(item.codigoSbai || "-")} · ${escapeHtml(typeLabel(item.tipo))}</strong>
+                <strong>${escapeHtml(item.codigoSbai || "-")} · ${escapeHtml(displayInventoryType(item))}</strong>
                 <span>Megan: ${escapeHtml(item.codigoMegan || "-")}</span>
                 <span>Descripcion: ${escapeHtml(item.descripcion || "-")}</span>
                 <span>Marca / Modelo: ${escapeHtml(item.marca || "-")} ${escapeHtml(item.modelo || "")}</span>
@@ -2511,8 +3015,8 @@
         document.getElementById("applyInventoryFilters")?.addEventListener("click", applyInventoryFilters);
         document.getElementById("clearInventoryFilters")?.addEventListener("click", clearInventoryFilters);
         if (canExportInventory()) {
-            document.getElementById("exportInventoryExcel")?.addEventListener("click", exportInventoryToExcel);
-            document.getElementById("exportInventoryPdf")?.addEventListener("click", exportInventoryToPdf);
+            document.getElementById("exportInventoryExcel")?.addEventListener("click", () => openExportDialog("excel"));
+            document.getElementById("exportInventoryPdf")?.addEventListener("click", () => openExportDialog("pdf"));
         }
         document.querySelectorAll("[data-sort]").forEach((button) => button.addEventListener("click", () => sortInventory(button.dataset.sort)));
         document.getElementById("prevPage")?.addEventListener("click", () => changePage(-1));
@@ -2810,7 +3314,8 @@
             return;
         }
         const fields = Array.isArray(categoryConfig.fields) ? categoryConfig.fields : [];
-        container.innerHTML = fields.map((field) => renderDynamicDbField(field)).join("");
+        container.innerHTML = renderDynamicDbFieldGroups(fields);
+        setupNewEquipmentAutocompletes();
         hint.textContent = "";
         summary.innerHTML = "";
     }
