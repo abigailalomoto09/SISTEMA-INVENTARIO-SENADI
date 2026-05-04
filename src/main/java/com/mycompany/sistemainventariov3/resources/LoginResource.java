@@ -39,7 +39,8 @@ public class LoginResource {
     public Response autenticar(String json) {
         try {
             LoginRequest loginRequest = gson.fromJson(json, LoginRequest.class);
-            Usuario usuario = usuarioService.autenticar(loginRequest.getUsername(), loginRequest.getPassword());
+            String rol = loginRequest.getRolSeleccionado();
+            Usuario usuario = usuarioService.autenticar(loginRequest.getUsername(), loginRequest.getPassword(), rol);
             SesionUsuario.setUsuarioActual(request, usuario);
 
             JsonObject response = new JsonObject();

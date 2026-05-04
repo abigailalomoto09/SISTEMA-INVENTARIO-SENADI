@@ -11,7 +11,9 @@ com\mycompany\sistemainventariov3\dao\CustodioDAO.class
 com\mycompany\sistemainventariov3\util\SesionUsuario.class
 com\mycompany\sistemainventariov3\ConnectionTest.class
 com\mycompany\sistemainventariov3\model\Escaner.class
+com\mycompany\sistemainventariov3\model\UsuarioRol.class
 com\mycompany\sistemainventariov3\dao\InfraestructuraDAO.class
+com\mycompany\sistemainventariov3\dao\UsuarioRolDAO.class
 com\mycompany\sistemainventariov3\resources\InventarioResource$3.class
 com\mycompany\sistemainventariov3\dao\EscanerDAO.class
 com\mycompany\sistemainventariov3\dao\UsuarioDAO.class
@@ -39,6 +41,7 @@ com\mycompany\sistemainventariov3\model\PC.class
 senadi\gob\ec\busfonetico\util\LDAP.class
 com\mycompany\sistemainventariov3\model\Proyector.class
 com\mycompany\sistemainventariov3\service\BienService.class
+com\mycompany\sistemainventariov3\model\UsuarioRol$RolEnum.class
 com\mycompany\sistemainventariov3\dao\PeriferícoDAO.class
 com\mycompany\sistemainventariov3\dao\BienControlAdministrativoDAO.class
 com\mycompany\sistemainventariov3\JAXRSConfiguration.class

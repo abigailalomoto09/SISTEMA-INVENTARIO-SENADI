@@ -142,19 +142,45 @@
         localStorage.removeItem(STORAGE_SESSION);
     }
 
-    function mapSession(data) {
-        const rol = (data.rol || "").toUpperCase();
+function mapSession(data) {
+        const rolRaw = String(data?.rol || "").trim().toUpperCase();
+        let role;
+        if (rolRaw.includes("ADMINISTRADOR") || rolRaw.includes("ADMIN")) {
+            role = "admin";
+        } else if (rolRaw.includes("CUSTODIO")) {
+            role = "custodio";
+        } else if (rolRaw.includes("TECNICO")) {
+            role = "tecnico";
+        } else {
+            role = "tecnico";
+        }
+
+        const roleLabel = role === "admin" ? "Administrador" : (role === "custodio" ? "Custodio" : "Técnico");
+
+        const fallbackName = data?.nombreCompleto || data?.usuario || data?.username || "Usuario";
+        const permissions = data?.permisos || {};
+
         return {
-            username: data.usuario || data.username || "usuario",
-            displayName: data.nombreCompleto || data.usuario || "Usuario",
-            role: rol === "ADMINISTRADOR" ? "admin" : "usuario",
-            roleLabel: rol === "ADMINISTRADOR" ? "Administrador" : "Usuario técnico"
+            username: data?.usuario || data?.username || "usuario",
+            displayName: fallbackName,
+            role,
+            roleLabel,
+            accessRole: role === "admin" ? "ADMINISTRADOR" : (role === "custodio" ? "CUSTODIO" : "TECNICO"),
+            idCustodio: data?.idCustodio ?? null,
+            permissions
         };
     }
 
-    function redirectForRole(session) {
-        const target = session.role === "admin" ? `${basePrefix}/pages/dashboard.html` : `${basePrefix}/pages/usuario/dashboard.html`;
-        window.location.href = target.replace("/pages/pages/", "/pages/");
+function redirectForRole(session) {
+        let target;
+        if (session.role === "admin") {
+            target = `${basePrefix}/pages/dashboard.html`;
+        } else if (session.role === "custodio") {
+            target = `${basePrefix}/pages/custodio/dashboard.html`;
+        } else {
+            target = `${basePrefix}/pages/usuario/dashboard.html`;
+        }
+        window.location.href = target.replace(/pages\/pages\//, "pages/");
     }
 
     function initLogin() {
@@ -166,29 +192,34 @@
         }
     }
 
-    async function handleLogin(event) {
+async function handleLogin(event) {
         event.preventDefault();
         const submit = document.getElementById("loginSubmit");
         const username = document.getElementById("username").value.trim();
         const password = document.getElementById("password").value.trim();
+        const rolSeleccionado = document.getElementById("roleSelect").value;
+        if (!rolSeleccionado) {
+            showLoginError("Seleccione un rol");
+            return;
+        }
         submit.disabled = true;
         hideLoginError();
         try {
             const response = await apiFetch("/login", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ username, password })
+                body: JSON.stringify({ username, password, rolSeleccionado })
             });
             const payload = await response.json();
             if (!response.ok || !payload.success) {
-                throw new Error(payload.message || "Credenciales inválidas");
+                throw new Error(payload.message || "Credenciales inválidas o rol no autorizado");
             }
             const session = mapSession(payload.data);
             setDemoSession(session);
             redirectForRole(session);
             return;
         } catch (error) {
-            const demo = buildDemoSession(username, password);
+            const demo = buildDemoSession(username, password, rolSeleccionado);
             if (demo) {
                 setDemoSession(demo);
                 redirectForRole(demo);
@@ -200,14 +231,8 @@
         }
     }
 
-    function buildDemoSession(username, password) {
-        if (username === "admin" && password === "admin123") {
-            return { username: "admin", displayName: "admin", role: "admin", roleLabel: "Administrador" };
-        }
-        if ((username === "tecnico" || username === "usuario") && password === "tecnico123") {
-            return { username: "tecnico", displayName: "tecnico", role: "usuario", roleLabel: "Usuario técnico" };
-        }
-        return null;
+function buildDemoSession(username, password, rolSeleccionado) {
+        return null; // Backend maneja real auth
     }
 
     function showLoginError(message) {

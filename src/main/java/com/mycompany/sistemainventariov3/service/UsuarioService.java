@@ -22,15 +22,16 @@ public class UsuarioService {
 
     /**
      * Autenticar usuario desde base de datos.
+     * @param rolRolSeleccionado Rol seleccionado (para multi-rol). Si null, cualquier rol OK.
      */
-    public Usuario autenticar(String usuario, String password) throws Exception {
+    public Usuario autenticar(String usuario, String password, String rolSeleccionado) throws Exception {
         if (usuario == null || usuario.trim().isEmpty() || password == null || password.trim().isEmpty()) {
             throw new Exception("Usuario y contrasena son requeridos");
         }
 
         try (Connection conn = DatabaseService.getConnection()) {
             provisionarCustodios(conn);
-            UsuarioAuthRecord record = buscarUsuario(conn, usuario.trim());
+            UsuarioAuthRecord record = buscarUsuario(conn, usuario.trim(), rolSeleccionado);
 
             if (record == null) {
                 throw new Exception("Credenciales invalidas");
@@ -75,7 +76,7 @@ public class UsuarioService {
         return SesionUsuario.esTecnico();
     }
 
-    private UsuarioAuthRecord buscarUsuario(Connection conn, String username) throws SQLException {
+    private UsuarioAuthRecord buscarUsuario(Connection conn, String username, String rolSeleccionado) throws SQLException {
         if (existeTabla(conn, "usuario")) {
             String sql = "SELECT u.username, u.password_hash, u.rol, u.id_custodio, u.activo, " +
                     "COALESCE(c.nombre, u.username) AS nombre_completo " +
@@ -99,28 +100,49 @@ public class UsuarioService {
             }
         }
 
-        if (existeTabla(conn, "usuarios")) {
-            boolean tieneIdCustodio = existeColumna(conn, "usuarios", "id_custodio");
-            String sql = "SELECT username, password, rol, nombre_completo, estado"
-                    + (tieneIdCustodio ? ", id_custodio" : "")
-                    + " FROM usuarios WHERE username = ? LIMIT 1";
-            try (PreparedStatement ps = conn.prepareStatement(sql)) {
-                ps.setString(1, username);
-                try (ResultSet rs = ps.executeQuery()) {
-                    if (rs.next()) {
-                        UsuarioAuthRecord record = new UsuarioAuthRecord();
-                        record.username = rs.getString("username");
-                        record.passwordHash = rs.getString("password");
-                        record.rol = rs.getString("rol");
-                        record.nombreCompleto = rs.getString("nombre_completo");
-                        String estado = rs.getString("estado");
-                        record.activo = estado == null || "ACTIVO".equalsIgnoreCase(estado);
-                        record.idCustodio = tieneIdCustodio ? (Integer) rs.getObject("id_custodio") : null;
-                        return record;
+String sql;
+            if (rolSeleccionado != null) {
+                sql = "SELECT u.username, u.password as password_hash, u.rol, u.nombre_completo, u.estado, u.id_custodio, ur.rol as rol_confirmado " +
+                      "FROM usuarios u " +
+                      "JOIN usuario_roles ur ON u.id_usuario = ur.id_usuario " +
+                      "WHERE u.username = ? AND ur.rol = ? AND u.estado = 'ACTIVO' " +
+                      "LIMIT 1";
+                try (PreparedStatement ps = conn.prepareStatement(sql)) {
+                    ps.setString(1, username);
+                    ps.setString(2, rolSeleccionado.toUpperCase());
+                    try (ResultSet rs = ps.executeQuery()) {
+                        if (rs.next()) {
+                            UsuarioAuthRecord record = new UsuarioAuthRecord();
+                            record.username = rs.getString("username");
+                            record.passwordHash = rs.getString("password_hash");
+                            record.rol = rs.getString("rol_confirmado") != null ? rs.getString("rol_confirmado") : rs.getString("rol");
+                            record.nombreCompleto = rs.getString("nombre_completo");
+                            record.activo = true;
+                            record.idCustodio = rs.getObject("id_custodio") != null ? rs.getInt("id_custodio") : null;
+                            return record;
+                        }
+                    }
+                }
+            } else {
+                sql = "SELECT u.username, u.password as password_hash, u.rol, u.nombre_completo, u.estado, u.id_custodio " +
+                      "FROM usuarios u " +
+                      "WHERE u.username = ? AND u.estado = 'ACTIVO' LIMIT 1";
+                try (PreparedStatement ps = conn.prepareStatement(sql)) {
+                    ps.setString(1, username);
+                    try (ResultSet rs = ps.executeQuery()) {
+                        if (rs.next()) {
+                            UsuarioAuthRecord record = new UsuarioAuthRecord();
+                            record.username = rs.getString("username");
+                            record.passwordHash = rs.getString("password_hash");
+                            record.rol = rs.getString("rol");
+                            record.nombreCompleto = rs.getString("nombre_completo");
+                            record.activo = true;
+                            record.idCustodio = rs.getObject("id_custodio") != null ? rs.getInt("id_custodio") : null;
+                            return record;
+                        }
                     }
                 }
             }
-        }
 
         return null;
     }
