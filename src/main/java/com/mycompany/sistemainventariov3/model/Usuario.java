@@ -11,6 +11,7 @@ public class Usuario {
     private String nombreCompleto;
     private Integer idCustodio;
     private boolean activo = true;
+    private java.util.List<String> rolesDisponibles;
 
     public Usuario() {
     }
@@ -70,11 +71,9 @@ public class Usuario {
         this.idCustodio = idCustodio;
     }
 
-    public boolean isActivo() {
-        return activo;
-    }
+    public boolean isActivo() { return activo; }
+    public void setActivo(boolean activo) { this.activo = activo; }
 
-    public void setActivo(boolean activo) {
-        this.activo = activo;
-    }
+    public java.util.List<String> getRolesDisponibles() { return rolesDisponibles; }
+    public void setRolesDisponibles(java.util.List<String> rolesDisponibles) { this.rolesDisponibles = rolesDisponibles; }
 }

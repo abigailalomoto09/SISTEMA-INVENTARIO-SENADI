@@ -1,6 +1,7 @@
 package com.mycompany.sistemainventariov3.resources;
 
 import com.google.gson.Gson;
+import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.mycompany.sistemainventariov3.dto.LoginRequest;
 import com.mycompany.sistemainventariov3.model.Usuario;
@@ -39,7 +40,7 @@ public class LoginResource {
     public Response autenticar(String json) {
         try {
             LoginRequest loginRequest = gson.fromJson(json, LoginRequest.class);
-            Usuario usuario = usuarioService.autenticar(loginRequest.getUsername(), loginRequest.getPassword());
+            Usuario usuario = usuarioService.autenticar(loginRequest.getUsername(), loginRequest.getPassword(), loginRequest.getRolElegido());
             SesionUsuario.setUsuarioActual(request, usuario);
 
             JsonObject response = new JsonObject();
@@ -114,6 +115,16 @@ public class LoginResource {
         if (usuario.getIdCustodio() != null) {
             usuarioResponse.addProperty("idCustodio", usuario.getIdCustodio());
         }
+        // Retornar lista de roles disponibles para el selector en el frontend
+        JsonArray rolesArray = new JsonArray();
+        if (usuario.getRolesDisponibles() != null) {
+            for (String r : usuario.getRolesDisponibles()) {
+                rolesArray.add(r);
+            }
+        } else {
+            rolesArray.add(rol);
+        }
+        usuarioResponse.add("rolesDisponibles", rolesArray);
 
         JsonObject permisos = new JsonObject();
         if ("ADMINISTRADOR".equals(rol)) {

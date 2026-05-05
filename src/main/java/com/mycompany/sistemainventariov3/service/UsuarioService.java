@@ -9,7 +9,9 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.text.Normalizer;
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 
@@ -22,8 +24,9 @@ public class UsuarioService {
 
     /**
      * Autenticar usuario desde base de datos.
+     * Si rolElegido es no nulo, valida que el usuario tenga ese rol disponible.
      */
-    public Usuario autenticar(String usuario, String password) throws Exception {
+    public Usuario autenticar(String usuario, String password, String rolElegido) throws Exception {
         if (usuario == null || usuario.trim().isEmpty() || password == null || password.trim().isEmpty()) {
             throw new Exception("Usuario y contrasena son requeridos");
         }
@@ -42,15 +45,43 @@ public class UsuarioService {
                 throw new Exception("Credenciales invalidas");
             }
 
-            return new Usuario(
-                    record.username,
-                    null,
-                    normalizarRol(record.rol),
-                    record.nombreCompleto,
-                    record.idCustodio,
-                    true
-            );
+            List<String> rolesDisponibles = obtenerRolesDisponibles(record);
+
+            String rolFinal;
+            if (rolElegido != null && !rolElegido.trim().isEmpty()) {
+                String rolNormalizado = normalizarRol(rolElegido.trim());
+                if (!rolesDisponibles.contains(rolNormalizado)) {
+                    throw new Exception("No tiene permiso para el rol seleccionado: " + rolNormalizado);
+                }
+                rolFinal = rolNormalizado;
+            } else {
+                rolFinal = rolesDisponibles.get(0);
+            }
+
+            Usuario u = new Usuario(record.username, null, rolFinal, record.nombreCompleto, record.idCustodio, true);
+            u.setRolesDisponibles(rolesDisponibles);
+            return u;
         }
+    }
+
+    /** Mantener compatibilidad con llamadas sin rolElegido */
+    public Usuario autenticar(String usuario, String password) throws Exception {
+        return autenticar(usuario, password, null);
+    }
+
+    private List<String> obtenerRolesDisponibles(UsuarioAuthRecord record) {
+        List<String> roles = new ArrayList<>();
+        String rolPrincipal = normalizarRol(record.rol);
+        roles.add(rolPrincipal);
+        if (record.rolesExtra != null && !record.rolesExtra.trim().isEmpty()) {
+            for (String extra : record.rolesExtra.split(",")) {
+                String r = normalizarRol(extra.trim());
+                if (!r.isEmpty() && !roles.contains(r)) {
+                    roles.add(r);
+                }
+            }
+        }
+        return roles;
     }
 
     /**
@@ -77,9 +108,11 @@ public class UsuarioService {
 
     private UsuarioAuthRecord buscarUsuario(Connection conn, String username) throws SQLException {
         if (existeTabla(conn, "usuario")) {
+            boolean tieneRolesExtra = existeColumna(conn, "usuario", "roles_extra");
             String sql = "SELECT u.username, u.password_hash, u.rol, u.id_custodio, u.activo, " +
-                    "COALESCE(c.nombre, u.username) AS nombre_completo " +
-                    "FROM usuario u " +
+                    "COALESCE(c.nombre, u.username) AS nombre_completo" +
+                    (tieneRolesExtra ? ", u.roles_extra" : "") +
+                    " FROM usuario u " +
                     "LEFT JOIN custodio c ON c.id_custodio = u.id_custodio " +
                     "WHERE u.username = ? LIMIT 1";
             try (PreparedStatement ps = conn.prepareStatement(sql)) {
@@ -93,6 +126,7 @@ public class UsuarioService {
                         record.idCustodio = (Integer) rs.getObject("id_custodio");
                         record.activo = rs.getInt("activo") == 1;
                         record.nombreCompleto = rs.getString("nombre_completo");
+                        record.rolesExtra = tieneRolesExtra ? rs.getString("roles_extra") : null;
                         return record;
                     }
                 }
@@ -293,6 +327,7 @@ public class UsuarioService {
         String username;
         String passwordHash;
         String rol;
+        String rolesExtra;
         String nombreCompleto;
         Integer idCustodio;
         boolean activo;

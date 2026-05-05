@@ -144,13 +144,12 @@ public class InventarioResource {
                 return Response.status(Response.Status.BAD_REQUEST).entity(gson.toJson(resp)).build();
             }
 
-            boolean registrarAuditoria = "TECNICO".equals(usuario.getRol());
             InventoryItemDTO item = inventarioJdbcService.actualizarCustodioEquipo(
                     idEquipo,
                     idCustodioNuevo,
                     usuario.getUsuario(),
                     usuario.getRol(),
-                    registrarAuditoria
+                    true
             );
 
             ApiResponse<InventoryItemDTO> response = ApiResponse.success("Custodio actualizado correctamente", item);
@@ -180,7 +179,7 @@ public class InventarioResource {
                 payload = Collections.emptyMap();
             }
             String estado = payload != null && payload.get("estado") != null ? String.valueOf(payload.get("estado")) : "";
-            InventoryItemDTO item = inventarioJdbcService.actualizarEstadoEquipo(idEquipo, estado);
+            InventoryItemDTO item = inventarioJdbcService.actualizarEstadoEquipo(idEquipo, estado, usuario.getUsuario(), usuario.getRol());
             ApiResponse<InventoryItemDTO> response = ApiResponse.success("Estado actualizado correctamente", item);
             return Response.ok(gson.toJson(response)).build();
         } catch (IllegalArgumentException e) {
@@ -222,14 +221,28 @@ public class InventarioResource {
     @Produces(MediaType.APPLICATION_JSON)
     public Response actualizar(@PathParam("tipo") String tipo, @PathParam("id") String id, String json) {
         try {
-            validarAutenticacion();
-            ApiResponse<?> response = ApiResponse.error(
-                    "NOT_IMPLEMENTED",
-                    "La edicion del modelo final aun no esta habilitada desde este endpoint.");
-            return Response.status(Response.Status.NOT_IMPLEMENTED).entity(gson.toJson(response)).build();
+            Usuario usuario = validarAutenticacion();
+            validarRoles(usuario, "ADMINISTRADOR");
+
+            Integer idEquipo = Integer.parseInt(id);
+            Map<String, Object> payload = gson.fromJson(json, new TypeToken<Map<String, Object>>() {}.getType());
+            if (payload == null) {
+                payload = Collections.emptyMap();
+            }
+
+            InventoryItemDTO item = inventarioJdbcService.actualizarEquipoCompleto(
+                    idEquipo, payload, usuario.getUsuario(), usuario.getRol());
+
+            ApiResponse<InventoryItemDTO> response = ApiResponse.success("Equipo actualizado correctamente", item);
+            return Response.ok(gson.toJson(response)).build();
+        } catch (SecurityException e) {
+            ApiResponse<?> resp = ApiResponse.error("FORBIDDEN", e.getMessage());
+            return Response.status(Response.Status.FORBIDDEN).entity(gson.toJson(resp)).build();
+        } catch (IllegalArgumentException e) {
+            ApiResponse<?> resp = ApiResponse.error("VALIDATION_ERROR", e.getMessage());
+            return Response.status(Response.Status.BAD_REQUEST).entity(gson.toJson(resp)).build();
         } catch (Exception e) {
-            ApiResponse<?> resp = ApiResponse.error("ERROR", e.getMessage());
-            return Response.status(Response.Status.UNAUTHORIZED).entity(gson.toJson(resp)).build();
+            return errorInterno(e);
         }
     }
 

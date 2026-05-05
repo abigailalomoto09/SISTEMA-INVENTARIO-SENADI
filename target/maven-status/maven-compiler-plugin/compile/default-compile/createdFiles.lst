@@ -2,6 +2,7 @@ com\mycompany\sistemainventariov3\resources\JavaEE8Resource.class
 com\mycompany\sistemainventariov3\resources\HistoricoResource.class
 com\mycompany\sistemainventariov3\dto\InventoryItemDTO.class
 com\mycompany\sistemainventariov3\model\Impresora.class
+com\mycompany\sistemainventariov3\resources\InventarioResource$4.class
 com\mycompany\sistemainventariov3\service\InventarioJdbcService.class
 com\mycompany\sistemainventariov3\util\SessionRequestFilter.class
 com\mycompany\sistemainventariov3\dao\LicenciaDAO.class

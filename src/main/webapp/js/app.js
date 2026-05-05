@@ -8,7 +8,7 @@
     const basePrefix = page === "login" || pathDepth <= 2 ? "." : (isUserRole ? "../.." : "..");
     const API_BASE = `${basePrefix}/resources`;
     const STORAGE_SESSION = "inventario.session.demo";
-    const PAGE_SIZE = 10;
+    const PAGE_SIZE = 100;
     const VALID_STATES = [
         "OPERATIVO",
         "NO OPERATIVO",
@@ -99,7 +99,9 @@
         filterModelo: "modelo",
         filterSerie: "numeroSerie",
         filterCustodio: "custodio",
-        filterUbicacion: "ubicacion"
+        filterEdificio: "ubicacionEdificio",
+        filterPiso: "ubicacionPiso",
+        filterDireccion: "ubicacionDireccion"
     };
     const state = {
         session: null,
@@ -144,16 +146,44 @@
 
     function mapSession(data) {
         const rol = (data.rol || "").toUpperCase();
+        let mappedRole, roleLabel;
+        if (rol === "ADMINISTRADOR") {
+            mappedRole = "admin";
+            roleLabel = "Administrador";
+        } else if (rol === "CUSTODIO") {
+            mappedRole = "custodio";
+            roleLabel = "Custodio";
+        } else {
+            mappedRole = "tecnico";
+            roleLabel = "Tecnico";
+        }
+
+        const permisosPorRol = {
+            admin:    { puedeEditarTodos: true,  puedeActualizarEstado: true,  puedeEditarCustodio: true,  puedeVer: true, puedeCrearEquipo: true,  puedeExportarInventario: true, puedeVerHistorial: true },
+            tecnico:  { puedeEditarTodos: false, puedeActualizarEstado: false, puedeEditarCustodio: true,  puedeVer: true, puedeCrearEquipo: false, puedeExportarInventario: true, puedeVerHistorial: true },
+            custodio: { puedeEditarTodos: false, puedeActualizarEstado: false, puedeEditarCustodio: false, puedeVer: true, puedeCrearEquipo: false, puedeExportarInventario: true, puedeVerHistorial: true }
+        };
+
         return {
             username: data.usuario || data.username || "usuario",
             displayName: data.nombreCompleto || data.usuario || "Usuario",
-            role: rol === "ADMINISTRADOR" ? "admin" : "usuario",
-            roleLabel: rol === "ADMINISTRADOR" ? "Administrador" : "Usuario técnico"
+            role: mappedRole,
+            roleLabel: roleLabel,
+            idCustodio: data.idCustodio || null,
+            permisos: permisosPorRol[mappedRole] || permisosPorRol.tecnico,
+            rolesDisponibles: data.rolesDisponibles || [rol]
         };
     }
 
     function redirectForRole(session) {
-        const target = session.role === "admin" ? `${basePrefix}/pages/dashboard.html` : `${basePrefix}/pages/usuario/dashboard.html`;
+        let target;
+        if (session.role === "admin") {
+            target = `${basePrefix}/pages/dashboard.html`;
+        } else if (session.role === "custodio") {
+            target = `${basePrefix}/pages/custodio/dashboard.html`;
+        } else {
+            target = `${basePrefix}/pages/usuario/dashboard.html`;
+        }
         window.location.href = target.replace("/pages/pages/", "/pages/");
     }
 
@@ -171,13 +201,14 @@
         const submit = document.getElementById("loginSubmit");
         const username = document.getElementById("username").value.trim();
         const password = document.getElementById("password").value.trim();
+        const rolElegido = document.getElementById("rolElegido")?.value || "";
         submit.disabled = true;
         hideLoginError();
         try {
             const response = await apiFetch("/login", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ username, password })
+                body: JSON.stringify({ username, password, rolElegido })
             });
             const payload = await response.json();
             if (!response.ok || !payload.success) {
@@ -202,10 +233,10 @@
 
     function buildDemoSession(username, password) {
         if (username === "admin" && password === "admin123") {
-            return { username: "admin", displayName: "admin", role: "admin", roleLabel: "Administrador" };
+            return { username: "admin", displayName: "Administrador Demo", role: "admin", roleLabel: "Administrador", permisos: { puedeEditarTodos: true, puedeActualizarEstado: true, puedeEditarCustodio: true, puedeVer: true, puedeCrearEquipo: true, puedeExportarInventario: true, puedeVerHistorial: true } };
         }
         if ((username === "tecnico" || username === "usuario") && password === "tecnico123") {
-            return { username: "tecnico", displayName: "tecnico", role: "usuario", roleLabel: "Usuario técnico" };
+            return { username: "tecnico", displayName: "Técnico Demo", role: "tecnico", roleLabel: "Técnico", permisos: { puedeEditarTodos: false, puedeActualizarEstado: false, puedeEditarCustodio: true, puedeVer: true, puedeCrearEquipo: false, puedeExportarInventario: true, puedeVerHistorial: true } };
         }
         return null;
     }
@@ -292,7 +323,7 @@
                         <div class="brand-mark">SI</div>
                         <div>
                             <strong>Sistema Inventario</strong>
-                            <span>${role === "admin" ? "Panel administrativo" : "Panel técnico"}</span>
+                            <span>${role === "admin" ? "Panel administrativo" : role === "custodio" ? "Panel custodio" : "Panel técnico"}</span>
                         </div>
                     </div>
                     <div class="sidebar__user">
@@ -326,22 +357,25 @@
     }
 
     function buildNav() {
-        const nav = role === "admin"
-            ? [
+        let nav;
+        if (role === "admin") {
+            nav = [
                 ["dashboard", "Dashboard", `${basePrefix}/pages/dashboard.html`],
                 ["inventario", "Inventario", `${basePrefix}/pages/inventario.html`],
-                // COMENTADO: redundante con filtros del módulo de inventario
-                // ["busqueda", "Búsqueda", `${basePrefix}/pages/busqueda.html`],
                 ["nuevo-equipo", "Nuevo Equipo", `${basePrefix}/pages/nuevo-equipo.html`]
-            ]
-            : [
-                ["dashboard", "Dashboard", `${basePrefix}/pages/usuario/dashboard.html`],
-                ["inventario", "Inventario", `${basePrefix}/pages/usuario/inventario.html`],
-                // COMENTADO: redundante con filtros del módulo de inventario
-                // ["busqueda", "Búsqueda", `${basePrefix}/pages/usuario/busqueda.html`]
             ];
+        } else if (role === "custodio") {
+            nav = [
+                ["dashboard", "Dashboard", `${basePrefix}/pages/custodio/dashboard.html`],
+                ["inventario", "Inventario", `${basePrefix}/pages/custodio/inventario.html`]
+            ];
+        } else {
+            nav = [
+                ["dashboard", "Dashboard", `${basePrefix}/pages/usuario/dashboard.html`],
+                ["inventario", "Inventario", `${basePrefix}/pages/usuario/inventario.html`]
+            ];
+        }
         return nav
-            .filter(([key]) => key !== "busqueda")
             .map(([key, label, href]) => `<a href="${href}" class="${key === page ? "is-active" : ""}"><span>•</span><span>${label}</span></a>`)
             .join("");
     }
@@ -408,21 +442,22 @@
     }
 
     function dashboardCards() {
-        const cards = role === "admin"
-            ? [
-                ["Inventario", "Filtra, revisa y exporta el inventario visible.", `${basePrefix}/pages/inventario.html`],
-                // COMENTADO: redundante con filtros del módulo de inventario
-                // ["Búsqueda", "Aplica múltiples criterios sobre la data cargada.", `${basePrefix}/pages/busqueda.html`],
-                ["Nuevo Equipo", "Formulario dinámico de registro simulado.", `${basePrefix}/pages/nuevo-equipo.html`]
-            ]
-            : [
-                ["Inventario", "Filtra, revisa y exporta el inventario visible.", `${basePrefix}/pages/usuario/inventario.html`],
-                // COMENTADO: redundante con filtros del módulo de inventario
-                // ["Búsqueda", "Aplica múltiples criterios sobre la data cargada.", `${basePrefix}/pages/usuario/busqueda.html`]
+        let cards;
+        if (role === "admin") {
+            cards = [
+                ["Inventario", "Filtra, revisa y exporta el inventario completo.", `${basePrefix}/pages/inventario.html`],
+                ["Nuevo Equipo", "Registra un nuevo equipo tecnológico.", `${basePrefix}/pages/nuevo-equipo.html`]
             ];
-        return cards
-            .filter(([title]) => title !== "Búsqueda")
-            .map(([title, text, href]) => `<a class="mini-card" href="${href}"><strong>${title}</strong><span>${text}</span></a>`);
+        } else if (role === "custodio") {
+            cards = [
+                ["Mi Inventario", "Equipos asignados a tu custodia.", `${basePrefix}/pages/custodio/inventario.html`]
+            ];
+        } else {
+            cards = [
+                ["Inventario", "Filtra equipos, cambia custodios y revisa el historial.", `${basePrefix}/pages/usuario/inventario.html`]
+            ];
+        }
+        return cards.map(([title, text, href]) => `<a class="mini-card" href="${href}"><strong>${title}</strong><span>${text}</span></a>`);
     }
 
     function renderInventoryPage() {
@@ -468,8 +503,16 @@
                         <input id="filterCustodio" type="text" placeholder="Filtrar por custodio">
                     </div>
                     <div class="field-group">
-                        <label for="filterUbicacion">Ubicación</label>
-                        <input id="filterUbicacion" type="text" placeholder="Filtrar por ubicación">
+                        <label for="filterEdificio">Edificio</label>
+                        <input id="filterEdificio" type="text" placeholder="Filtrar por edificio">
+                    </div>
+                    <div class="field-group">
+                        <label for="filterPiso">Piso</label>
+                        <input id="filterPiso" type="text" placeholder="Filtrar por piso">
+                    </div>
+                    <div class="field-group">
+                        <label for="filterDireccion">Dirección</label>
+                        <input id="filterDireccion" type="text" placeholder="Filtrar por dirección">
                     </div>
                     <div class="field-group">
                         <label for="filterEstado">Estado</label>
@@ -490,7 +533,8 @@
                     <table>
                         <thead>
                             <tr>
-                                ${["codigoSbai", "codigoMegan", "descripcion", "tipo", "marca", "modelo", "numeroSerie", "custodio", "ubicacion", "procesador", "estado"].map((key) => `<th><button class="table-sort" data-sort="${key}">${labelForColumn(key)}</button></th>`).join("")}
+                                ${["codigoSbai", "codigoMegan", "descripcion", "tipo", "marca", "modelo", "numeroSerie", "custodio", "ubicacionEdificio", "ubicacionPiso", "ubicacionDireccion", "procesador", "estado"].map((key) => `<th><button class="table-sort" data-sort="${key}">${labelForColumn(key)}</button></th>`).join("")}
+                                <th>Acciones</th>
                             </tr>
                         </thead>
                         <tbody id="inventoryBody"></tbody>
@@ -576,7 +620,6 @@
                                 <option value="proyectores">Proyector</option>
                             </select>
                         </div>
-                        <div class="helper-banner" id="equipmentCategoryHint"></div>
                         <form id="newEquipmentForm">
                             <div class="form-grid" id="dynamicEquipmentFields"></div>
                             <div class="form-actions" style="margin-top:18px;">
@@ -675,10 +718,16 @@
             modelo: item.modelo || "",
             custodio: item.custodio || "",
             ubicacion: item.ubicacion || "",
+            ubicacionEdificio: item.ubicacionEdificio || "",
+            ubicacionPiso: item.ubicacionPiso || "",
+            ubicacionDireccion: item.ubicacionDireccion || "",
             estado: normalizeState(item.estado || ""),
             procesador: item.procesador || "",
             caracteristicas: item.caracteristicas || "",
             observacion: item.observacion || "",
+            ip: item.ip || "",
+            fechaIngreso: item.fechaIngreso || "",
+            ultimoMantenimiento: item.ultimoMantenimiento || "",
             raw: item
         }));
     }
@@ -719,7 +768,9 @@
             "filterModelo",
             "filterSerie",
             "filterCustodio",
-            "filterUbicacion",
+            "filterEdificio",
+            "filterPiso",
+            "filterDireccion",
             "filterEstado"
         ];
     }
@@ -734,7 +785,9 @@
             modelo: document.getElementById("filterModelo")?.value.trim().toLowerCase() || "",
             numeroSerie: document.getElementById("filterSerie")?.value.trim().toLowerCase() || "",
             custodio: document.getElementById("filterCustodio")?.value.trim().toLowerCase() || "",
-            ubicacion: document.getElementById("filterUbicacion")?.value.trim().toLowerCase() || "",
+            edificio: document.getElementById("filterEdificio")?.value.trim().toLowerCase() || "",
+            piso: document.getElementById("filterPiso")?.value.trim().toLowerCase() || "",
+            direccion: document.getElementById("filterDireccion")?.value.trim().toLowerCase() || "",
             estado: document.getElementById("filterEstado")?.value.trim().toLowerCase() || ""
         };
     }
@@ -751,7 +804,9 @@
                 && matchesFilter(item.modelo, filters.modelo)
                 && matchesFilter(item.numeroSerie, filters.numeroSerie)
                 && matchesFilter(item.custodio, filters.custodio)
-                && matchesFilter(item.ubicacion, filters.ubicacion)
+                && matchesFilter(item.ubicacionEdificio, filters.edificio)
+                && matchesFilter(item.ubicacionPiso, filters.piso)
+                && matchesFilter(item.ubicacionDireccion, filters.direccion)
                 && matchesFilter(item.estado, filters.estado);
         });
         sortInventory(state.inventorySort.key, false);
@@ -820,6 +875,17 @@
     }
 
     function renderInventoryRow(item) {
+        const permisos = state.session && state.session.permisos ? state.session.permisos : {};
+        const btnEditar = permisos.puedeEditarTodos
+            ? `<button class="btn-action btn-edit-full" onclick="abrirModalEditar(${item.id})">Editar</button>`
+            : "";
+        const btnCustodio = !permisos.puedeEditarTodos && permisos.puedeEditarCustodio
+            ? `<button class="btn-action btn-edit" onclick="abrirModalCustodio(${item.id})">Custodio</button>`
+            : "";
+        const btnEstado = !permisos.puedeEditarTodos && permisos.puedeActualizarEstado
+            ? `<button class="btn-action btn-state" onclick="abrirModalEstado(${item.id}, '${escapeHtml(item.estado || '')}')">Estado</button>`
+            : "";
+        const btnHistorial = `<button class="btn-action btn-history" onclick="abrirModalHistorial(${item.id})">Historial</button>`;
         return `
             <tr>
                 <td>${escapeHtml(item.codigoSbai || "-")}</td>
@@ -830,9 +896,12 @@
                 <td>${escapeHtml(item.modelo || "-")}</td>
                 <td>${escapeHtml(item.numeroSerie || "-")}</td>
                 <td>${escapeHtml(item.custodio || "-")}</td>
-                <td>${escapeHtml(item.ubicacion || "-")}</td>
+                <td>${escapeHtml(item.ubicacionEdificio || "-")}</td>
+                <td>${escapeHtml(item.ubicacionPiso || "-")}</td>
+                <td>${escapeHtml(item.ubicacionDireccion || "-")}</td>
                 <td>${escapeHtml(item.procesador || item.caracteristicas || "-")}</td>
                 <td>${stateBadge(item.estado)}</td>
+                <td class="actions-cell">${btnEditar} ${btnCustodio} ${btnEstado} ${btnHistorial}</td>
             </tr>
         `;
     }
@@ -858,7 +927,7 @@
             showToast("Sin datos", "No hay resultados filtrados para exportar.", "info");
             return;
         }
-        const header = ["Código SBYE", "Código Megan", "Descripción", "Tipo", "Marca", "Modelo", "Serie", "Custodio", "Ubicación", "Detalle", "Estado"];
+        const header = ["Código SBYE", "Código Megan", "Descripción", "Tipo", "Marca", "Modelo", "Serie", "Custodio", "Edificio", "Piso", "Dirección", "Detalle", "Estado"];
         const bodyRows = rows.map((item) => [
             item.codigoSbai,
             item.codigoMegan,
@@ -868,7 +937,9 @@
             item.modelo,
             item.numeroSerie,
             item.custodio,
-            item.ubicacion,
+            item.ubicacionEdificio,
+            item.ubicacionPiso,
+            item.ubicacionDireccion,
             item.procesador || item.caracteristicas,
             item.estado
         ]);
@@ -1192,6 +1263,9 @@
             numeroSerie: "S/N",
             custodio: "Custodio",
             ubicacion: "Ubicación",
+            ubicacionEdificio: "Edificio",
+            ubicacionPiso: "Piso",
+            ubicacionDireccion: "Dirección",
             estado: "Estado",
             procesador: "Detalle",
             caracteristicas: "Características",
@@ -1335,20 +1409,24 @@
     }
 
     function buildNav() {
-        const nav = role === "admin"
-            ? [
+        let nav;
+        if (role === "admin") {
+            nav = [
                 ["dashboard", "Dashboard", `${basePrefix}/pages/dashboard.html`],
                 ["inventario", "Inventario", `${basePrefix}/pages/inventario.html`],
-                // COMENTADO: redundante con filtros del módulo de inventario
-                // ["busqueda", "Búsqueda", `${basePrefix}/pages/busqueda.html`],
                 ["nuevo-equipo", "Nuevo Equipo", `${basePrefix}/pages/nuevo-equipo.html`]
-            ]
-            : [
-                ["dashboard", "Dashboard", `${basePrefix}/pages/usuario/dashboard.html`],
-                ["inventario", "Inventario", `${basePrefix}/pages/usuario/inventario.html`],
-                // COMENTADO: redundante con filtros del módulo de inventario
-                // ["busqueda", "Búsqueda", `${basePrefix}/pages/usuario/busqueda.html`]
             ];
+        } else if (role === "custodio") {
+            nav = [
+                ["dashboard", "Dashboard", `${basePrefix}/pages/custodio/dashboard.html`],
+                ["inventario", "Inventario", `${basePrefix}/pages/custodio/inventario.html`]
+            ];
+        } else {
+            nav = [
+                ["dashboard", "Dashboard", `${basePrefix}/pages/usuario/dashboard.html`],
+                ["inventario", "Inventario", `${basePrefix}/pages/usuario/inventario.html`]
+            ];
+        }
         return nav
             .map(([key, label, href]) => `
                 <a href="${href}" class="${key === page ? "is-active" : ""}">
@@ -1377,11 +1455,6 @@
                         <div class="eyebrow">Centro de control</div>
                         <h2>Inventario institucional conectado a la base real.</h2>
                         <p>Consulta equipos tecnológicos, filtra por varios campos escribiendo manualmente y aprovecha sugerencias basadas en registros ya guardados en la base.</p>
-                        <div class="hero-pills">
-                            <span class="hero-pill">Inventario operativo</span>
-                            <span class="hero-pill">Filtros con sugerencias</span>
-                            <span class="hero-pill">Exportación inmediata</span>
-                        </div>
                     </div>
                     <div class="hero-panel">
                         <div class="hero-panel__label">Vista rápida</div>
@@ -1389,7 +1462,7 @@
                             <article class="stat-card"><span>Total cargado</span><strong id="statTotal">--</strong></article>
                             <article class="stat-card"><span>Operativos</span><strong id="statActive">--</strong></article>
                             <article class="stat-card"><span>Ubicaciones</span><strong id="statLocations">--</strong></article>
-                            <article class="stat-card"><span>Rol activo</span><strong>${role === "admin" ? "Admin" : "Técnico"}</strong></article>
+                            <article class="stat-card"><span>Rol activo</span><strong>${role === "admin" ? "Administrador" : role === "custodio" ? "Custodio" : "Técnico"}</strong></article>
                         </div>
                     </div>
                 </div>
@@ -1481,7 +1554,9 @@
                     ${renderAutocompleteField("filterModelo", "Modelo", "Filtrar por modelo")}
                     ${renderAutocompleteField("filterSerie", "Número de serie", "Filtrar por número de serie")}
                     ${renderAutocompleteField("filterCustodio", "Custodio", "Filtrar por custodio")}
-                    ${renderAutocompleteField("filterUbicacion", "Ubicación", "Filtrar por ubicación")}
+                    ${renderAutocompleteField("filterEdificio", "Edificio", "Filtrar por edificio")}
+                    ${renderAutocompleteField("filterPiso", "Piso", "Filtrar por piso")}
+                    ${renderAutocompleteField("filterDireccion", "Dirección", "Filtrar por dirección")}
                     <div class="field-group">
                         <label for="filterEstado">Estado</label>
                         <select id="filterEstado">
@@ -1502,7 +1577,8 @@
                     <table>
                         <thead>
                             <tr>
-                                ${["codigoSbai", "codigoMegan", "descripcion", "tipo", "marca", "modelo", "numeroSerie", "custodio", "ubicacion", "procesador", "estado"].map((key) => `<th><button class="table-sort" data-sort="${key}">${labelForColumn(key)}</button></th>`).join("")}
+                                ${["codigoSbai", "codigoMegan", "descripcion", "tipo", "marca", "modelo", "numeroSerie", "custodio", "ubicacionEdificio", "ubicacionPiso", "ubicacionDireccion", "procesador", "estado"].map((key) => `<th><button class="table-sort" data-sort="${key}">${labelForColumn(key)}</button></th>`).join("")}
+                                <th>Acciones</th>
                             </tr>
                         </thead>
                         <tbody id="inventoryBody"></tbody>
@@ -1655,6 +1731,9 @@
             numeroSerie: "Número de serie",
             custodio: "Custodio",
             ubicacion: "Ubicación",
+            ubicacionEdificio: "Edificio",
+            ubicacionPiso: "Piso",
+            ubicacionDireccion: "Dirección",
             estado: "Estado",
             procesador: "Detalle",
             caracteristicas: "Características",
@@ -1727,7 +1806,9 @@
                     ${renderAutocompleteField("filterModelo", "Modelo", "Filtrar por modelo")}
                     ${renderAutocompleteField("filterSerie", "Numero de serie", "Filtrar por numero")}
                     ${renderAutocompleteField("filterCustodio", "Custodio", "Filtrar por custodio")}
-                    ${renderAutocompleteField("filterUbicacion", "Ubicacion", "Filtrar por ubicacion")}
+                    ${renderAutocompleteField("filterEdificio", "Edificio", "Filtrar por edificio")}
+                    ${renderAutocompleteField("filterPiso", "Piso", "Filtrar por piso")}
+                    ${renderAutocompleteField("filterDireccion", "Dirección", "Filtrar por dirección")}
                     <div class="field-group">
                         <label for="filterEstado">Estado</label>
                         <select id="filterEstado">
@@ -1747,7 +1828,8 @@
                     <table>
                         <thead>
                             <tr>
-                                ${["codigoSbai", "codigoMegan", "descripcion", "tipo", "marca", "modelo", "numeroSerie", "custodio", "ubicacion", "procesador", "estado"].map((key) => `<th><button class="table-sort" data-sort="${key}">${labelForColumn(key)}</button></th>`).join("")}
+                                ${["codigoSbai", "codigoMegan", "descripcion", "tipo", "marca", "modelo", "numeroSerie", "custodio", "ubicacionEdificio", "ubicacionPiso", "ubicacionDireccion", "procesador", "estado"].map((key) => `<th><button class="table-sort" data-sort="${key}">${labelForColumn(key)}</button></th>`).join("")}
+                                <th>Acciones</th>
                             </tr>
                         </thead>
                         <tbody id="inventoryBody"></tbody>
@@ -2113,11 +2195,11 @@
                         <button class="btn btn-secondary" type="button" id="exportSelectAll">Todos</button>
                         <button class="btn btn-secondary" type="button" id="exportSelectNone">Ninguno</button>
                     </div>
-                    <div style="margin-top:10px; max-height: 260px; overflow:auto; border:1px solid rgba(22,50,79,0.15); padding:10px; border-radius:6px;">
+                    <div class="export-field-list">
                         ${INVENTORY_EXPORT_COLUMNS.map((col) => `
-                            <label style="display:flex; align-items:center; gap:10px; padding:6px 2px;">
-                                <input type="checkbox" data-export-col="${escapeHtml(col.key)}" ${selected.has(col.key) ? "checked" : ""}>
-                                <span>${escapeHtml(col.label)}</span>
+                            <label class="export-field-item">
+                                <input type="checkbox" class="export-field-checkbox" data-export-col="${escapeHtml(col.key)}" ${selected.has(col.key) ? "checked" : ""}>
+                                <span class="export-field-label">${escapeHtml(col.label)}</span>
                             </label>
                         `).join("")}
                     </div>
@@ -2555,6 +2637,9 @@
             numeroSerie: "Numero de serie",
             custodio: "Custodio",
             ubicacion: "Ubicacion",
+            ubicacionEdificio: "Edificio",
+            ubicacionPiso: "Piso",
+            ubicacionDireccion: "Dirección",
             estado: "Estado",
             procesador: "Detalle",
             caracteristicas: "Caracteristicas",
@@ -2652,7 +2737,8 @@
             roleLabel,
             accessRole: role === "admin" ? "ADMINISTRADOR" : (role === "custodio" ? "CUSTODIO" : "TECNICO"),
             idCustodio: data?.idCustodio ?? null,
-            permissions
+            permissions,
+            permisos: permissions
         };
     }
 
@@ -2888,7 +2974,9 @@
                     ${renderAutocompleteField("filterModelo", "Modelo", "Filtrar por modelo")}
                     ${renderAutocompleteField("filterSerie", "Numero de serie", "Filtrar por numero")}
                     ${renderAutocompleteField("filterCustodio", "Custodio", "Filtrar por custodio")}
-                    ${renderAutocompleteField("filterUbicacion", "Ubicacion", "Filtrar por ubicacion")}
+                    ${renderAutocompleteField("filterEdificio", "Edificio", "Filtrar por edificio")}
+                    ${renderAutocompleteField("filterPiso", "Piso", "Filtrar por piso")}
+                    ${renderAutocompleteField("filterDireccion", "Dirección", "Filtrar por dirección")}
                     <div class="field-group">
                         <label for="filterEstado">Estado</label>
                         <select id="filterEstado">
@@ -2908,7 +2996,7 @@
                     <table>
                         <thead>
                             <tr>
-                                ${["codigoSbai", "codigoMegan", "descripcion", "tipo", "marca", "modelo", "numeroSerie", "custodio", "ubicacion", "procesador", "estado"]
+                                ${["codigoSbai", "codigoMegan", "descripcion", "tipo", "marca", "modelo", "numeroSerie", "custodio", "ubicacionEdificio", "ubicacionPiso", "ubicacionDireccion", "procesador", "estado"]
                 .map((key) => `<th><button class="table-sort" data-sort="${key}">${labelForColumn(key)}</button></th>`).join("")}
                                 <th>Acciones</th>
                             </tr>
@@ -2958,7 +3046,9 @@
                 <td>${escapeHtml(item.modelo || "-")}</td>
                 <td>${escapeHtml(item.numeroSerie || "-")}</td>
                 <td>${escapeHtml(item.custodio || "-")}</td>
-                <td>${escapeHtml(item.ubicacion || "-")}</td>
+                <td>${escapeHtml(item.ubicacionEdificio || "-")}</td>
+                <td>${escapeHtml(item.ubicacionPiso || "-")}</td>
+                <td>${escapeHtml(item.ubicacionDireccion || "-")}</td>
                 <td>${escapeHtml(item.procesador || item.caracteristicas || "-")}</td>
                 <td>${stateBadge(item.estado)}</td>
                 <td>${buildInventoryActionButtons(item)}</td>
@@ -3070,109 +3160,77 @@
 
     async function openCustodioEditor(item) {
         try {
-            const custodiosIniciales = await loadCustodios(null, 120);
-            if (!custodiosIniciales.length) {
-                showToast("Sin custodios", "No hay custodios disponibles para asignar.", "info");
-                return;
-            }
+            const custodios = await loadCustodios(null, 500);
+            const opcionesCustodio = custodios.map((c) => {
+                const nombre = String(c?.nombre || "");
+                return `<option value="${c.id}">${escapeHtml(nombre)}</option>`;
+            }).join("");
+
+            const VALID_STATES_LOCAL = ["OPERATIVO", "EN MANTENIMIENTO", "DADO DE BAJA", "EN BODEGA", "OBSOLETO"];
+            const tipoLabel = {
+                pc: "PC", laptop: "Laptop", periferico: "Periférico", impresora: "Impresora",
+                escaner: "Escáner", telefono: "Teléfono", proyector: "Proyector",
+                infraestructura: "Infraestructura", licencia: "Licencia",
+                bien_control_admin: "Bien Control Adm.", modem: "Módem"
+            };
+
             openModal(
-                `Editar custodio (${escapeHtml(item.codigoSbai || item.id)})`,
-                `
-                    <div class="field-group">
-                        <label for="custodioSearchInput">Buscar custodio</label>
-                        <input id="custodioSearchInput" type="text" autocomplete="off" placeholder="Escriba para filtrar por nombre o usuario">
-                        <small class="helper-text">Selecciona un custodio existente para asociarlo al equipo.</small>
-                    </div>
-                    <div class="field-group">
-                        <label for="nuevoCustodioSelect">Custodio</label>
-                        <select id="nuevoCustodioSelect" size="10"></select>
-                        <small id="custodioSearchMeta" class="helper-text"></small>
-                    </div>
-                    <p class="muted">Custodio actual: ${escapeHtml(item.custodio || "-")}</p>
-                `,
+                `Editar equipo — ${escapeHtml(item.codigoSbai || String(item.id))}`,
+                `<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;" id="editFormGrid2">
+                    <label class="edit-field"><span>Código SBYE</span><input name="codigo_sbye" value="${escapeHtml(item.codigoSbai || "")}"></label>
+                    <label class="edit-field"><span>Código Megan</span><input name="codigo_megan" value="${escapeHtml(item.codigoMegan || "")}"></label>
+                    <label class="edit-field" style="grid-column:span 2;"><span>Descripción</span><input name="descripcion" value="${escapeHtml(item.descripcion || "")}"></label>
+                    <label class="edit-field"><span>Tipo</span><input value="${escapeHtml(tipoLabel[item.tipo] || item.tipo || "")}" disabled style="opacity:.6;cursor:not-allowed;"></label>
+                    <label class="edit-field"><span>Marca</span><input name="marca" value="${escapeHtml(item.marca || "")}"></label>
+                    <label class="edit-field"><span>Modelo</span><input name="modelo" value="${escapeHtml(item.modelo || "")}"></label>
+                    <label class="edit-field"><span>Número de serie</span><input name="sn" value="${escapeHtml(item.numeroSerie || "")}"></label>
+                    <label class="edit-field"><span>Custodio</span>
+                        <select name="id_custodio_actual" id="custodioSelectEdit"><option value="">-- Sin custodio --</option>${opcionesCustodio}</select>
+                    </label>
+                    <label class="edit-field"><span>Edificio</span><input name="ubicacion_edificio" value="${escapeHtml(item.ubicacionEdificio || item.ubicacion || "")}"></label>
+                    <label class="edit-field"><span>Piso</span><input name="ubicacion_piso" value="${escapeHtml(item.ubicacionPiso || "")}"></label>
+                    <label class="edit-field" style="grid-column:span 2;"><span>Dirección / Área</span><input name="ubicacion_direccion" value="${escapeHtml(item.ubicacionDireccion || "")}"></label>
+                    <label class="edit-field" style="grid-column:span 2;"><span>Detalle</span><textarea name="observacion" rows="2">${escapeHtml(item.observacion || item.caracteristicas || "")}</textarea></label>
+                </div>`,
                 [
                     { label: "Cancelar", className: "btn btn-secondary", onClick: closeModal },
                     {
-                        label: "Guardar",
+                        label: "Guardar cambios",
                         className: "btn btn-primary",
                         onClick: async () => {
-                            const select = document.getElementById("nuevoCustodioSelect");
-                            const idCustodio = Number(select?.value || 0);
-                            if (!idCustodio) {
-                                showToast("Dato invalido", "Seleccione un custodio valido.", "danger");
-                                return;
+                            const grid = document.getElementById("editFormGrid2");
+                            if (!grid) return;
+                            const payload = {};
+                            grid.querySelectorAll("input[name], select[name], textarea[name]").forEach((el) => {
+                                payload[el.name] = el.value;
+                            });
+                            try {
+                                const r = await apiFetch(`/inventario/${item.tipo}/${item.id}`, {
+                                    method: "PUT",
+                                    headers: { "Content-Type": "application/json" },
+                                    body: JSON.stringify(payload)
+                                });
+                                const p = await r.json();
+                                if (!r.ok || !p.success) throw new Error(p.message || "Error al guardar");
+                                closeModal();
+                                await loadInventory();
+                                applyInventoryFilters();
+                                showToast("Guardado", "Equipo actualizado correctamente.", "success");
+                            } catch (err) {
+                                showToast("Error", err.message, "danger");
                             }
-                            await saveCustodioChange(item, idCustodio);
                         }
                     }
                 ]
             );
 
-            const select = document.getElementById("nuevoCustodioSelect");
-            const search = document.getElementById("custodioSearchInput");
-            const meta = document.getElementById("custodioSearchMeta");
-
-            if (!select) {
-                return;
+            const selCustodio = document.getElementById("custodioSelectEdit");
+            if (selCustodio && item.custodio) {
+                const match = custodios.find((c) => String(c.nombre).trim().toLowerCase() === String(item.custodio).trim().toLowerCase());
+                if (match) selCustodio.value = String(match.id);
             }
-
-            const nombreActual = String(item.custodio || "").trim().toLowerCase();
-            const renderOptions = (list) => {
-                const previous = Number(select.value || 0);
-                select.innerHTML = list
-                    .map((custodio) => {
-                        const nombre = String(custodio?.nombre || "");
-                        const username = String(custodio?.username || "").trim();
-                        const label = username ? `${nombre} (${username})` : nombre;
-                        return `<option value="${custodio.id}">${escapeHtml(label)}</option>`;
-                    })
-                    .join("");
-
-                if (meta) {
-                    meta.textContent = `${list.length} coincidencias`;
-                }
-
-                if (previous && list.some((custodio) => Number(custodio.id) === previous)) {
-                    select.value = String(previous);
-                    return;
-                }
-
-                if (nombreActual) {
-                    const match = list.find((custodio) => String(custodio?.nombre || "").trim().toLowerCase() === nombreActual);
-                    if (match) {
-                        select.value = String(match.id);
-                        return;
-                    }
-                }
-
-                if (list.length) {
-                    select.value = String(list[0].id);
-                }
-            };
-
-            renderOptions(custodiosIniciales);
-
-            if (!search) {
-                return;
-            }
-
-            let debounceId;
-            const runSearch = async () => {
-                const term = search.value.trim();
-                const resultados = await loadCustodios(term, 120);
-                renderOptions(resultados);
-            };
-
-            search.addEventListener("input", () => {
-                window.clearTimeout(debounceId);
-                debounceId = window.setTimeout(() => {
-                    runSearch().catch((error) => {
-                        showToast("Error", error.message || "No se pudo buscar custodios.", "danger");
-                    });
-                }, 250);
-            });
         } catch (error) {
-            showToast("Error", error.message || "No se pudo abrir la edicion de custodio.", "danger");
+            showToast("Error", error.message || "No se pudo abrir el editor.", "danger");
         }
     }
 
@@ -3320,10 +3378,224 @@
         summary.innerHTML = "";
     }
 
+    // ==================== MODALES DE ACCIÓN (accesibles desde onclick en la tabla) ====================
+
+    // Campos editables por tipo de equipo
+    const CAMPOS_TIPO = {
+        pc:              ["procesador", "ram", "disco_duro", "so", "ip"],
+        laptop:          ["procesador", "ram", "disco_duro", "so", "ip"],
+        impresora:       ["tipo_impresora", "ip", "caracteristicas"],
+        periferico:      ["tipo_periferico", "caracteristicas"],
+        escaner:         ["caracteristicas"],
+        telefono:        ["caracteristicas"],
+        proyector:       ["caracteristicas", "acta_ugdt", "acta_ugad", "anotaciones"],
+        infraestructura: ["subtipo", "caracteristicas", "acta_ugdt", "acta_ugad", "anotaciones"],
+        licencia:        ["caracteristicas", "acta_ugdt", "acta_ugad", "anotaciones"],
+        bien_control_admin: ["codigo_anterior"],
+        modem:           ["numero_contrato", "numero_servicio", "plan_comercial", "estado_servicio", "megas", "acreditacion", "caracteristicas", "anotaciones"]
+    };
+    const LABEL_CAMPO = {
+        procesador: "Procesador", ram: "RAM", disco_duro: "Disco Duro", so: "Sistema Operativo", ip: "IP",
+        tipo_impresora: "Tipo Impresora", tipo_periferico: "Tipo Periférico", subtipo: "Subtipo",
+        caracteristicas: "Características", anotaciones: "Anotaciones", codigo_anterior: "Código Anterior",
+        acta_ugdt: "Acta UGDT", acta_ugad: "Acta UGAD",
+        numero_contrato: "Nº Contrato", numero_servicio: "Nº Servicio",
+        plan_comercial: "Plan Comercial", estado_servicio: "Estado Servicio", megas: "Megas",
+        acreditacion: "Acreditación"
+    };
+
+    async function abrirModalEditar(idEquipo) {
+        const item = state.inventory.find((i) => i.id === idEquipo);
+        if (!item) { showToast("Error", "Equipo no encontrado en el inventario cargado.", "danger"); return; }
+
+        // Cargar custodios y ubicaciones en paralelo
+        let custodios = [], ubicaciones = [];
+        try {
+            const [rc, ru] = await Promise.all([
+                apiFetch("/inventario/custodios?limit=500"),
+                apiFetch("/inventario/ubicaciones?limit=500")
+            ]);
+            const pc = await rc.json(); custodios = Array.isArray(pc.data) ? pc.data : [];
+            const pu = await ru.json(); ubicaciones = Array.isArray(pu.data) ? pu.data : [];
+        } catch (_) { /* continuar sin autocompletar */ }
+
+        const opcionesCustodio = custodios.map((c) => `<option value="${c.id}">${escapeHtml(c.nombre)}</option>`).join("");
+
+        const tipoLabel = {
+            pc: "PC", laptop: "Laptop", periferico: "Periférico", impresora: "Impresora",
+            escaner: "Escáner", telefono: "Teléfono", proyector: "Proyector",
+            infraestructura: "Infraestructura", licencia: "Licencia",
+            bien_control_admin: "Bien Control Adm.", modem: "Módem"
+        };
+
+        const bodyHtml = `
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;" id="editFormGrid">
+                <label class="edit-field"><span>Código SBYE</span><input name="codigo_sbye" value="${escapeHtml(item.codigoSbai || "")}"></label>
+                <label class="edit-field"><span>Código Megan</span><input name="codigo_megan" value="${escapeHtml(item.codigoMegan || "")}"></label>
+                <label class="edit-field" style="grid-column:span 2;"><span>Descripción</span><input name="descripcion" value="${escapeHtml(item.descripcion || "")}"></label>
+                <label class="edit-field"><span>Tipo</span><input value="${escapeHtml(tipoLabel[item.tipo] || item.tipo || "")}" disabled style="opacity:.6;cursor:not-allowed;"></label>
+                <label class="edit-field"><span>Marca</span><input name="marca" value="${escapeHtml(item.marca || "")}"></label>
+                <label class="edit-field"><span>Modelo</span><input name="modelo" value="${escapeHtml(item.modelo || "")}"></label>
+                <label class="edit-field"><span>Número de serie</span><input name="sn" value="${escapeHtml(item.numeroSerie || "")}"></label>
+                <label class="edit-field"><span>Custodio</span>
+                    <select name="id_custodio_actual"><option value="">-- Sin custodio --</option>${opcionesCustodio}</select>
+                </label>
+                <label class="edit-field"><span>Edificio</span><input name="ubicacion_edificio" value="${escapeHtml(item.ubicacionEdificio || "")}"></label>
+                <label class="edit-field"><span>Piso</span><input name="ubicacion_piso" value="${escapeHtml(item.ubicacionPiso || "")}"></label>
+                <label class="edit-field" style="grid-column:span 2;"><span>Dirección / Área</span><input name="ubicacion_direccion" value="${escapeHtml(item.ubicacionDireccion || "")}"></label>
+                <label class="edit-field" style="grid-column:span 2;"><span>Detalle</span><textarea name="observacion" rows="2">${escapeHtml(item.observacion || "")}</textarea></label>
+            </div>`;
+
+        openModal(`Editar equipo #${idEquipo} — ${(item.tipo || "").toUpperCase()}`, bodyHtml, [
+            {
+                label: "Guardar cambios", className: "btn btn-primary", onClick: async () => {
+                    const grid = document.getElementById("editFormGrid");
+                    if (!grid) return;
+                    const payload = {};
+                    grid.querySelectorAll("input, select, textarea").forEach((el) => {
+                        if (el.name) payload[el.name] = el.value;
+                    });
+                    try {
+                        const r = await apiFetch(`/inventario/${item.tipo}/${idEquipo}`, {
+                            method: "PUT",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify(payload)
+                        });
+                        const p = await r.json();
+                        if (!r.ok || !p.success) throw new Error(p.message || "Error al guardar");
+                        const updated = p.data;
+                        const idx = state.inventory.findIndex((i) => i.id === idEquipo);
+                        if (idx !== -1) {
+                            const prev = state.inventory[idx];
+                            state.inventory[idx] = Object.assign(prev, {
+                                descripcion: updated.descripcion ?? prev.descripcion,
+                                codigoSbai: updated.codigoSbai ?? prev.codigoSbai,
+                                codigoMegan: updated.codigoMegan ?? prev.codigoMegan,
+                                marca: updated.marca ?? prev.marca,
+                                modelo: updated.modelo ?? prev.modelo,
+                                numeroSerie: updated.numeroSerie ?? prev.numeroSerie,
+                                custodio: updated.custodio ?? prev.custodio,
+                                ubicacion: updated.ubicacion ?? prev.ubicacion,
+                                ubicacionEdificio: updated.ubicacionEdificio ?? prev.ubicacionEdificio,
+                                ubicacionPiso: updated.ubicacionPiso ?? prev.ubicacionPiso,
+                                ubicacionDireccion: updated.ubicacionDireccion ?? prev.ubicacionDireccion,
+                                estado: normalizeState(updated.estado ?? prev.estado),
+                                observacion: updated.observacion ?? prev.observacion,
+                                raw: updated
+                            });
+                            applyInventoryFilters();
+                        }
+                        showToast("Guardado", "Equipo actualizado correctamente.", "success");
+                        closeModal();
+                    } catch (err) {
+                        showToast("Error", err.message, "danger");
+                    }
+                }
+            },
+            { label: "Cancelar", className: "btn btn-secondary", onClick: closeModal }
+        ]);
+
+        // Pre-seleccionar custodio actual
+        const selCustodio = document.querySelector('#editFormGrid select[name="id_custodio_actual"]');
+        if (selCustodio) {
+            const match = custodios.find((c) => c.nombre === item.custodio);
+            if (match) selCustodio.value = match.id;
+        }
+    }
+
+    async function abrirModalCustodio(idEquipo) {
+        return abrirModalEditar(idEquipo);
+    }
+
+    async function abrirModalEstado(idEquipo, estadoActual) {
+        const opcionesEstado = VALID_STATES.map((s) => `<option value="${s}" ${s === estadoActual ? "selected" : ""}>${s}</option>`).join("");
+        openModal("Cambiar Estado", `
+            <div class="field-group">
+                <label for="estadoSelect">Nuevo estado</label>
+                <select id="estadoSelect" style="width:100%;padding:10px;border-radius:10px;border:1px solid #dce7f3;">${opcionesEstado}</select>
+            </div>
+        `, [
+            {
+                label: "Guardar", className: "btn btn-primary", onClick: async () => {
+                    const nuevoEstado = document.getElementById("estadoSelect").value;
+                    try {
+                        const r = await apiFetch(`/inventario/${idEquipo}/estado`, {
+                            method: "PUT",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({ estado: nuevoEstado })
+                        });
+                        const p = await r.json();
+                        if (!r.ok || !p.success) throw new Error(p.message || "Error al actualizar");
+                        const idx = state.inventory.findIndex((i) => i.id === idEquipo);
+                        if (idx !== -1) {
+                            state.inventory[idx].estado = normalizeState(nuevoEstado);
+                            applyInventoryFilters();
+                        }
+                        showToast("Listo", "Estado actualizado correctamente.", "success");
+                        closeModal();
+                    } catch (err) {
+                        showToast("Error", err.message, "danger");
+                    }
+                }
+            },
+            { label: "Cancelar", className: "btn btn-secondary", onClick: closeModal }
+        ]);
+    }
+
+    async function abrirModalHistorial(idEquipo) {
+        openModal("Historial del Equipo", `<div id="historialContent"><p>Cargando historial...</p></div>`, [
+            { label: "Cerrar", className: "btn btn-secondary", onClick: closeModal }
+        ]);
+        try {
+            const res = await apiFetch(`/inventario/${idEquipo}/historial`);
+            const payload = await res.json();
+            const historial = Array.isArray(payload.data) ? payload.data : [];
+            const container = document.getElementById("historialContent");
+            if (!historial.length) {
+                container.innerHTML = `<p style="color:#61708a;text-align:center;padding:24px;">Sin registros de historial para este equipo.</p>`;
+                return;
+            }
+            container.innerHTML = `
+                <div style="overflow-x:auto;">
+                    <table style="width:100%;border-collapse:collapse;font-size:13px;">
+                        <thead>
+                            <tr style="background:#eef4fb;">
+                                <th style="padding:8px;text-align:left;border-bottom:1px solid #dce7f3;">Acción</th>
+                                <th style="padding:8px;text-align:left;border-bottom:1px solid #dce7f3;">Anterior</th>
+                                <th style="padding:8px;text-align:left;border-bottom:1px solid #dce7f3;">Nuevo</th>
+                                <th style="padding:8px;text-align:left;border-bottom:1px solid #dce7f3;">Usuario</th>
+                                <th style="padding:8px;text-align:left;border-bottom:1px solid #dce7f3;">Rol</th>
+                                <th style="padding:8px;text-align:left;border-bottom:1px solid #dce7f3;">Fecha</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${historial.map((h) => `
+                                <tr style="border-bottom:1px solid #f0f4fa;">
+                                    <td style="padding:8px;">${escapeHtml(h.accion || "-")}</td>
+                                    <td style="padding:8px;">${escapeHtml(h.valorAnterior || "-")}</td>
+                                    <td style="padding:8px;font-weight:600;">${escapeHtml(h.valorNuevo || "-")}</td>
+                                    <td style="padding:8px;">${escapeHtml(h.usuario || "-")}</td>
+                                    <td style="padding:8px;">${escapeHtml(h.rol || "-")}</td>
+                                    <td style="padding:8px;white-space:nowrap;">${h.fecha ? new Date(h.fecha).toLocaleString("es-EC") : "-"}</td>
+                                </tr>
+                            `).join("")}
+                        </tbody>
+                    </table>
+                </div>
+            `;
+        } catch (e) {
+            document.getElementById("historialContent").innerHTML = `<p style="color:red;">Error: ${e.message}</p>`;
+        }
+    }
+
     if (typeof window !== "undefined") {
         window.openModal = openModal;
         window.closeModal = closeModal;
         window.showToast = showToast;
         window.formatDate = formatDate;
+        window.abrirModalEditar = abrirModalEditar;
+        window.abrirModalCustodio = abrirModalCustodio;
+        window.abrirModalEstado = abrirModalEstado;
+        window.abrirModalHistorial = abrirModalHistorial;
     }
 })();

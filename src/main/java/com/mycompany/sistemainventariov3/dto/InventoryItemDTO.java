@@ -16,6 +16,9 @@ public class InventoryItemDTO {
     private String numeroSerie;
     private String custodio;
     private String ubicacion;
+    private String ubicacionEdificio;
+    private String ubicacionPiso;
+    private String ubicacionDireccion;
     private String estado;
     private String procesador;
     private String ram;
@@ -24,6 +27,8 @@ public class InventoryItemDTO {
     private String observacion;
     private String caracteristicas;
     private String ip;
+    private String fechaIngreso;
+    private String ultimoMantenimiento;
 
     public Integer getId() {
         return id;
@@ -105,13 +110,17 @@ public class InventoryItemDTO {
         this.custodio = custodio;
     }
 
-    public String getUbicacion() {
-        return ubicacion;
-    }
+    public String getUbicacion() { return ubicacion; }
+    public void setUbicacion(String ubicacion) { this.ubicacion = ubicacion; }
 
-    public void setUbicacion(String ubicacion) {
-        this.ubicacion = ubicacion;
-    }
+    public String getUbicacionEdificio() { return ubicacionEdificio; }
+    public void setUbicacionEdificio(String ubicacionEdificio) { this.ubicacionEdificio = ubicacionEdificio; }
+
+    public String getUbicacionPiso() { return ubicacionPiso; }
+    public void setUbicacionPiso(String ubicacionPiso) { this.ubicacionPiso = ubicacionPiso; }
+
+    public String getUbicacionDireccion() { return ubicacionDireccion; }
+    public void setUbicacionDireccion(String ubicacionDireccion) { this.ubicacionDireccion = ubicacionDireccion; }
 
     public String getEstado() {
         return estado;
@@ -176,4 +185,10 @@ public class InventoryItemDTO {
     public void setIp(String ip) {
         this.ip = ip;
     }
+
+    public String getFechaIngreso() { return fechaIngreso; }
+    public void setFechaIngreso(String fechaIngreso) { this.fechaIngreso = fechaIngreso; }
+
+    public String getUltimoMantenimiento() { return ultimoMantenimiento; }
+    public void setUltimoMantenimiento(String ultimoMantenimiento) { this.ultimoMantenimiento = ultimoMantenimiento; }
 }

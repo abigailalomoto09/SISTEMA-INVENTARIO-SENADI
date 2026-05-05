@@ -55,7 +55,7 @@ public class InventarioJdbcService {
 
     private static final String BASE_QUERY =
             "SELECT e.id_equipo, e.tipo_equipo, e.codigo_sbye, e.codigo_megan, e.descripcion, " +
-            "e.marca, e.modelo, e.sn, e.estado, e.observacion, " +
+            "e.marca, e.modelo, e.sn, e.estado, e.observacion, e.fecha_ingreso, e.ultimo_mantenimiento, " +
             "c.nombre AS custodio_nombre, " +
             "u.edificio, u.piso, u.direccion, " +
             "pc.procesador AS pc_procesador, pc.ram AS pc_ram, pc.disco_duro AS pc_disco_duro, pc.so AS pc_so, pc.ip AS pc_ip, " +
@@ -303,10 +303,11 @@ public class InventarioJdbcService {
                     ps.executeUpdate();
                 }
 
-                if (registrarAuditoria) {
-                    asegurarTablaAuditoria(conn);
-                    registrarAuditoria(conn, idEquipo, usuario, rol, "Cambio de custodio", nombreAnterior, nombreNuevo);
-                }
+                // Siempre registrar auditoría para todos los roles
+                asegurarTablaAuditoria(conn);
+                registrarAuditoria(conn, idEquipo, usuario, rol, "Cambio de custodio",
+                        nombreAnterior != null ? nombreAnterior : "(sin custodio)",
+                        nombreNuevo);
 
                 conn.commit();
                 return obtenerInventarioPorId(conn, idEquipo);
@@ -320,6 +321,10 @@ public class InventarioJdbcService {
     }
 
     public InventoryItemDTO actualizarEstadoEquipo(Integer idEquipo, String nuevoEstado) throws Exception {
+        return actualizarEstadoEquipo(idEquipo, nuevoEstado, null, null);
+    }
+
+    public InventoryItemDTO actualizarEstadoEquipo(Integer idEquipo, String nuevoEstado, String usuario, String rol) throws Exception {
         String estado = normalizarEstado(nuevoEstado);
         if (!"OPERATIVO".equals(estado) && !"NO OPERATIVO".equals(estado) && !"REPORTADO PARA DAR DE BAJA".equals(estado)) {
             throw new IllegalArgumentException("Estado no permitido.");
@@ -328,6 +333,16 @@ public class InventarioJdbcService {
         try (Connection conn = DatabaseService.getConnection()) {
             conn.setAutoCommit(false);
             try {
+                // Obtener estado anterior
+                String estadoAnterior = "";
+                String sqlSelect = "SELECT estado FROM equipo WHERE id_equipo = ?";
+                try (PreparedStatement ps = conn.prepareStatement(sqlSelect)) {
+                    ps.setInt(1, idEquipo);
+                    try (ResultSet rs = ps.executeQuery()) {
+                        if (rs.next()) estadoAnterior = rs.getString("estado");
+                    }
+                }
+
                 String update = "UPDATE equipo SET estado = ?, ultima_actualizacion = CURDATE() WHERE id_equipo = ?";
                 try (PreparedStatement ps = conn.prepareStatement(update)) {
                     ps.setString(1, estado);
@@ -337,6 +352,14 @@ public class InventarioJdbcService {
                         throw new IllegalArgumentException("No se encontro el equipo indicado.");
                     }
                 }
+
+                // Registrar auditoría
+                asegurarTablaAuditoria(conn);
+                registrarAuditoria(conn, idEquipo,
+                        usuario != null ? usuario : "SISTEMA",
+                        rol != null ? rol : "ADMINISTRADOR",
+                        "Cambio de estado", estadoAnterior, estado);
+
                 conn.commit();
                 return obtenerInventarioPorId(conn, idEquipo);
             } catch (Exception e) {
@@ -351,10 +374,13 @@ public class InventarioJdbcService {
     public List<Map<String, Object>> obtenerHistorialEquipo(Integer idEquipo) throws Exception {
         try (Connection conn = DatabaseService.getConnection()) {
             asegurarTablaAuditoria(conn);
-            String sql = "SELECT id, usuario, rol, accion, valor_anterior, valor_nuevo, fecha " +
-                    "FROM auditoria_custodio WHERE id_equipo = ? ORDER BY fecha DESC, id DESC";
+            // Incluir historial de custodio desde historial_custodio si existe
             List<Map<String, Object>> historial = new ArrayList<>();
-            try (PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            // Fuente 1: tabla de auditoría general (cambios de custodio y estado)
+            String sql1 = "SELECT id, usuario, rol, accion, valor_anterior, valor_nuevo, fecha " +
+                    "FROM auditoria_custodio WHERE id_equipo = ? ORDER BY fecha DESC, id DESC";
+            try (PreparedStatement ps = conn.prepareStatement(sql1)) {
                 ps.setInt(1, idEquipo);
                 try (ResultSet rs = ps.executeQuery()) {
                     while (rs.next()) {
@@ -366,12 +392,147 @@ public class InventarioJdbcService {
                         item.put("valorAnterior", rs.getString("valor_anterior"));
                         item.put("valorNuevo", rs.getString("valor_nuevo"));
                         item.put("fecha", rs.getTimestamp("fecha"));
+                        item.put("fuente", "auditoria");
                         historial.add(item);
                     }
                 }
             }
+
+            // Fuente 2: historial_custodio (si existe)
+            boolean tieneHistorialCustodio = existeTabla(conn, "historial_custodio");
+            if (tieneHistorialCustodio) {
+                String sql2 = "SELECT hc.id_historial AS id, " +
+                        "COALESCE(c.nombre, hc.custodio_nombre_libre) AS custodio_nuevo, " +
+                        "hc.fecha_inicio AS fecha, hc.motivo " +
+                        "FROM historial_custodio hc " +
+                        "LEFT JOIN custodio c ON c.id_custodio = hc.id_custodio " +
+                        "WHERE hc.id_equipo = ? ORDER BY hc.fecha_inicio DESC";
+                try (PreparedStatement ps = conn.prepareStatement(sql2)) {
+                    ps.setInt(1, idEquipo);
+                    try (ResultSet rs = ps.executeQuery()) {
+                        while (rs.next()) {
+                            Map<String, Object> item = new LinkedHashMap<>();
+                            item.put("id", "hc-" + rs.getInt("id"));
+                            item.put("usuario", "(registro historico)");
+                            item.put("rol", "SISTEMA");
+                            item.put("accion", "Historial de custodio");
+                            item.put("valorAnterior", "");
+                            item.put("valorNuevo", rs.getString("custodio_nuevo"));
+                            item.put("fecha", rs.getTimestamp("fecha"));
+                            item.put("fuente", "historial_custodio");
+                            historial.add(item);
+                        }
+                    }
+                }
+            }
+
+            historial.sort((a, b) -> {
+                java.sql.Timestamp fa = (java.sql.Timestamp) a.get("fecha");
+                java.sql.Timestamp fb = (java.sql.Timestamp) b.get("fecha");
+                if (fa == null && fb == null) return 0;
+                if (fa == null) return 1;
+                if (fb == null) return -1;
+                return fb.compareTo(fa);
+            });
             return historial;
         }
+    }
+
+    public InventoryItemDTO actualizarEquipoCompleto(
+            Integer idEquipo,
+            Map<String, Object> payload,
+            String usuario,
+            String rol) throws Exception {
+        if (payload == null) {
+            payload = new LinkedHashMap<>();
+        }
+        try (Connection conn = DatabaseService.getConnection()) {
+            conn.setAutoCommit(false);
+            try {
+                String tipo = obtenerTipoEquipo(conn, idEquipo);
+                if (tipo == null) {
+                    throw new IllegalArgumentException("Equipo no encontrado.");
+                }
+
+                resolverRelacionesCatalogo(conn, payload);
+
+                String schema = conn.getCatalog();
+                Set<String> columnasEquipo = obtenerColumnasPermitidas(conn, schema, "equipo",
+                        new HashSet<>(Arrays.asList("id_equipo", "tipo_equipo", "creado_en", "actualizado_en")));
+                Set<String> columnasHija = obtenerColumnasPermitidas(conn, schema, tablaHijaPorTipo(tipo),
+                        new HashSet<>(Arrays.asList("id_equipo")));
+
+                // Construir SET dinámico para equipo
+                List<String> sets = new ArrayList<>();
+                List<Object[]> params = new ArrayList<>();
+                for (String col : columnasEquipo) {
+                    if (payload.containsKey(col) && !"costo".equals(col)) {
+                        sets.add(col + " = ?");
+                        params.add(new Object[]{col, payload.get(col)});
+                    }
+                }
+                sets.add("ultima_actualizacion = CURDATE()");
+
+                if (!sets.isEmpty()) {
+                    String updateSql = "UPDATE equipo SET " + String.join(", ", sets) + " WHERE id_equipo = ?";
+                    try (PreparedStatement ps = conn.prepareStatement(updateSql)) {
+                        int idx = 1;
+                        for (Object[] p : params) {
+                            setValorParametro(ps, idx++, (String) p[0], p[1]);
+                        }
+                        ps.setInt(idx, idEquipo);
+                        ps.executeUpdate();
+                    }
+                }
+
+                // Actualizar tabla hija
+                List<String> setsHija = new ArrayList<>();
+                List<Object[]> paramsHija = new ArrayList<>();
+                for (String col : columnasHija) {
+                    if (payload.containsKey(col)) {
+                        setsHija.add(col + " = ?");
+                        paramsHija.add(new Object[]{col, payload.get(col)});
+                    }
+                }
+                if (!setsHija.isEmpty()) {
+                    String tabla = tablaHijaPorTipo(tipo);
+                    String updateHija = "UPDATE " + tabla + " SET " + String.join(", ", setsHija) + " WHERE id_equipo = ?";
+                    try (PreparedStatement ps = conn.prepareStatement(updateHija)) {
+                        int idx = 1;
+                        for (Object[] p : paramsHija) {
+                            setValorParametro(ps, idx++, (String) p[0], p[1]);
+                        }
+                        ps.setInt(idx, idEquipo);
+                        ps.executeUpdate();
+                    }
+                }
+
+                asegurarTablaAuditoria(conn);
+                registrarAuditoria(conn, idEquipo,
+                        usuario != null ? usuario : "SISTEMA",
+                        rol != null ? rol : "ADMINISTRADOR",
+                        "Edición completa del equipo", "", "Campos actualizados: " + String.join(", ", sets));
+
+                conn.commit();
+                return obtenerInventarioPorId(conn, idEquipo);
+            } catch (Exception e) {
+                conn.rollback();
+                throw e;
+            } finally {
+                conn.setAutoCommit(true);
+            }
+        }
+    }
+
+    private String obtenerTipoEquipo(Connection conn, Integer idEquipo) throws Exception {
+        String sql = "SELECT tipo_equipo FROM equipo WHERE id_equipo = ?";
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, idEquipo);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) return rs.getString("tipo_equipo");
+            }
+        }
+        return null;
     }
 
     public InventoryItemDTO crearEquipo(String tipo, Map<String, Object> payload) throws Exception {
@@ -472,6 +633,9 @@ public class InventarioJdbcService {
         item.setNumeroSerie(valor(rs, "sn"));
         item.setCustodio(valor(rs, "custodio_nombre"));
         item.setUbicacion(construirUbicacion(rs));
+        item.setUbicacionEdificio(valor(rs, "edificio"));
+        item.setUbicacionPiso(valor(rs, "piso"));
+        item.setUbicacionDireccion(valor(rs, "direccion"));
         item.setEstado(normalizarEstado(valor(rs, "estado")));
         item.setObservacion(valor(rs, "observacion"));
         item.setProcesador(coalesce(valor(rs, "pc_procesador"), valor(rs, "laptop_procesador")));
@@ -480,6 +644,8 @@ public class InventarioJdbcService {
         item.setSistemaOperativo(coalesce(valor(rs, "pc_so"), valor(rs, "laptop_so")));
         item.setIp(coalesce(valor(rs, "pc_ip"), valor(rs, "laptop_ip"), valor(rs, "impresora_ip")));
         item.setCaracteristicas(construirCaracteristicas(rs, tipo));
+        item.setFechaIngreso(valor(rs, "fecha_ingreso"));
+        item.setUltimoMantenimiento(valor(rs, "ultimo_mantenimiento"));
         return item;
     }
 
