@@ -4431,6 +4431,25 @@ ON DUPLICATE KEY UPDATE
   id_custodio = (SELECT id_custodio FROM custodio WHERE nombre = 'MIGUEL CABRERA' LIMIT 1),
   activo = 1;
 
+-- ============================================================
+-- FIN EXTENSIÓN DE ROLES
+-- ============================================================
+
+-- ============================================================
+-- MEJORA 1: SOPORTE MULTI-ROL POR USUARIO
+-- Columna roles_extra permite que un usuario tenga roles
+-- adicionales además del rol principal.
+-- Ejemplo: Paul es CUSTODIO (rol) pero también ADMIN (roles_extra)
+-- ============================================================
+ALTER TABLE usuario
+    ADD COLUMN roles_extra VARCHAR(200) NULL DEFAULT NULL
+    COMMENT 'Roles adicionales separados por coma: ADMIN,TECNICO,CUSTODIO';
+
+-- ============================================================
+-- Usuarios con doble rol: TECNICO + CUSTODIO
+-- (deben ir DESPUÉS del ALTER TABLE que crea roles_extra)
+-- ============================================================
+
 -- Miguel Cabrera: actualizar a rol TECNICO + roles_extra CUSTODIO
 INSERT INTO usuario (username, password_hash, email, rol, id_custodio, activo, roles_extra)
 SELECT 'mcabrera', MD5('Temporal123'), NULL, 'TECNICO', c.id_custodio, 1, 'CUSTODIO'
@@ -4491,20 +4510,6 @@ ON DUPLICATE KEY UPDATE
   id_custodio = (SELECT id_custodio FROM custodio WHERE nombre = 'EMERSON R. CERACAPA SOLIS' LIMIT 1),
   activo = 1;
 
--- ============================================================
--- FIN EXTENSIÓN DE ROLES
--- ============================================================
-
--- ============================================================
--- MEJORA 1: SOPORTE MULTI-ROL POR USUARIO
--- Columna roles_extra permite que un usuario tenga roles
--- adicionales además del rol principal.
--- Ejemplo: Paul es CUSTODIO (rol) pero también ADMIN (roles_extra)
--- ============================================================
-ALTER TABLE usuario
-    ADD COLUMN roles_extra VARCHAR(200) NULL DEFAULT NULL
-    COMMENT 'Roles adicionales separados por coma: ADMIN,TECNICO,CUSTODIO';
-
 -- Ejemplo: Paul Fernando Orozco Vinueza -> custodio + administrador
 -- (Buscar en custodio y crear usuario si no existe)
 INSERT INTO custodio (nombre, activo)
@@ -4544,6 +4549,7 @@ CREATE TABLE IF NOT EXISTS auditoria_custodio (
 -- NORMALIZACIÓN DE CUSTODIOS DUPLICADOS
 -- Unifica nombres inconsistentes conservando todos los equipos
 -- ============================================================
+SET SQL_SAFE_UPDATES = 0;
 
 -- --------------------------------------------------------
 -- GRUPO 1: ADRIANA CARRILLO → ADRIANA E. CARRILLO ALMEIDA
@@ -4984,4 +4990,5 @@ WHERE id_custodio IN
     (SELECT id_custodio FROM (SELECT id_custodio FROM custodio WHERE nombre IN ('.','S/N')) t);
 DELETE FROM custodio WHERE nombre IN ('.','S/N');
 
+SET SQL_SAFE_UPDATES = 1;
 SET FOREIGN_KEY_CHECKS = 1;
