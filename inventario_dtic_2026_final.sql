@@ -768,40 +768,40 @@ JOIN (VALUES
   ROW('141.01.07.1778.313','25208351','MXL2500F1J','CORE I7','8GB','500GB','WIN 10'),
   ROW('S/N','35777914','1CZ20704JP','CORE I7','32GB','1000GB','WIN 10'),
   ROW('S/N','35777915','1CZ20704K1','CORE I7','32GB','1000GB','UBUNTU'),
-  ROW('S/N','35777913','4CE234C7VR','CORE I5','16GB','500GB','WIN10'),
-  ROW('S/N','35777912','4CE234C7VX','CORE I5','16GB','500GB','WIN10'),
-  ROW('S/N','35777911','4CE234C7XB','CORE I5','8GB','500GB','WIN11'),
-  ROW('S/N','35777910','4CE234C7XC','CORE I5','8GB','500GB','WIN11'),
+  ROW('S/N','35777913','4CE234C7VR','CORE I5','16GB','500GB','WIN 10'),
+  ROW('S/N','35777912','4CE234C7VX','CORE I5','16GB','500GB','WIN 10'),
+  ROW('S/N','35777911','4CE234C7XB','CORE I5','8GB','500GB','WIN 11'),
+  ROW('S/N','35777910','4CE234C7XC','CORE I5','8GB','500GB','WIN 11'),
   ROW('S/N','25208297','4CE234C7XW','CORE I5','8GB','500GB','WIN 10'),
-  ROW('S/N','35777908','4CE234C7YM','CORE I5','16GB','500GB','WIN11'),
-  ROW('141.01.07.1778.386','25208418','7JL2CZ1','CORE I7','16GB','500GB','WIN10'),
-  ROW('141.01.07.1778.395','25208427','7JT2CZ1','CORE I7','8GB','500GB','WIN10'),
+  ROW('S/N','35777908','4CE234C7YM','CORE I5','16GB','500GB','WIN 11'),
+  ROW('141.01.07.1778.386','25208418','7JL2CZ1','CORE I7','16GB','500GB','WIN 10'),
+  ROW('141.01.07.1778.395','25208427','7JT2CZ1','CORE I7','8GB','500GB','WIN 10'),
   ROW('141.01.07.1778.378','25214542','7K03CZ1','CORE I7','4GB','500GB','WIN 10'),
   ROW('141.01.07.1778.375','25208407','7K05CZ1','CORE I7','6GB','500GB','WIN 10'),
-  ROW('141.01.07.1778.383','25208415','7K24CZ1','CORE I7','8GB','500GB','WIN10'),
-  ROW('141.01.07.1778.385','25208417','7K52CZ1','CORE I7','8GB','500GB','WIN10'),
-  ROW('141.01.07.1778.400','25208432','7K55CZ1','CORE I7','8GB','500GB','WIN10'),
+  ROW('141.01.07.1778.383','25208415','7K24CZ1','CORE I7','8GB','500GB','WIN 10'),
+  ROW('141.01.07.1778.385','25208417','7K52CZ1','CORE I7','8GB','500GB','WIN 10'),
+  ROW('141.01.07.1778.400','25208432','7K55CZ1','CORE I7','8GB','500GB','WIN 10'),
   ROW('141.01.07.1778.394','25208426','7K94CZ1','CORE I7','16GB','500GB','WIN 10'),
-  ROW('141.01.07.1778.390','25208422','7KF4CZ1','CORE I7','4GB','500GB','WIN10'),
-  ROW('141.01.07.1778.382','25208414','7KG2CZ1','CORE I7','8GB','250GB','WIN10'),
+  ROW('141.01.07.1778.390','25208422','7KF4CZ1','CORE I7','4GB','500GB','WIN 10'),
+  ROW('141.01.07.1778.382','25208414','7KG2CZ1','CORE I7','8GB','250GB','WIN 10'),
   ROW('141.01.07.1778.388','25208420','7KK3CZ1','CORE I7','16GB','500GB','WIN 10'),
   ROW('141.01.07.1778.397','25208429','7KL3CZ1','CORE I7','8GB','150GB','WIN 10'),
-  ROW('141.01.07.1778.376','25208408','7KN4CZ1','CORE I7','8GB','500GB','WIN10'),
+  ROW('141.01.07.1778.376','25208408','7KN4CZ1','CORE I7','8GB','500GB','WIN 10'),
   ROW('141.01.07.1778.379','25208411','7KS4CZ1','CORE I7','8GB','500GB','WIN 10'),
   ROW('141.01.07.1778.387','25208419','7KT2CZ1','CORE I7','8GB','500GB','WIN 10'),
-  ROW('141.01.07.1778.377','25208409','7KT3CZ1','CORE I7','8GB','250GB','WIN10'),
+  ROW('141.01.07.1778.377','25208409','7KT3CZ1','CORE I7','8GB','250GB','WIN 10'),
   ROW('141.01.07.1778.398','25208430','7KW3CZI','CORE I7','6GB','250GB','WIN 10'),
-  ROW('141.01.07.1778.380','25208412','7KY2CZ1','CORE I5','8GB','500GB','WIN11'),
+  ROW('141.01.07.1778.380','25208412','7KY2CZ1','CORE I5','8GB','500GB','WIN 11'),
   ROW('141.01.07.1778.393','S/N','7KY3CZ1','CORE I7','8GB','500GB','WIN 10'),
-  ROW('141.01.07.1778.384','25208416','7L04CZ1','CORE I7','8GB','500GB','WIN10'),
-  ROW('141.01.07.1778.399','25208431','7L13CZ1','CORE I7','8GB','500GB','WIN10'),
+  ROW('141.01.07.1778.384','25208416','7L04CZ1','CORE I7','8GB','500GB','WIN 10'),
+  ROW('141.01.07.1778.399','25208431','7L13CZ1','CORE I7','8GB','500GB','WIN 10'),
   ROW('141.01.07.1778.396','25208428','7L15CZ1','CORE I7','8GB','500GB','WIN 10'),
   ROW('00:00:00','25208632','CND2322K8X','CORE 2 DUO','2GB','150GB','WIN 7'),
   ROW('141.01.07.4224.129','25208741','JYY2YZ1','CORE I7','8GB','500GB','WIN 10'),
   ROW('141.01.07.1778.163','25208205','MXJ8380BT7','CORE 2 DUO','4GB','150GB','WIN 10'),
   ROW('141.01.07.1778.183','25208224','MXJ8380BVW','CORE 2 DUO','4GB','250GB','WIN 10'),
   ROW('141.01.07.1778.155','25208197','MXJ8380BW3','CORE 2 DUO','4GB','250GB','WIN 10'),
-  ROW('141.01.07.1778.154','25208196','MXJ8380BX1','CORE 2 DUO','4GB','149 GB','WIN10'),
+  ROW('141.01.07.1778.154','25208196','MXJ8380BX1','CORE 2 DUO','4GB','149 GB','WIN 10'),
   ROW('141.01.07.1778.107','25208152','MXJ8380BX5','CORE 2 DUO','6GB','150GB','WIN 10'),
   ROW('141.01.07.1778.101','25208152','MXJ8380BX5','CORE 2 DUO','4GB','250GB','WIN 10'),
   ROW('141.01.07.1778.124','25208169','MXJ8380BXK','CORE 2 DUO','4GB','1000GB','WIN 10'),
@@ -812,29 +812,29 @@ JOIN (VALUES
   ROW('141.01.07.1778.227','25208265','MXJ91807LQ','CORE 2 DUO','4GB','250 GB','WIN 10'),
   ROW('141.01.07.1778.213','25208253','MXJ91807MQ','CORE 2 DUO','4GB','250GB','WIN 10'),
   ROW('141.01.67.1778.218','25208257','MXJ91807N1','CORE 2 DUO','4GB','250GB','WIN 10'),
-  ROW('141.01.07.1778.220','25208258','MXJ91807N4','CORE 2 DUO','4GB','250GB','WIN10'),
-  ROW('141.01.07.1778.210','2520R250','MXJ91807N5','CORE 2 DUO','4GB','250GB','WIN10'),
+  ROW('141.01.07.1778.220','25208258','MXJ91807N4','CORE 2 DUO','4GB','250GB','WIN 10'),
+  ROW('141.01.07.1778.210','2520R250','MXJ91807N5','CORE 2 DUO','4GB','250GB','WIN 10'),
   ROW('141.01.07.1778.221','25208259','MXJ91807P3','CORE 2 DUO','4GB','150GB','WIN 10'),
   ROW('141.01.07.1778.209','25208249','MXJ9240267','CORE 2 DUO','4GB','150GB','WIN 10'),
   ROW('141.01.07.1778.232','25208270','MXJ924028R','CORE 2 DUO','4GB','500GB','WIN 10'),
-  ROW('S/N','S/N','MXL1491BRW','CORE I5','8GB','500GB','WIN10'),
-  ROW('141.01.07.1778.225','25208293','MXL2022GT7','CORE I7','8GB','500GB','WIN10'),
+  ROW('S/N','S/N','MXL1491BRW','CORE I5','8GB','500GB','WIN 10'),
+  ROW('141.01.07.1778.225','25208293','MXL2022GT7','CORE I7','8GB','500GB','WIN 10'),
   ROW('141.01.07.1778.236','25208274','MXL2022GTL','CORE I7','8GB','500GB','WIN 10'),
   ROW('141.01.07.1778.261','25208299','MXL2022GTM','CORE I7','8GB','500GB','WIN 10'),
   ROW('141.01.07.1778.244','25208282','MXL2022GTN','CORE I7','6GB','500GB','WIN 10'),
-  ROW('141.01.07.1778.262','25208300','MXL2022GTP','CORE I7','10GB','500GB','WIN10'),
+  ROW('141.01.07.1778.262','25208300','MXL2022GTP','CORE I7','10GB','500GB','WIN 10'),
   ROW('141.01.07.1778.248','25208286','MXL2022GTQ','CORE I7','8GB','500GB','WIN 10'),
   ROW('141.01.07.1778.264','25208302','MXL2022GTV','CORE I7','4GB','500GB','WIN 10'),
   ROW('141.01.07.1778245','25208283','MXL2022GTW','CORE I7','8GB','500GB','WIN 10'),
-  ROW('141.01.07.1778.244','25208281','MXL2022GV0','CORE I7','6GB','500GB','WIN10'),
+  ROW('141.01.07.1778.244','25208281','MXL2022GV0','CORE I7','6GB','500GB','WIN 10'),
   ROW('141.01.07.1778.259','25208297','MXL2022GV1','CORE I7','8GB','500GB','WIN 10'),
   ROW('141.01.07.1778.257','25208295','MXL2022GV2','CORE I7','12GB','500GB','WIN 10'),
   ROW('141.01.07.1778.239','25208277','MXL2022GV7','CORE I7','8GB','500GB','WIN 10'),
-  ROW('141.01.07.1778.252','25208290','MXL2022GV8','CORE I7','8GB','250GB','WIN10'),
+  ROW('141.01.07.1778.252','25208290','MXL2022GV8','CORE I7','8GB','250GB','WIN 10'),
   ROW('141.01.07.1778.247','25208285','MXL2022GVD','CORE I7','6GB','500GB','WIN 10'),
-  ROW('141.01.07.1778.269','25208307','MXL2022GVG','CORE I7','6GB','500GB','WIN10'),
+  ROW('141.01.07.1778.269','25208307','MXL2022GVG','CORE I7','6GB','500GB','WIN 10'),
   ROW('141.01.07.1778.242','25208280','MXL2022GVH','CORE I7','4GB','500GB','WIN 10'),
-  ROW('141.01.07.1778.258','25208296','MXL2022GVJ','CORE I7','8GB','500GB','WIN10'),
+  ROW('141.01.07.1778.258','25208296','MXL2022GVJ','CORE I7','8GB','500GB','WIN 10'),
   ROW('141.01.07.1778.266','25208304','MXL2022GVK','CORE I7','8GB','250GB','WIN 10'),
   ROW('141.01.07.1778.256','25208294','MXL2022GVM','CORE I7','6GB','500GB','WIN 10'),
   ROW('141.01.07.1778.246','25208284','MXL2022GVN','CORE I7','6GB','500GB','WIN 10'),
@@ -842,30 +842,30 @@ JOIN (VALUES
   ROW('141.01.07.1778.309','25208347','MXL25005PM','CORE I7','8GB','500GB','WIN 10'),
   ROW('141.01.07.1778.331','25208369','MXL25005PQ','CORE I5','8GB','500GB','WIN 10'),
   ROW('141.01.07.1778.300','25208388','MXL25005Q7','CORE I7','8GB','500GB','WIN 10'),
-  ROW('141.01.07.1778.330','25208368','MXL25005QZ','CORE I7','4GB','500GB','WIN10'),
-  ROW('141.01.07.1778.272','25208310','MXL25005QZ','CORE I7','6GB','500GB','WIN10'),
-  ROW('141.01.07.1778.285','25208323','MXL25005RC','CORE I7','8GB','500GB','WIN10'),
-  ROW('141.01.07.1778.328','25208366','MXL25005RD','CORE I7','8GB','500GB','WIN10'),
-  ROW('141.01.07.1778.310','25208348','MXL25005S1','CORE I7','6GB','500GB','WIN10'),
+  ROW('141.01.07.1778.330','25208368','MXL25005QZ','CORE I7','4GB','500GB','WIN 10'),
+  ROW('141.01.07.1778.272','25208310','MXL25005QZ','CORE I7','6GB','500GB','WIN 10'),
+  ROW('141.01.07.1778.285','25208323','MXL25005RC','CORE I7','8GB','500GB','WIN 10'),
+  ROW('141.01.07.1778.328','25208366','MXL25005RD','CORE I7','8GB','500GB','WIN 10'),
+  ROW('141.01.07.1778.310','25208348','MXL25005S1','CORE I7','6GB','500GB','WIN 10'),
   ROW('141.01.07.1778.290','25214438','MXL25005SD','CORE I7','8GB','500GB','WIN 10'),
-  ROW('141.01.07.1778.275','25208313','MXL25007YD','CORE I7','8GB','250GB','WIN10'),
+  ROW('141.01.07.1778.275','25208313','MXL25007YD','CORE I7','8GB','250GB','WIN 10'),
   ROW('141.01.07.1778.293','25208331','MXL25007YG','CORE I7','8GB','500GB','WIN 10'),
   ROW('141.01.07.1778.304','25208342','MXL25007YW','CORE I7','8GB','500GB','WIN 10'),
   ROW('141.01.07.1778.292','25208330','MXL25007YZ','CORE I7','12GB','500GB','WIN 10'),
-  ROW('141.01.07.1778.291','25208329','MXL25007Z1','CORE I7','6GB','500GB','WIN10'),
-  ROW('141.01.07.1778.332','25208370','MXL25007Z4','CORE I7','8GB','500GB','WIN10'),
+  ROW('141.01.07.1778.291','25208329','MXL25007Z1','CORE I7','6GB','500GB','WIN 10'),
+  ROW('141.01.07.1778.332','25208370','MXL25007Z4','CORE I7','8GB','500GB','WIN 10'),
   ROW('141.01.07.1778.297','25208335','MXL25007Z6','CORE I7','6GB','500GB','WIN 10'),
-  ROW('141.01.07.1778.299','25208337','MXL25007Z8','CORE I7','4GB','500GB','WIN10'),
+  ROW('141.01.07.1778.299','25208337','MXL25007Z8','CORE I7','4GB','500GB','WIN 10'),
   ROW('141.01.07.1778.333','25208371','MXL25007ZC','CORE I7','8GB','500GB','WIN 10'),
   ROW('141.01.07.1778.281','25208319','MXL25007ZL','CORE I7','8GB','500GB','WIN 10'),
   ROW('141.01.07.1778.273','25208311','MXL25007ZS','CORE I7','8GB','500GB','WIN 10'),
-  ROW('141.01.07.1778.307','25208345','MXL25008KX','CORE I7','8GB','500GB','WIN10'),
+  ROW('141.01.07.1778.307','25208345','MXL25008KX','CORE I7','8GB','500GB','WIN 10'),
   ROW('141.01.07.1778.334','25208372','MXL25008LH','CORE I7','4GB','250GB','WIN 10'),
   ROW('141.01.07.1778.289','25208327','MXL25008LV','CORE I7','8GB','500GB','WIN 10'),
-  ROW('141.01.07.1778.303','25208341','MXL250092N','CORE I7','8GB','500GB','WIN10'),
+  ROW('141.01.07.1778.303','25208341','MXL250092N','CORE I7','8GB','500GB','WIN 10'),
   ROW('141.01.07.1778.277','25208315','MXL250093C','CORE I7','8GB','500GB','WIN 10'),
   ROW('141.01.07.1778.280','25208318','MXL250093W','CORE I7','6GB','500GB','WIN 10'),
-  ROW('141.01.07.1778.323','25208361','MXL2500C0Q','CORE I7','8GB','500GB','WIN10'),
+  ROW('141.01.07.1778.323','25208361','MXL2500C0Q','CORE I7','8GB','500GB','WIN 10'),
   ROW('141.01.07.1778.318','25208356','MXL2500C0X','CORE I7','4GB','500GB','WIN 10'),
   ROW('141.01.07.1778.308','25208346','MXL2500C0Y','CORE I7','8GB','500GB','WIN 10'),
   ROW('141.01.07.1778.274','25208312','MXL2500C15','CORE I7','12GB','500GB','WIN 10'),
@@ -878,17 +878,17 @@ JOIN (VALUES
   ROW('141.01.07.1778.340','25208378','MXL2500F1N','CORE I7','6GB','500GB','WIN 10'),
   ROW('141.01.07.1778.321','25208359','MXL2500F1V','CORE I7','8GB','500GB','WIN 10'),
   ROW('141.01.07.1778.329','25208367','MXL2500F22','CORE I7','8GB','500GB','WIN 10'),
-  ROW('141.01.07.1778.322','25208360','MXL2500F2B','CORE I7','8GB','500GB','WIN10'),
+  ROW('141.01.07.1778.322','25208360','MXL2500F2B','CORE I7','8GB','500GB','WIN 10'),
   ROW('141.01.07.1778.296','25208334','MXL2500F2F','CORE I7','8GB','500GB','WIN 10'),
   ROW('141.01.07.1778.325','25208363','MXL2500F2J','CORE I7','6GB','500GB','WIN 10'),
   ROW('141.01.07.1778.338','25208376','MXL2500F2L','CORE I7','4GB','1500GB','WIN 10'),
   ROW('S/N','S/N','MXL2500GSP','CORE I7','8GB','500GB','WIN 10'),
-  ROW('141.01.07.1778.282','25208320','MXL2500GSQ','CORE I7','6GB','500GB','WIN10'),
+  ROW('141.01.07.1778.282','25208320','MXL2500GSQ','CORE I7','6GB','500GB','WIN 10'),
   ROW('141.01.07.1778.305','25208336','MXL2500GT2','CORE I7','8GB','500GB','WIN 10'),
-  ROW('141.01.07.1778.284','25208333','MXL2500GTN','CORE I7','8GB','250GB','WIN10'),
+  ROW('141.01.07.1778.284','25208333','MXL2500GTN','CORE I7','8GB','250GB','WIN 10'),
   ROW('141.01.07.1778.271','25208309','MXL2500GV4','CORE I7','8GB','250GB','WIN 10'),
   ROW('141.01.07.1778.305','25208343','MXL2500GVC','CORE I7','8GB','500GB','WIN 10'),
-  ROW('141.01.07.1778.327','25208365','MXL2500GVH','CORE I7','8GB','500GB','WIN10'),
+  ROW('141.01.07.1778.327','25208365','MXL2500GVH','CORE I7','8GB','500GB','WIN 10'),
   ROW('141.01.07.1778.194','35777939','MXL8380BY5','CORE 2 DUO','4GB','150GB','WIN 10'),
   ROW('S/N','25208273','S/N','CORE I7','8GB','500GB','WIN 10'),
   ROW('S/N','25208344','S/N','CORE I7','8GB','500GB','WIN 10'),
@@ -1056,7 +1056,7 @@ JOIN (VALUES
   ROW('S/N','S/N','5CD247DKQ0','CORE I7','16GB','500GB','WIN 11'),
   ROW('141.01.07.4224.148','25208758','PFOAJ4YP','CORE I7','8GB','500GB','WIN 10'),
   ROW('141.01.07.4224.146','25208756',NULL,'CORE I7','8GB','500GB','WIN 10'),
-  ROW('141.01.07.4224.048','25208669','5CB31914WY','CORE I7','8GB','500GB','WIN10'),
+  ROW('141.01.07.4224.048','25208669','5CB31914WY','CORE I7','8GB','500GB','WIN 10'),
   ROW('S/N','35777924','CND2322K90','CORE I5','16GB','500GB','WIN 10'),
   ROW('S/N','35777942','CND2322K6Z','CORE I5','16GB','500GB','WIN 10'),
   ROW('S/N','35777934','CND2322K9G','CORE I5','16GB','500GB','WIN 10'),
@@ -2163,14 +2163,14 @@ INSERT IGNORE INTO equipo (tipo_equipo,codigo_megan,codigo_sbye,descripcion,marc
 ('escaner','141.01.07.1822.035','25208513','ESCANNER','EPSON','WORKFORCE GT-S85','RVYZ001869',NULL,NULL,'OPERATIVO','NINGUNA','2025-08-25',NULL,118,10),
 ('escaner','141.01.07.1822.027','25208505','ESCANNER','EPSON','WORKFORCE GT-S85','RVYZ001848',NULL,NULL,'OPERATIVO','NINGUNA','2025-08-25',NULL,182,10),
 ('escaner','141.01.07.1822.040','25208518','ESCANNER','EPSON','WORKFORCE GT-S85','RVY002169',NULL,NULL,'OPERATIVO','NINGUNA','2025-08-25',NULL,48,53),
-('escaner','141.01.07.1822.025','25208503','ESCANNER','ESPSON','WORKFORCE GT-S85','RVZ001839',NULL,NULL,'OPERATIVO','NINGUNA','2025-08-25',NULL,60,33),
-('escaner','141.01.07.1822.031','25208509','ESCANNER','ESPSON','WORKFORCE GT-S85','RVYZ001858',NULL,NULL,'OPERATIVO','NINGUNA','2025-08-25',NULL,24,49),
-('escaner','141.01.07.1822.045','25208522','ESCANNER','ESPSON','WORKFORCE GT-S85','SN',NULL,NULL,'OPERATIVO','NINGUNA','2025-08-25',NULL,7,81),
-('escaner','141.01.07.1822.047','S/N','ESCANNER','ESPSON','WORKFORCE GT-S85','DVY/002298',NULL,NULL,'OPERATIVO','NINGUNA','2025-08-25',NULL,110,84),
-('escaner','141.01.04.7360.208','25208011','ESCANNER','ESPSON','WORKFORCE GT-S85','RVYZ001865',NULL,NULL,'OPERATIVO','NINGUNA','2025-08-25',NULL,165,72),
-('escaner','141.01.04.1822.028','25208506','ESCANNER','ESPSON','WORKFORCE GT-S85','RVYZ001850',NULL,NULL,'OPERATIVO','NINGUNA','2025-08-25',NULL,123,89),
-('escaner','141.01.04.1822.046','25208523','ESCANNER','ESPSON','WORKFORCE GT-S85','RVYZ002213',NULL,NULL,'OPERATIVO','NINGUNA','2025-08-25',NULL,83,72),
-('escaner','141.01.07.1822.032','25208510','ESCANNER','ESPSON','WORKFORCE GT-S85','RVY7001861',NULL,NULL,'OPERATIVO','NINGUNA','2025-08-25',NULL,240,75);
+('escaner','141.01.07.1822.025','25208503','ESCANNER','EPSON','WORKFORCE GT-S85','RVZ001839',NULL,NULL,'OPERATIVO','NINGUNA','2025-08-25',NULL,60,33),
+('escaner','141.01.07.1822.031','25208509','ESCANNER','EPSON','WORKFORCE GT-S85','RVYZ001858',NULL,NULL,'OPERATIVO','NINGUNA','2025-08-25',NULL,24,49),
+('escaner','141.01.07.1822.045','25208522','ESCANNER','EPSON','WORKFORCE GT-S85','SN',NULL,NULL,'OPERATIVO','NINGUNA','2025-08-25',NULL,7,81),
+('escaner','141.01.07.1822.047','S/N','ESCANNER','EPSON','WORKFORCE GT-S85','DVY/002298',NULL,NULL,'OPERATIVO','NINGUNA','2025-08-25',NULL,110,84),
+('escaner','141.01.04.7360.208','25208011','ESCANNER','EPSON','WORKFORCE GT-S85','RVYZ001865',NULL,NULL,'OPERATIVO','NINGUNA','2025-08-25',NULL,165,72),
+('escaner','141.01.04.1822.028','25208506','ESCANNER','EPSON','WORKFORCE GT-S85','RVYZ001850',NULL,NULL,'OPERATIVO','NINGUNA','2025-08-25',NULL,123,89),
+('escaner','141.01.04.1822.046','25208523','ESCANNER','EPSON','WORKFORCE GT-S85','RVYZ002213',NULL,NULL,'OPERATIVO','NINGUNA','2025-08-25',NULL,83,72),
+('escaner','141.01.07.1822.032','25208510','ESCANNER','EPSON','WORKFORCE GT-S85','RVY7001861',NULL,NULL,'OPERATIVO','NINGUNA','2025-08-25',NULL,240,75);
 
 INSERT IGNORE INTO escaner (id_equipo, caracteristicas)
 SELECT e.id_equipo, v.carac FROM equipo e
@@ -4431,6 +4431,66 @@ ON DUPLICATE KEY UPDATE
   id_custodio = (SELECT id_custodio FROM custodio WHERE nombre = 'MIGUEL CABRERA' LIMIT 1),
   activo = 1;
 
+-- Miguel Cabrera: actualizar a rol TECNICO + roles_extra CUSTODIO
+INSERT INTO usuario (username, password_hash, email, rol, id_custodio, activo, roles_extra)
+SELECT 'mcabrera', MD5('Temporal123'), NULL, 'TECNICO', c.id_custodio, 1, 'CUSTODIO'
+FROM custodio c
+WHERE c.nombre = 'MIGUEL CABRERA'
+LIMIT 1
+ON DUPLICATE KEY UPDATE
+  rol = 'TECNICO',
+  roles_extra = 'CUSTODIO',
+  id_custodio = (SELECT id_custodio FROM custodio WHERE nombre = 'MIGUEL CABRERA' LIMIT 1),
+  activo = 1;
+
+-- Marco Molina: TECNICO + CUSTODIO
+INSERT INTO usuario (username, password_hash, email, rol, id_custodio, activo, roles_extra)
+SELECT 'mmolina', MD5('Temporal123'), NULL, 'TECNICO', c.id_custodio, 1, 'CUSTODIO'
+FROM custodio c
+WHERE c.nombre = 'MARCO M. MOLINA MENDIETA'
+LIMIT 1
+ON DUPLICATE KEY UPDATE
+  rol = 'TECNICO',
+  roles_extra = 'CUSTODIO',
+  id_custodio = (SELECT id_custodio FROM custodio WHERE nombre = 'MARCO M. MOLINA MENDIETA' LIMIT 1),
+  activo = 1;
+
+-- María Fernanda Pilco: TECNICO + CUSTODIO
+INSERT INTO usuario (username, password_hash, email, rol, id_custodio, activo, roles_extra)
+SELECT 'mpilco', MD5('Temporal123'), NULL, 'TECNICO', c.id_custodio, 1, 'CUSTODIO'
+FROM custodio c
+WHERE c.nombre = 'MARÍA FERNANDA PILCO CARRIÓN'
+LIMIT 1
+ON DUPLICATE KEY UPDATE
+  rol = 'TECNICO',
+  roles_extra = 'CUSTODIO',
+  id_custodio = (SELECT id_custodio FROM custodio WHERE nombre = 'MARÍA FERNANDA PILCO CARRIÓN' LIMIT 1),
+  activo = 1;
+
+-- Michael Yanangomez: TECNICO + CUSTODIO
+INSERT INTO usuario (username, password_hash, email, rol, id_custodio, activo, roles_extra)
+SELECT 'myanangomez', MD5('Temporal123'), NULL, 'TECNICO', c.id_custodio, 1, 'CUSTODIO'
+FROM custodio c
+WHERE c.nombre = 'MICHAEL J. YANANGOMEZ SUAREZ'
+LIMIT 1
+ON DUPLICATE KEY UPDATE
+  rol = 'TECNICO',
+  roles_extra = 'CUSTODIO',
+  id_custodio = (SELECT id_custodio FROM custodio WHERE nombre = 'MICHAEL J. YANANGOMEZ SUAREZ' LIMIT 1),
+  activo = 1;
+
+-- Emerson Ceracapa: TECNICO + CUSTODIO
+INSERT INTO usuario (username, password_hash, email, rol, id_custodio, activo, roles_extra)
+SELECT 'eceracapa', MD5('Temporal123'), NULL, 'TECNICO', c.id_custodio, 1, 'CUSTODIO'
+FROM custodio c
+WHERE c.nombre = 'EMERSON R. CERACAPA SOLIS'
+LIMIT 1
+ON DUPLICATE KEY UPDATE
+  rol = 'TECNICO',
+  roles_extra = 'CUSTODIO',
+  id_custodio = (SELECT id_custodio FROM custodio WHERE nombre = 'EMERSON R. CERACAPA SOLIS' LIMIT 1),
+  activo = 1;
+
 -- ============================================================
 -- FIN EXTENSIÓN DE ROLES
 -- ============================================================
@@ -4479,5 +4539,449 @@ CREATE TABLE IF NOT EXISTS auditoria_custodio (
     KEY idx_auditoria_fecha   (fecha)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
   COMMENT='Auditoría completa de cambios por equipo';
+
+-- ============================================================
+-- NORMALIZACIÓN DE CUSTODIOS DUPLICADOS
+-- Unifica nombres inconsistentes conservando todos los equipos
+-- ============================================================
+
+-- --------------------------------------------------------
+-- GRUPO 1: ADRIANA CARRILLO → ADRIANA E. CARRILLO ALMEIDA
+-- --------------------------------------------------------
+UPDATE equipo SET id_custodio_actual =
+    (SELECT id_custodio FROM (SELECT id_custodio FROM custodio WHERE nombre = 'ADRIANA E. CARRILLO ALMEIDA' LIMIT 1) t)
+WHERE id_custodio_actual IN
+    (SELECT id_custodio FROM (SELECT id_custodio FROM custodio WHERE nombre = 'ADRIANA CARRILLO') t);
+UPDATE historial_custodio SET id_custodio =
+    (SELECT id_custodio FROM (SELECT id_custodio FROM custodio WHERE nombre = 'ADRIANA E. CARRILLO ALMEIDA' LIMIT 1) t)
+WHERE id_custodio IN
+    (SELECT id_custodio FROM (SELECT id_custodio FROM custodio WHERE nombre = 'ADRIANA CARRILLO') t);
+DELETE FROM custodio WHERE nombre = 'ADRIANA CARRILLO';
+
+-- --------------------------------------------------------
+-- GRUPO 2: ADRIANA CERVANTES CHACON → ADRIANA LEONOR CERVANTES CHACON
+-- --------------------------------------------------------
+UPDATE equipo SET id_custodio_actual =
+    (SELECT id_custodio FROM (SELECT id_custodio FROM custodio WHERE nombre = 'ADRIANA LEONOR CERVANTES CHACON' LIMIT 1) t)
+WHERE id_custodio_actual IN
+    (SELECT id_custodio FROM (SELECT id_custodio FROM custodio WHERE nombre = 'ADRIANA CERVANTES CHACON') t);
+UPDATE historial_custodio SET id_custodio =
+    (SELECT id_custodio FROM (SELECT id_custodio FROM custodio WHERE nombre = 'ADRIANA LEONOR CERVANTES CHACON' LIMIT 1) t)
+WHERE id_custodio IN
+    (SELECT id_custodio FROM (SELECT id_custodio FROM custodio WHERE nombre = 'ADRIANA CERVANTES CHACON') t);
+DELETE FROM custodio WHERE nombre = 'ADRIANA CERVANTES CHACON';
+
+-- --------------------------------------------------------
+-- GRUPO 3: ANDRADE SAETEROS LUIS ALFREDO → LUIS A. ANDRADE SAETEROS
+-- --------------------------------------------------------
+UPDATE equipo SET id_custodio_actual =
+    (SELECT id_custodio FROM (SELECT id_custodio FROM custodio WHERE nombre = 'LUIS A. ANDRADE SAETEROS' LIMIT 1) t)
+WHERE id_custodio_actual IN
+    (SELECT id_custodio FROM (SELECT id_custodio FROM custodio WHERE nombre = 'ANDRADE SAETEROS LUIS ALFREDO') t);
+UPDATE historial_custodio SET id_custodio =
+    (SELECT id_custodio FROM (SELECT id_custodio FROM custodio WHERE nombre = 'LUIS A. ANDRADE SAETEROS' LIMIT 1) t)
+WHERE id_custodio IN
+    (SELECT id_custodio FROM (SELECT id_custodio FROM custodio WHERE nombre = 'ANDRADE SAETEROS LUIS ALFREDO') t);
+DELETE FROM custodio WHERE nombre = 'ANDRADE SAETEROS LUIS ALFREDO';
+
+-- --------------------------------------------------------
+-- GRUPO 4: ANGEL F. ONTANEDA JIMENEZ → ANGEL FABIAN ONTANEDA JIMENEZ
+-- --------------------------------------------------------
+UPDATE equipo SET id_custodio_actual =
+    (SELECT id_custodio FROM (SELECT id_custodio FROM custodio WHERE nombre = 'ANGEL FABIAN ONTANEDA JIMENEZ' LIMIT 1) t)
+WHERE id_custodio_actual IN
+    (SELECT id_custodio FROM (SELECT id_custodio FROM custodio WHERE nombre = 'ANGEL F. ONTANEDA JIMENEZ') t);
+UPDATE historial_custodio SET id_custodio =
+    (SELECT id_custodio FROM (SELECT id_custodio FROM custodio WHERE nombre = 'ANGEL FABIAN ONTANEDA JIMENEZ' LIMIT 1) t)
+WHERE id_custodio IN
+    (SELECT id_custodio FROM (SELECT id_custodio FROM custodio WHERE nombre = 'ANGEL F. ONTANEDA JIMENEZ') t);
+DELETE FROM custodio WHERE nombre = 'ANGEL F. ONTANEDA JIMENEZ';
+
+-- --------------------------------------------------------
+-- GRUPO 5: BYRON TAFUR / TAFUR BUSTOS BYRONE ISAAC → BYRONE I. TAFUR BUSTOS
+-- --------------------------------------------------------
+UPDATE equipo SET id_custodio_actual =
+    (SELECT id_custodio FROM (SELECT id_custodio FROM custodio WHERE nombre = 'BYRONE I. TAFUR BUSTOS' LIMIT 1) t)
+WHERE id_custodio_actual IN
+    (SELECT id_custodio FROM (SELECT id_custodio FROM custodio WHERE nombre IN ('BYRON TAFUR','TAFUR BUSTOS BYRONE ISAAC')) t);
+UPDATE historial_custodio SET id_custodio =
+    (SELECT id_custodio FROM (SELECT id_custodio FROM custodio WHERE nombre = 'BYRONE I. TAFUR BUSTOS' LIMIT 1) t)
+WHERE id_custodio IN
+    (SELECT id_custodio FROM (SELECT id_custodio FROM custodio WHERE nombre IN ('BYRON TAFUR','TAFUR BUSTOS BYRONE ISAAC')) t);
+DELETE FROM custodio WHERE nombre IN ('BYRON TAFUR','TAFUR BUSTOS BYRONE ISAAC');
+
+-- --------------------------------------------------------
+-- GRUPO 6: CRIOLLO NAVARRETE CARLOS JAVIER → CARLOS J. CRIOLLO NAVARRETE
+-- --------------------------------------------------------
+UPDATE equipo SET id_custodio_actual =
+    (SELECT id_custodio FROM (SELECT id_custodio FROM custodio WHERE nombre = 'CARLOS J. CRIOLLO NAVARRETE' LIMIT 1) t)
+WHERE id_custodio_actual IN
+    (SELECT id_custodio FROM (SELECT id_custodio FROM custodio WHERE nombre = 'CRIOLLO NAVARRETE CARLOS JAVIER') t);
+UPDATE historial_custodio SET id_custodio =
+    (SELECT id_custodio FROM (SELECT id_custodio FROM custodio WHERE nombre = 'CARLOS J. CRIOLLO NAVARRETE' LIMIT 1) t)
+WHERE id_custodio IN
+    (SELECT id_custodio FROM (SELECT id_custodio FROM custodio WHERE nombre = 'CRIOLLO NAVARRETE CARLOS JAVIER') t);
+DELETE FROM custodio WHERE nombre = 'CRIOLLO NAVARRETE CARLOS JAVIER';
+
+-- --------------------------------------------------------
+-- GRUPO 7: CEVALLOS JEREZ FREDDY FABIAN → FREDDY F. CEVALLOS JEREZ
+-- --------------------------------------------------------
+UPDATE equipo SET id_custodio_actual =
+    (SELECT id_custodio FROM (SELECT id_custodio FROM custodio WHERE nombre = 'FREDDY F. CEVALLOS JEREZ' LIMIT 1) t)
+WHERE id_custodio_actual IN
+    (SELECT id_custodio FROM (SELECT id_custodio FROM custodio WHERE nombre = 'CEVALLOS JEREZ FREDDY FABIAN') t);
+UPDATE historial_custodio SET id_custodio =
+    (SELECT id_custodio FROM (SELECT id_custodio FROM custodio WHERE nombre = 'FREDDY F. CEVALLOS JEREZ' LIMIT 1) t)
+WHERE id_custodio IN
+    (SELECT id_custodio FROM (SELECT id_custodio FROM custodio WHERE nombre = 'CEVALLOS JEREZ FREDDY FABIAN') t);
+DELETE FROM custodio WHERE nombre = 'CEVALLOS JEREZ FREDDY FABIAN';
+
+-- --------------------------------------------------------
+-- GRUPO 8: EMERSON CERACAPA SOLÍS → EMERSON R. CERACAPA SOLIS
+-- --------------------------------------------------------
+UPDATE equipo SET id_custodio_actual =
+    (SELECT id_custodio FROM (SELECT id_custodio FROM custodio WHERE nombre = 'EMERSON R. CERACAPA SOLIS' LIMIT 1) t)
+WHERE id_custodio_actual IN
+    (SELECT id_custodio FROM (SELECT id_custodio FROM custodio WHERE nombre = 'EMERSON CERACAPA SOLÍS') t);
+UPDATE historial_custodio SET id_custodio =
+    (SELECT id_custodio FROM (SELECT id_custodio FROM custodio WHERE nombre = 'EMERSON R. CERACAPA SOLIS' LIMIT 1) t)
+WHERE id_custodio IN
+    (SELECT id_custodio FROM (SELECT id_custodio FROM custodio WHERE nombre = 'EMERSON CERACAPA SOLÍS') t);
+DELETE FROM custodio WHERE nombre = 'EMERSON CERACAPA SOLÍS';
+
+-- --------------------------------------------------------
+-- GRUPO 9: FABIAN P. LOPEZ NUÑEZ → FABIAN PATRICIO LOPEZ NUÑEZ
+-- --------------------------------------------------------
+UPDATE equipo SET id_custodio_actual =
+    (SELECT id_custodio FROM (SELECT id_custodio FROM custodio WHERE nombre = 'FABIAN PATRICIO LOPEZ NUÑEZ' LIMIT 1) t)
+WHERE id_custodio_actual IN
+    (SELECT id_custodio FROM (SELECT id_custodio FROM custodio WHERE nombre = 'FABIAN P. LOPEZ NUÑEZ') t);
+UPDATE historial_custodio SET id_custodio =
+    (SELECT id_custodio FROM (SELECT id_custodio FROM custodio WHERE nombre = 'FABIAN PATRICIO LOPEZ NUÑEZ' LIMIT 1) t)
+WHERE id_custodio IN
+    (SELECT id_custodio FROM (SELECT id_custodio FROM custodio WHERE nombre = 'FABIAN P. LOPEZ NUÑEZ') t);
+DELETE FROM custodio WHERE nombre = 'FABIAN P. LOPEZ NUÑEZ';
+
+-- --------------------------------------------------------
+-- GRUPO 10: FERNANDO B. NOGALES SORNOZA → FERNANDO BAYARDO NOGALES SORNOZA
+-- --------------------------------------------------------
+UPDATE equipo SET id_custodio_actual =
+    (SELECT id_custodio FROM (SELECT id_custodio FROM custodio WHERE nombre = 'FERNANDO BAYARDO NOGALES SORNOZA' LIMIT 1) t)
+WHERE id_custodio_actual IN
+    (SELECT id_custodio FROM (SELECT id_custodio FROM custodio WHERE nombre = 'FERNANDO B. NOGALES SORNOZA') t);
+UPDATE historial_custodio SET id_custodio =
+    (SELECT id_custodio FROM (SELECT id_custodio FROM custodio WHERE nombre = 'FERNANDO BAYARDO NOGALES SORNOZA' LIMIT 1) t)
+WHERE id_custodio IN
+    (SELECT id_custodio FROM (SELECT id_custodio FROM custodio WHERE nombre = 'FERNANDO B. NOGALES SORNOZA') t);
+DELETE FROM custodio WHERE nombre = 'FERNANDO B. NOGALES SORNOZA';
+
+-- --------------------------------------------------------
+-- GRUPO 11: FREDDY P. VALAREZO ROMERO / VALAREZO ROMERO FREDDY PATRICIO → FREDDY PATRICIO VALAREZO ROMERO
+-- --------------------------------------------------------
+UPDATE equipo SET id_custodio_actual =
+    (SELECT id_custodio FROM (SELECT id_custodio FROM custodio WHERE nombre = 'FREDDY PATRICIO VALAREZO ROMERO' LIMIT 1) t)
+WHERE id_custodio_actual IN
+    (SELECT id_custodio FROM (SELECT id_custodio FROM custodio WHERE nombre IN ('FREDDY P. VALAREZO ROMERO','VALAREZO ROMERO FREDDY PATRICIO')) t);
+UPDATE historial_custodio SET id_custodio =
+    (SELECT id_custodio FROM (SELECT id_custodio FROM custodio WHERE nombre = 'FREDDY PATRICIO VALAREZO ROMERO' LIMIT 1) t)
+WHERE id_custodio IN
+    (SELECT id_custodio FROM (SELECT id_custodio FROM custodio WHERE nombre IN ('FREDDY P. VALAREZO ROMERO','VALAREZO ROMERO FREDDY PATRICIO')) t);
+DELETE FROM custodio WHERE nombre IN ('FREDDY P. VALAREZO ROMERO','VALAREZO ROMERO FREDDY PATRICIO');
+
+-- --------------------------------------------------------
+-- GRUPO 12: HYPATIA E. PIEDRA ILLESCAS → HYPATIA ELIZABETH PIEDRA ILLESCAS
+-- --------------------------------------------------------
+UPDATE equipo SET id_custodio_actual =
+    (SELECT id_custodio FROM (SELECT id_custodio FROM custodio WHERE nombre = 'HYPATIA ELIZABETH PIEDRA ILLESCAS' LIMIT 1) t)
+WHERE id_custodio_actual IN
+    (SELECT id_custodio FROM (SELECT id_custodio FROM custodio WHERE nombre = 'HYPATIA E. PIEDRA ILLESCAS') t);
+UPDATE historial_custodio SET id_custodio =
+    (SELECT id_custodio FROM (SELECT id_custodio FROM custodio WHERE nombre = 'HYPATIA ELIZABETH PIEDRA ILLESCAS' LIMIT 1) t)
+WHERE id_custodio IN
+    (SELECT id_custodio FROM (SELECT id_custodio FROM custodio WHERE nombre = 'HYPATIA E. PIEDRA ILLESCAS') t);
+DELETE FROM custodio WHERE nombre = 'HYPATIA E. PIEDRA ILLESCAS';
+
+-- --------------------------------------------------------
+-- GRUPO 13: IRMA SANGUIL VILLACIS → IRMA MONSERRATH SANGUIL VILLACIS
+-- --------------------------------------------------------
+UPDATE equipo SET id_custodio_actual =
+    (SELECT id_custodio FROM (SELECT id_custodio FROM custodio WHERE nombre = 'IRMA MONSERRATH SANGUIL VILLACIS' LIMIT 1) t)
+WHERE id_custodio_actual IN
+    (SELECT id_custodio FROM (SELECT id_custodio FROM custodio WHERE nombre = 'IRMA SANGUIL VILLACIS') t);
+UPDATE historial_custodio SET id_custodio =
+    (SELECT id_custodio FROM (SELECT id_custodio FROM custodio WHERE nombre = 'IRMA MONSERRATH SANGUIL VILLACIS' LIMIT 1) t)
+WHERE id_custodio IN
+    (SELECT id_custodio FROM (SELECT id_custodio FROM custodio WHERE nombre = 'IRMA SANGUIL VILLACIS') t);
+DELETE FROM custodio WHERE nombre = 'IRMA SANGUIL VILLACIS';
+
+-- --------------------------------------------------------
+-- GRUPO 14: ISMAEL DAVID RODRIGUEZ FIGEROA (typo) → ISMAEL RODRIGUEZ FIGUEROA
+-- --------------------------------------------------------
+UPDATE equipo SET id_custodio_actual =
+    (SELECT id_custodio FROM (SELECT id_custodio FROM custodio WHERE nombre = 'ISMAEL RODRIGUEZ FIGUEROA' LIMIT 1) t)
+WHERE id_custodio_actual IN
+    (SELECT id_custodio FROM (SELECT id_custodio FROM custodio WHERE nombre = 'ISMAEL DAVID RODRIGUEZ FIGEROA') t);
+UPDATE historial_custodio SET id_custodio =
+    (SELECT id_custodio FROM (SELECT id_custodio FROM custodio WHERE nombre = 'ISMAEL RODRIGUEZ FIGUEROA' LIMIT 1) t)
+WHERE id_custodio IN
+    (SELECT id_custodio FROM (SELECT id_custodio FROM custodio WHERE nombre = 'ISMAEL DAVID RODRIGUEZ FIGEROA') t);
+DELETE FROM custodio WHERE nombre = 'ISMAEL DAVID RODRIGUEZ FIGEROA';
+
+-- --------------------------------------------------------
+-- GRUPO 15: JESUS JESSENIA GOMEZ DELGADO → JESSENIA GOMEZ DELGADO
+-- --------------------------------------------------------
+UPDATE equipo SET id_custodio_actual =
+    (SELECT id_custodio FROM (SELECT id_custodio FROM custodio WHERE nombre = 'JESSENIA GOMEZ DELGADO' LIMIT 1) t)
+WHERE id_custodio_actual IN
+    (SELECT id_custodio FROM (SELECT id_custodio FROM custodio WHERE nombre = 'JESUS JESSENIA GOMEZ DELGADO') t);
+UPDATE historial_custodio SET id_custodio =
+    (SELECT id_custodio FROM (SELECT id_custodio FROM custodio WHERE nombre = 'JESSENIA GOMEZ DELGADO' LIMIT 1) t)
+WHERE id_custodio IN
+    (SELECT id_custodio FROM (SELECT id_custodio FROM custodio WHERE nombre = 'JESUS JESSENIA GOMEZ DELGADO') t);
+DELETE FROM custodio WHERE nombre = 'JESUS JESSENIA GOMEZ DELGADO';
+
+-- --------------------------------------------------------
+-- GRUPO 16: JHON F. SALAS VALDES / SALAS VALDES JHON FREDDY → JHON FREDDY SALAS VALDES
+-- --------------------------------------------------------
+UPDATE equipo SET id_custodio_actual =
+    (SELECT id_custodio FROM (SELECT id_custodio FROM custodio WHERE nombre = 'JHON FREDDY SALAS VALDES' LIMIT 1) t)
+WHERE id_custodio_actual IN
+    (SELECT id_custodio FROM (SELECT id_custodio FROM custodio WHERE nombre IN ('JHON F. SALAS VALDES','SALAS VALDES JHON FREDDY')) t);
+UPDATE historial_custodio SET id_custodio =
+    (SELECT id_custodio FROM (SELECT id_custodio FROM custodio WHERE nombre = 'JHON FREDDY SALAS VALDES' LIMIT 1) t)
+WHERE id_custodio IN
+    (SELECT id_custodio FROM (SELECT id_custodio FROM custodio WHERE nombre IN ('JHON F. SALAS VALDES','SALAS VALDES JHON FREDDY')) t);
+DELETE FROM custodio WHERE nombre IN ('JHON F. SALAS VALDES','SALAS VALDES JHON FREDDY');
+
+-- --------------------------------------------------------
+-- GRUPO 17: JORGE P. PAEZ ZURITA → JORGE PAUL PAEZ ZURITA
+-- --------------------------------------------------------
+UPDATE equipo SET id_custodio_actual =
+    (SELECT id_custodio FROM (SELECT id_custodio FROM custodio WHERE nombre = 'JORGE PAUL PAEZ ZURITA' LIMIT 1) t)
+WHERE id_custodio_actual IN
+    (SELECT id_custodio FROM (SELECT id_custodio FROM custodio WHERE nombre = 'JORGE P. PAEZ ZURITA') t);
+UPDATE historial_custodio SET id_custodio =
+    (SELECT id_custodio FROM (SELECT id_custodio FROM custodio WHERE nombre = 'JORGE PAUL PAEZ ZURITA' LIMIT 1) t)
+WHERE id_custodio IN
+    (SELECT id_custodio FROM (SELECT id_custodio FROM custodio WHERE nombre = 'JORGE P. PAEZ ZURITA') t);
+DELETE FROM custodio WHERE nombre = 'JORGE P. PAEZ ZURITA';
+
+-- --------------------------------------------------------
+-- GRUPO 18: JOSE L. CAJAMARCA CRIOLLO → JOSE LUIS CAJAMARCA CRIOLLO
+-- --------------------------------------------------------
+UPDATE equipo SET id_custodio_actual =
+    (SELECT id_custodio FROM (SELECT id_custodio FROM custodio WHERE nombre = 'JOSE LUIS CAJAMARCA CRIOLLO' LIMIT 1) t)
+WHERE id_custodio_actual IN
+    (SELECT id_custodio FROM (SELECT id_custodio FROM custodio WHERE nombre = 'JOSE L. CAJAMARCA CRIOLLO') t);
+UPDATE historial_custodio SET id_custodio =
+    (SELECT id_custodio FROM (SELECT id_custodio FROM custodio WHERE nombre = 'JOSE LUIS CAJAMARCA CRIOLLO' LIMIT 1) t)
+WHERE id_custodio IN
+    (SELECT id_custodio FROM (SELECT id_custodio FROM custodio WHERE nombre = 'JOSE L. CAJAMARCA CRIOLLO') t);
+DELETE FROM custodio WHERE nombre = 'JOSE L. CAJAMARCA CRIOLLO';
+
+-- --------------------------------------------------------
+-- GRUPO 19: JULIO A. ROBALINO JACOME / ROBALINO JACOME JULIO ALBERTO → JULIO ALBERTO ROBALINO JÁCOME
+-- --------------------------------------------------------
+UPDATE equipo SET id_custodio_actual =
+    (SELECT id_custodio FROM (SELECT id_custodio FROM custodio WHERE nombre = 'JULIO ALBERTO ROBALINO JÁCOME' LIMIT 1) t)
+WHERE id_custodio_actual IN
+    (SELECT id_custodio FROM (SELECT id_custodio FROM custodio WHERE nombre IN ('JULIO A. ROBALINO JACOME','ROBALINO JACOME JULIO ALBERTO')) t);
+UPDATE historial_custodio SET id_custodio =
+    (SELECT id_custodio FROM (SELECT id_custodio FROM custodio WHERE nombre = 'JULIO ALBERTO ROBALINO JÁCOME' LIMIT 1) t)
+WHERE id_custodio IN
+    (SELECT id_custodio FROM (SELECT id_custodio FROM custodio WHERE nombre IN ('JULIO A. ROBALINO JACOME','ROBALINO JACOME JULIO ALBERTO')) t);
+DELETE FROM custodio WHERE nombre IN ('JULIO A. ROBALINO JACOME','ROBALINO JACOME JULIO ALBERTO');
+
+-- --------------------------------------------------------
+-- GRUPO 20: KHATERINE ALEGRIA RENGIFO CEVALLOS / RENGIFO CEVALLOS KHATERYNE ALEGRIA → KATHERINE A. RENGIFO CEVALLOS
+-- --------------------------------------------------------
+UPDATE equipo SET id_custodio_actual =
+    (SELECT id_custodio FROM (SELECT id_custodio FROM custodio WHERE nombre = 'KATHERINE A. RENGIFO CEVALLOS' LIMIT 1) t)
+WHERE id_custodio_actual IN
+    (SELECT id_custodio FROM (SELECT id_custodio FROM custodio WHERE nombre IN ('KHATERINE ALEGRIA  RENGIFO CEVALLOS','RENGIFO CEVALLOS KHATERYNE ALEGRIA')) t);
+UPDATE historial_custodio SET id_custodio =
+    (SELECT id_custodio FROM (SELECT id_custodio FROM custodio WHERE nombre = 'KATHERINE A. RENGIFO CEVALLOS' LIMIT 1) t)
+WHERE id_custodio IN
+    (SELECT id_custodio FROM (SELECT id_custodio FROM custodio WHERE nombre IN ('KHATERINE ALEGRIA  RENGIFO CEVALLOS','RENGIFO CEVALLOS KHATERYNE ALEGRIA')) t);
+DELETE FROM custodio WHERE nombre IN ('KHATERINE ALEGRIA  RENGIFO CEVALLOS','RENGIFO CEVALLOS KHATERYNE ALEGRIA');
+
+-- --------------------------------------------------------
+-- GRUPO 21: MANOSALVAS ARMIJOS GABRIELA ALEXANDRA → GABRIELA A. MANOSALVAS ARMIJOS
+-- --------------------------------------------------------
+UPDATE equipo SET id_custodio_actual =
+    (SELECT id_custodio FROM (SELECT id_custodio FROM custodio WHERE nombre = 'GABRIELA A. MANOSALVAS ARMIJOS' LIMIT 1) t)
+WHERE id_custodio_actual IN
+    (SELECT id_custodio FROM (SELECT id_custodio FROM custodio WHERE nombre = 'MANOSALVAS ARMIJOS GABRIELA ALEXANDRA') t);
+UPDATE historial_custodio SET id_custodio =
+    (SELECT id_custodio FROM (SELECT id_custodio FROM custodio WHERE nombre = 'GABRIELA A. MANOSALVAS ARMIJOS' LIMIT 1) t)
+WHERE id_custodio IN
+    (SELECT id_custodio FROM (SELECT id_custodio FROM custodio WHERE nombre = 'MANOSALVAS ARMIJOS GABRIELA ALEXANDRA') t);
+DELETE FROM custodio WHERE nombre = 'MANOSALVAS ARMIJOS GABRIELA ALEXANDRA';
+
+-- --------------------------------------------------------
+-- GRUPO 22: MARIA B. CHAVEZ ARBOLEDA → MARIA BELEN CHAVEZ ARBOLEDA
+-- --------------------------------------------------------
+UPDATE equipo SET id_custodio_actual =
+    (SELECT id_custodio FROM (SELECT id_custodio FROM custodio WHERE nombre = 'MARIA BELEN CHAVEZ ARBOLEDA' LIMIT 1) t)
+WHERE id_custodio_actual IN
+    (SELECT id_custodio FROM (SELECT id_custodio FROM custodio WHERE nombre = 'MARIA B. CHAVEZ ARBOLEDA') t);
+UPDATE historial_custodio SET id_custodio =
+    (SELECT id_custodio FROM (SELECT id_custodio FROM custodio WHERE nombre = 'MARIA BELEN CHAVEZ ARBOLEDA' LIMIT 1) t)
+WHERE id_custodio IN
+    (SELECT id_custodio FROM (SELECT id_custodio FROM custodio WHERE nombre = 'MARIA B. CHAVEZ ARBOLEDA') t);
+DELETE FROM custodio WHERE nombre = 'MARIA B. CHAVEZ ARBOLEDA';
+
+-- --------------------------------------------------------
+-- GRUPO 23: MARITZA L. ALVAREZ CORNEJO → MARITZA LORENA ALVAREZ CORNEJO
+-- --------------------------------------------------------
+UPDATE equipo SET id_custodio_actual =
+    (SELECT id_custodio FROM (SELECT id_custodio FROM custodio WHERE nombre = 'MARITZA LORENA ALVAREZ CORNEJO' LIMIT 1) t)
+WHERE id_custodio_actual IN
+    (SELECT id_custodio FROM (SELECT id_custodio FROM custodio WHERE nombre = 'MARITZA L. ALVAREZ CORNEJO') t);
+UPDATE historial_custodio SET id_custodio =
+    (SELECT id_custodio FROM (SELECT id_custodio FROM custodio WHERE nombre = 'MARITZA LORENA ALVAREZ CORNEJO' LIMIT 1) t)
+WHERE id_custodio IN
+    (SELECT id_custodio FROM (SELECT id_custodio FROM custodio WHERE nombre = 'MARITZA L. ALVAREZ CORNEJO') t);
+DELETE FROM custodio WHERE nombre = 'MARITZA L. ALVAREZ CORNEJO';
+
+-- --------------------------------------------------------
+-- GRUPO 24: MELISSA FRÍAS RUIZ → MELISSA FERNANDA FRIAS RUIZ
+-- --------------------------------------------------------
+UPDATE equipo SET id_custodio_actual =
+    (SELECT id_custodio FROM (SELECT id_custodio FROM custodio WHERE nombre = 'MELISSA FERNANDA FRIAS RUIZ' LIMIT 1) t)
+WHERE id_custodio_actual IN
+    (SELECT id_custodio FROM (SELECT id_custodio FROM custodio WHERE nombre = 'MELISSA FRÍAS RUIZ') t);
+UPDATE historial_custodio SET id_custodio =
+    (SELECT id_custodio FROM (SELECT id_custodio FROM custodio WHERE nombre = 'MELISSA FERNANDA FRIAS RUIZ' LIMIT 1) t)
+WHERE id_custodio IN
+    (SELECT id_custodio FROM (SELECT id_custodio FROM custodio WHERE nombre = 'MELISSA FRÍAS RUIZ') t);
+DELETE FROM custodio WHERE nombre = 'MELISSA FRÍAS RUIZ';
+
+-- --------------------------------------------------------
+-- GRUPO 25: MÓNICA VALVINA VÁSQUEZ LEMA → MONICA V. VASQUEZ LEMA
+-- --------------------------------------------------------
+UPDATE equipo SET id_custodio_actual =
+    (SELECT id_custodio FROM (SELECT id_custodio FROM custodio WHERE nombre = 'MONICA V. VASQUEZ LEMA' LIMIT 1) t)
+WHERE id_custodio_actual IN
+    (SELECT id_custodio FROM (SELECT id_custodio FROM custodio WHERE nombre = 'MÓNICA VALVINA VÁSQUEZ LEMA') t);
+UPDATE historial_custodio SET id_custodio =
+    (SELECT id_custodio FROM (SELECT id_custodio FROM custodio WHERE nombre = 'MONICA V. VASQUEZ LEMA' LIMIT 1) t)
+WHERE id_custodio IN
+    (SELECT id_custodio FROM (SELECT id_custodio FROM custodio WHERE nombre = 'MÓNICA VALVINA VÁSQUEZ LEMA') t);
+DELETE FROM custodio WHERE nombre = 'MÓNICA VALVINA VÁSQUEZ LEMA';
+
+-- --------------------------------------------------------
+-- GRUPO 26: PAUL OROZCO VINUEZA → PAUL FERNANDO OROZCO VINUEZA
+-- --------------------------------------------------------
+UPDATE equipo SET id_custodio_actual =
+    (SELECT id_custodio FROM (SELECT id_custodio FROM custodio WHERE nombre = 'PAUL FERNANDO OROZCO VINUEZA' LIMIT 1) t)
+WHERE id_custodio_actual IN
+    (SELECT id_custodio FROM (SELECT id_custodio FROM custodio WHERE nombre = 'PAUL OROZCO VINUEZA') t);
+UPDATE historial_custodio SET id_custodio =
+    (SELECT id_custodio FROM (SELECT id_custodio FROM custodio WHERE nombre = 'PAUL FERNANDO OROZCO VINUEZA' LIMIT 1) t)
+WHERE id_custodio IN
+    (SELECT id_custodio FROM (SELECT id_custodio FROM custodio WHERE nombre = 'PAUL OROZCO VINUEZA') t);
+DELETE FROM custodio WHERE nombre = 'PAUL OROZCO VINUEZA';
+
+-- --------------------------------------------------------
+-- GRUPO 27: MOSQUERA HIDALGO PAULINA DEL CONSUELO → PAULINA C. MOSQUERA HIDALGO
+-- --------------------------------------------------------
+UPDATE equipo SET id_custodio_actual =
+    (SELECT id_custodio FROM (SELECT id_custodio FROM custodio WHERE nombre = 'PAULINA C. MOSQUERA HIDALGO' LIMIT 1) t)
+WHERE id_custodio_actual IN
+    (SELECT id_custodio FROM (SELECT id_custodio FROM custodio WHERE nombre = 'MOSQUERA HIDALGO PAULINA DEL CONSUELO') t);
+UPDATE historial_custodio SET id_custodio =
+    (SELECT id_custodio FROM (SELECT id_custodio FROM custodio WHERE nombre = 'PAULINA C. MOSQUERA HIDALGO' LIMIT 1) t)
+WHERE id_custodio IN
+    (SELECT id_custodio FROM (SELECT id_custodio FROM custodio WHERE nombre = 'MOSQUERA HIDALGO PAULINA DEL CONSUELO') t);
+DELETE FROM custodio WHERE nombre = 'MOSQUERA HIDALGO PAULINA DEL CONSUELO';
+
+-- --------------------------------------------------------
+-- GRUPO 28: PEDRO A. BAQUERO GUEVARA → PEDRO ANIBAL BAQUERO GUEVARA
+-- --------------------------------------------------------
+UPDATE equipo SET id_custodio_actual =
+    (SELECT id_custodio FROM (SELECT id_custodio FROM custodio WHERE nombre = 'PEDRO ANIBAL BAQUERO GUEVARA' LIMIT 1) t)
+WHERE id_custodio_actual IN
+    (SELECT id_custodio FROM (SELECT id_custodio FROM custodio WHERE nombre = 'PEDRO A. BAQUERO GUEVARA') t);
+UPDATE historial_custodio SET id_custodio =
+    (SELECT id_custodio FROM (SELECT id_custodio FROM custodio WHERE nombre = 'PEDRO ANIBAL BAQUERO GUEVARA' LIMIT 1) t)
+WHERE id_custodio IN
+    (SELECT id_custodio FROM (SELECT id_custodio FROM custodio WHERE nombre = 'PEDRO A. BAQUERO GUEVARA') t);
+DELETE FROM custodio WHERE nombre = 'PEDRO A. BAQUERO GUEVARA';
+
+-- --------------------------------------------------------
+-- GRUPO 29: SALGADO ARIAS BLANCA MARGARITA → BLANCA M. SALGADO ARIAS
+-- --------------------------------------------------------
+UPDATE equipo SET id_custodio_actual =
+    (SELECT id_custodio FROM (SELECT id_custodio FROM custodio WHERE nombre = 'BLANCA M. SALGADO ARIAS' LIMIT 1) t)
+WHERE id_custodio_actual IN
+    (SELECT id_custodio FROM (SELECT id_custodio FROM custodio WHERE nombre = 'SALGADO ARIAS BLANCA MARGARITA') t);
+UPDATE historial_custodio SET id_custodio =
+    (SELECT id_custodio FROM (SELECT id_custodio FROM custodio WHERE nombre = 'BLANCA M. SALGADO ARIAS' LIMIT 1) t)
+WHERE id_custodio IN
+    (SELECT id_custodio FROM (SELECT id_custodio FROM custodio WHERE nombre = 'SALGADO ARIAS BLANCA MARGARITA') t);
+DELETE FROM custodio WHERE nombre = 'SALGADO ARIAS BLANCA MARGARITA';
+
+-- --------------------------------------------------------
+-- GRUPO 30: TERESA N. ESPINOZA ZALDUMBIDE → TERESA NATALIA ESPINOZA ZALDUMBIDE
+-- --------------------------------------------------------
+UPDATE equipo SET id_custodio_actual =
+    (SELECT id_custodio FROM (SELECT id_custodio FROM custodio WHERE nombre = 'TERESA NATALIA ESPINOZA ZALDUMBIDE' LIMIT 1) t)
+WHERE id_custodio_actual IN
+    (SELECT id_custodio FROM (SELECT id_custodio FROM custodio WHERE nombre = 'TERESA N. ESPINOZA ZALDUMBIDE') t);
+UPDATE historial_custodio SET id_custodio =
+    (SELECT id_custodio FROM (SELECT id_custodio FROM custodio WHERE nombre = 'TERESA NATALIA ESPINOZA ZALDUMBIDE' LIMIT 1) t)
+WHERE id_custodio IN
+    (SELECT id_custodio FROM (SELECT id_custodio FROM custodio WHERE nombre = 'TERESA N. ESPINOZA ZALDUMBIDE') t);
+DELETE FROM custodio WHERE nombre = 'TERESA N. ESPINOZA ZALDUMBIDE';
+
+-- --------------------------------------------------------
+-- GRUPO 31: WALTER F. DARQUEA CHUGCHO → WALTER FABIAN DARQUEA CHUGCHO
+-- --------------------------------------------------------
+UPDATE equipo SET id_custodio_actual =
+    (SELECT id_custodio FROM (SELECT id_custodio FROM custodio WHERE nombre = 'WALTER FABIAN DARQUEA CHUGCHO' LIMIT 1) t)
+WHERE id_custodio_actual IN
+    (SELECT id_custodio FROM (SELECT id_custodio FROM custodio WHERE nombre = 'WALTER F. DARQUEA CHUGCHO') t);
+UPDATE historial_custodio SET id_custodio =
+    (SELECT id_custodio FROM (SELECT id_custodio FROM custodio WHERE nombre = 'WALTER FABIAN DARQUEA CHUGCHO' LIMIT 1) t)
+WHERE id_custodio IN
+    (SELECT id_custodio FROM (SELECT id_custodio FROM custodio WHERE nombre = 'WALTER F. DARQUEA CHUGCHO') t);
+DELETE FROM custodio WHERE nombre = 'WALTER F. DARQUEA CHUGCHO';
+
+-- --------------------------------------------------------
+-- GRUPO 32: Karina Vazquez (minúsculas) → KARINA VAZQUEZ
+-- --------------------------------------------------------
+UPDATE custodio SET nombre = 'KARINA VAZQUEZ' WHERE nombre = 'Karina Vazquez';
+
+-- --------------------------------------------------------
+-- GRUPO 33: LOAIZA MOREIRA LUCIA CRISTINA (orden invertido) → LUCIA CRISTINA LOAIZA MOREIRA
+-- --------------------------------------------------------
+UPDATE custodio SET nombre = 'LUCIA CRISTINA LOAIZA MOREIRA' WHERE nombre = 'LOAIZA MOREIRA LUCIA CRISTINA';
+
+-- --------------------------------------------------------
+-- GRUPO 34: PADILLA RIVAS KATYA DOMINIQUE → KATYA DOMINIQUE PADILLA RIVAS
+-- --------------------------------------------------------
+UPDATE equipo SET id_custodio_actual =
+    (SELECT id_custodio FROM (SELECT id_custodio FROM custodio WHERE nombre = 'KATYA DOMINIQUE PADILLA RIVAS' LIMIT 1) t)
+WHERE id_custodio_actual IN
+    (SELECT id_custodio FROM (SELECT id_custodio FROM custodio WHERE nombre = 'PADILLA RIVAS KATYA DOMINIQUE') t);
+UPDATE historial_custodio SET id_custodio =
+    (SELECT id_custodio FROM (SELECT id_custodio FROM custodio WHERE nombre = 'KATYA DOMINIQUE PADILLA RIVAS' LIMIT 1) t)
+WHERE id_custodio IN
+    (SELECT id_custodio FROM (SELECT id_custodio FROM custodio WHERE nombre = 'PADILLA RIVAS KATYA DOMINIQUE') t);
+DELETE FROM custodio WHERE nombre = 'PADILLA RIVAS KATYA DOMINIQUE';
+
+-- --------------------------------------------------------
+-- GRUPO 35: '.' y 'S/N' → SIN CUSTODIO
+-- --------------------------------------------------------
+UPDATE equipo SET id_custodio_actual =
+    (SELECT id_custodio FROM (SELECT id_custodio FROM custodio WHERE nombre = 'SIN CUSTODIO' LIMIT 1) t)
+WHERE id_custodio_actual IN
+    (SELECT id_custodio FROM (SELECT id_custodio FROM custodio WHERE nombre IN ('.','S/N')) t);
+UPDATE historial_custodio SET id_custodio =
+    (SELECT id_custodio FROM (SELECT id_custodio FROM custodio WHERE nombre = 'SIN CUSTODIO' LIMIT 1) t)
+WHERE id_custodio IN
+    (SELECT id_custodio FROM (SELECT id_custodio FROM custodio WHERE nombre IN ('.','S/N')) t);
+DELETE FROM custodio WHERE nombre IN ('.','S/N');
 
 SET FOREIGN_KEY_CHECKS = 1;

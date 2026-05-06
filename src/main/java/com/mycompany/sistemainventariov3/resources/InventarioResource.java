@@ -144,10 +144,15 @@ public class InventarioResource {
                 return Response.status(Response.Status.BAD_REQUEST).entity(gson.toJson(resp)).build();
             }
 
+            String registradoPor = (payload.containsKey("registradoPor") && payload.get("registradoPor") != null
+                    && !String.valueOf(payload.get("registradoPor")).trim().isEmpty())
+                    ? String.valueOf(payload.get("registradoPor")).trim()
+                    : usuario.getUsuario();
+
             InventoryItemDTO item = inventarioJdbcService.actualizarCustodioEquipo(
                     idEquipo,
                     idCustodioNuevo,
-                    usuario.getUsuario(),
+                    registradoPor,
                     usuario.getRol(),
                     true
             );

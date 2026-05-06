@@ -3165,57 +3165,81 @@
                 const nombre = String(c?.nombre || "");
                 return `<option value="${c.id}">${escapeHtml(nombre)}</option>`;
             }).join("");
+            const datalistOpts = custodios.map((c) =>
+                `<option value="${escapeHtml(String(c?.nombre || ""))}"></option>`
+            ).join("");
 
-            const VALID_STATES_LOCAL = ["OPERATIVO", "EN MANTENIMIENTO", "DADO DE BAJA", "EN BODEGA", "OBSOLETO"];
             const tipoLabel = {
                 pc: "PC", laptop: "Laptop", periferico: "Periférico", impresora: "Impresora",
                 escaner: "Escáner", telefono: "Teléfono", proyector: "Proyector",
                 infraestructura: "Infraestructura", licencia: "Licencia",
                 bien_control_admin: "Bien Control Adm.", modem: "Módem"
             };
+            const hoy = new Date().toISOString().split("T")[0];
+            const roSt = "opacity:.55;cursor:not-allowed;background:#f4f6fb;border-color:#e0e9f6;";
 
             openModal(
-                `Editar equipo — ${escapeHtml(item.codigoSbai || String(item.id))}`,
-                `<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;" id="editFormGrid2">
-                    <label class="edit-field"><span>Código SBYE</span><input name="codigo_sbye" value="${escapeHtml(item.codigoSbai || "")}"></label>
-                    <label class="edit-field"><span>Código Megan</span><input name="codigo_megan" value="${escapeHtml(item.codigoMegan || "")}"></label>
-                    <label class="edit-field" style="grid-column:span 2;"><span>Descripción</span><input name="descripcion" value="${escapeHtml(item.descripcion || "")}"></label>
-                    <label class="edit-field"><span>Tipo</span><input value="${escapeHtml(tipoLabel[item.tipo] || item.tipo || "")}" disabled style="opacity:.6;cursor:not-allowed;"></label>
-                    <label class="edit-field"><span>Marca</span><input name="marca" value="${escapeHtml(item.marca || "")}"></label>
-                    <label class="edit-field"><span>Modelo</span><input name="modelo" value="${escapeHtml(item.modelo || "")}"></label>
-                    <label class="edit-field"><span>Número de serie</span><input name="sn" value="${escapeHtml(item.numeroSerie || "")}"></label>
-                    <label class="edit-field"><span>Custodio</span>
-                        <select name="id_custodio_actual" id="custodioSelectEdit"><option value="">-- Sin custodio --</option>${opcionesCustodio}</select>
-                    </label>
-                    <label class="edit-field"><span>Edificio</span><input name="ubicacion_edificio" value="${escapeHtml(item.ubicacionEdificio || item.ubicacion || "")}"></label>
-                    <label class="edit-field"><span>Piso</span><input name="ubicacion_piso" value="${escapeHtml(item.ubicacionPiso || "")}"></label>
-                    <label class="edit-field" style="grid-column:span 2;"><span>Dirección / Área</span><input name="ubicacion_direccion" value="${escapeHtml(item.ubicacionDireccion || "")}"></label>
-                    <label class="edit-field" style="grid-column:span 2;"><span>Detalle</span><textarea name="observacion" rows="2">${escapeHtml(item.observacion || item.caracteristicas || "")}</textarea></label>
+                `Editar custodio — ${escapeHtml(item.codigoSbai || String(item.id))}`,
+                `<div>
+                    <div style="background:#fff8e1;border:1px solid #ffe082;border-radius:8px;padding:9px 14px;margin-bottom:14px;font-size:13px;color:#7a5f00;display:flex;align-items:center;gap:8px;">
+                        <span style="font-size:16px;">ℹ️</span>
+                        <span>Los campos en gris son de <strong>solo lectura</strong>. Únicamente puede modificar el <strong>custodio</strong>.</span>
+                    </div>
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;" id="editFormGrid2">
+                        <label class="edit-field"><span>Código SBYE</span><input value="${escapeHtml(item.codigoSbai || "")}" disabled style="${roSt}"></label>
+                        <label class="edit-field"><span>Código Megan</span><input value="${escapeHtml(item.codigoMegan || "")}" disabled style="${roSt}"></label>
+                        <label class="edit-field" style="grid-column:span 2;"><span>Descripción</span><input value="${escapeHtml(item.descripcion || "")}" disabled style="${roSt}"></label>
+                        <label class="edit-field"><span>Tipo</span><input value="${escapeHtml(tipoLabel[item.tipo] || item.tipo || "")}" disabled style="${roSt}"></label>
+                        <label class="edit-field"><span>Marca</span><input value="${escapeHtml(item.marca || "")}" disabled style="${roSt}"></label>
+                        <label class="edit-field"><span>Modelo</span><input value="${escapeHtml(item.modelo || "")}" disabled style="${roSt}"></label>
+                        <label class="edit-field"><span>Número de serie</span><input value="${escapeHtml(item.numeroSerie || "")}" disabled style="${roSt}"></label>
+                        <label class="edit-field" style="grid-column:span 2;">
+                            <span>Custodio <em style="color:var(--primary);font-weight:600;font-style:normal;">(editable)</em></span>
+                            <select name="id_custodio_actual" id="custodioSelectEdit" style="border-color:var(--primary);">
+                                <option value="">-- Sin custodio --</option>${opcionesCustodio}
+                            </select>
+                        </label>
+                        <label class="edit-field"><span>Edificio</span><input value="${escapeHtml(item.ubicacionEdificio || "")}" disabled style="${roSt}"></label>
+                        <label class="edit-field"><span>Piso</span><input value="${escapeHtml(item.ubicacionPiso || "")}" disabled style="${roSt}"></label>
+                        <label class="edit-field" style="grid-column:span 2;"><span>Dirección / Área</span><input value="${escapeHtml(item.ubicacionDireccion || "")}" disabled style="${roSt}"></label>
+                        <label class="edit-field" style="grid-column:span 2;"><span>Detalle</span><textarea disabled rows="2" style="${roSt}">${escapeHtml(item.observacion || item.caracteristicas || "")}</textarea></label>
+                        <hr style="grid-column:span 2;border:none;border-top:1px solid #dce7f3;margin:2px 0 4px;">
+                        <label class="edit-field" style="grid-column:span 2;">
+                            <span>Registrado por <em style="color:var(--primary);font-weight:600;font-style:normal;">(requerido)</em></span>
+                            <input id="registradoPorInput" list="listCustodiosSug" autocomplete="off" placeholder="Escriba su nombre completo..." style="font-weight:500;">
+                            <datalist id="listCustodiosSug">${datalistOpts}</datalist>
+                        </label>
+                        <label class="edit-field">
+                            <span>Fecha del cambio</span>
+                            <input type="date" id="fechaCambioInput" value="${hoy}">
+                        </label>
+                    </div>
                 </div>`,
                 [
                     { label: "Cancelar", className: "btn btn-secondary", onClick: closeModal },
                     {
-                        label: "Guardar cambios",
+                        label: "Guardar cambio",
                         className: "btn btn-primary",
                         onClick: async () => {
-                            const grid = document.getElementById("editFormGrid2");
-                            if (!grid) return;
-                            const payload = {};
-                            grid.querySelectorAll("input[name], select[name], textarea[name]").forEach((el) => {
-                                payload[el.name] = el.value;
-                            });
+                            const sel = document.getElementById("custodioSelectEdit");
+                            const regPor = document.getElementById("registradoPorInput");
+                            if (!sel?.value) { showToast("Aviso", "Seleccione un custodio.", "warning"); return; }
+                            if (!regPor?.value.trim()) { showToast("Aviso", "Ingrese el nombre de quien registra el cambio.", "warning"); return; }
                             try {
-                                const r = await apiFetch(`/inventario/${item.tipo}/${item.id}`, {
+                                const r = await apiFetch(`/inventario/${item.id}/custodio`, {
                                     method: "PUT",
                                     headers: { "Content-Type": "application/json" },
-                                    body: JSON.stringify(payload)
+                                    body: JSON.stringify({
+                                        idCustodio: parseInt(sel.value),
+                                        registradoPor: regPor.value.trim()
+                                    })
                                 });
                                 const p = await r.json();
                                 if (!r.ok || !p.success) throw new Error(p.message || "Error al guardar");
                                 closeModal();
                                 await loadInventory();
                                 applyInventoryFilters();
-                                showToast("Guardado", "Equipo actualizado correctamente.", "success");
+                                showToast("Custodio actualizado", "El cambio se guardó correctamente en el historial.", "success");
                             } catch (err) {
                                 showToast("Error", err.message, "danger");
                             }
@@ -3308,20 +3332,33 @@
             }
             const historial = Array.isArray(payload.data) ? payload.data : [];
             const bodyHtml = historial.length
-                ? historial.map((registro) => `
-                    <article class="report-history__item">
-                        <strong>${escapeHtml(registro.accion || "Cambio")}</strong>
-                        <div class="muted">Usuario: ${escapeHtml(registro.usuario || "-")} | Rol: ${escapeHtml(registro.rol || "-")}</div>
-                        <div class="muted">Anterior: ${escapeHtml(registro.valorAnterior || "-")}</div>
-                        <div class="muted">Nuevo: ${escapeHtml(registro.valorNuevo || "-")}</div>
-                        <div class="muted">Fecha: ${escapeHtml(formatDate(registro.fecha))}</div>
-                    </article>
-                `).join("")
-                : '<p class="muted">No hay historial registrado para este equipo.</p>';
+                ? `<div style="display:flex;flex-direction:column;gap:10px;">
+                    ${historial.map((h) => {
+                        const ant = escapeHtml(h.valorAnterior || "-");
+                        const nvo = escapeHtml(h.valorNuevo || "-");
+                        const fecha = h.fecha ? new Date(h.fecha).toLocaleString("es-EC") : "-";
+                        const rolLabel = h.rol ? escapeHtml(h.rol) : "TÉCNICO";
+                        const usuLabel = h.usuario ? escapeHtml(h.usuario) : "-";
+                        return `<div style="background:#f8fafd;border:1px solid #dce7f3;border-radius:10px;padding:12px 14px;">
+                            <div style="font-weight:600;color:var(--primary);margin-bottom:6px;font-size:14px;">${escapeHtml(h.accion || "Cambio")}</div>
+                            <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px 14px;font-size:13px;">
+                                <div style="color:#61708a;">Antes:</div>
+                                <div style="color:#61708a;">Ahora:</div>
+                                <div style="background:#fff3cd;border-radius:5px;padding:3px 7px;font-weight:500;">${ant}</div>
+                                <div style="background:#d4edda;border-radius:5px;padding:3px 7px;font-weight:600;color:#155724;">${nvo}</div>
+                            </div>
+                            <div style="margin-top:8px;font-size:12px;color:#61708a;border-top:1px solid #eef2f9;padding-top:6px;display:flex;justify-content:space-between;flex-wrap:wrap;gap:4px;">
+                                <span>Registrado por: <strong>${usuLabel}</strong> — Rol: <strong>${rolLabel}</strong></span>
+                                <span>📅 ${fecha}</span>
+                            </div>
+                        </div>`;
+                    }).join("")}
+                  </div>`
+                : '<p style="color:#61708a;text-align:center;padding:24px;">No hay historial registrado para este equipo.</p>';
 
             openModal(
-                `Historial del equipo ${escapeHtml(item.codigoSbai || item.id)}`,
-                `<div class="report-history">${bodyHtml}</div>`,
+                `Historial — ${escapeHtml(item.codigoSbai || item.id)}`,
+                bodyHtml,
                 [{ label: "Cerrar", className: "btn btn-secondary", onClick: closeModal }]
             );
         } catch (error) {
@@ -3543,7 +3580,7 @@
     }
 
     async function abrirModalHistorial(idEquipo) {
-        openModal("Historial del Equipo", `<div id="historialContent"><p>Cargando historial...</p></div>`, [
+        openModal("Historial del Equipo", `<div id="historialContent" style="min-height:80px;"><p style="color:#61708a;padding:16px;">Cargando historial...</p></div>`, [
             { label: "Cerrar", className: "btn btn-secondary", onClick: closeModal }
         ]);
         try {
@@ -3560,31 +3597,34 @@
                     <table style="width:100%;border-collapse:collapse;font-size:13px;">
                         <thead>
                             <tr style="background:#eef4fb;">
-                                <th style="padding:8px;text-align:left;border-bottom:1px solid #dce7f3;">Acción</th>
-                                <th style="padding:8px;text-align:left;border-bottom:1px solid #dce7f3;">Anterior</th>
-                                <th style="padding:8px;text-align:left;border-bottom:1px solid #dce7f3;">Nuevo</th>
-                                <th style="padding:8px;text-align:left;border-bottom:1px solid #dce7f3;">Usuario</th>
-                                <th style="padding:8px;text-align:left;border-bottom:1px solid #dce7f3;">Rol</th>
-                                <th style="padding:8px;text-align:left;border-bottom:1px solid #dce7f3;">Fecha</th>
+                                <th style="padding:9px 10px;text-align:left;border-bottom:2px solid #dce7f3;white-space:nowrap;">Acción</th>
+                                <th style="padding:9px 10px;text-align:left;border-bottom:2px solid #dce7f3;">Datos anteriores</th>
+                                <th style="padding:9px 10px;text-align:left;border-bottom:2px solid #dce7f3;">Datos actualizados</th>
+                                <th style="padding:9px 10px;text-align:left;border-bottom:2px solid #dce7f3;white-space:nowrap;">Registrado por</th>
+                                <th style="padding:9px 10px;text-align:left;border-bottom:2px solid #dce7f3;white-space:nowrap;">Fecha</th>
                             </tr>
                         </thead>
                         <tbody>
-                            ${historial.map((h) => `
-                                <tr style="border-bottom:1px solid #f0f4fa;">
-                                    <td style="padding:8px;">${escapeHtml(h.accion || "-")}</td>
-                                    <td style="padding:8px;">${escapeHtml(h.valorAnterior || "-")}</td>
-                                    <td style="padding:8px;font-weight:600;">${escapeHtml(h.valorNuevo || "-")}</td>
-                                    <td style="padding:8px;">${escapeHtml(h.usuario || "-")}</td>
-                                    <td style="padding:8px;">${escapeHtml(h.rol || "-")}</td>
-                                    <td style="padding:8px;white-space:nowrap;">${h.fecha ? new Date(h.fecha).toLocaleString("es-EC") : "-"}</td>
-                                </tr>
-                            `).join("")}
+                            ${historial.map((h) => {
+                                const ant = h.valorAnterior && h.valorAnterior !== "?" ? escapeHtml(h.valorAnterior) : "—";
+                                const nvo = h.valorNuevo && h.valorNuevo !== "?" ? escapeHtml(h.valorNuevo) : "—";
+                                const rol = escapeHtml(h.rol || "ADMINISTRADOR");
+                                const usuario = escapeHtml(h.usuario || "-");
+                                const fecha = h.fecha ? new Date(h.fecha).toLocaleString("es-EC") : "-";
+                                return `<tr style="border-bottom:1px solid #f0f4fa;">
+                                    <td style="padding:8px 10px;white-space:nowrap;font-weight:500;">${escapeHtml(h.accion || "-")}</td>
+                                    <td style="padding:8px 10px;"><span style="background:#fff3cd;border-radius:4px;padding:2px 6px;">${ant}</span></td>
+                                    <td style="padding:8px 10px;"><span style="background:#d4edda;border-radius:4px;padding:2px 6px;font-weight:600;color:#155724;">${nvo}</span></td>
+                                    <td style="padding:8px 10px;white-space:nowrap;"><span style="font-size:11px;background:#e8f0fe;color:var(--primary);border-radius:4px;padding:2px 6px;font-weight:600;">${rol}</span><br><span style="color:#61708a;font-size:12px;">${usuario}</span></td>
+                                    <td style="padding:8px 10px;white-space:nowrap;color:#61708a;">${fecha}</td>
+                                </tr>`;
+                            }).join("")}
                         </tbody>
                     </table>
                 </div>
             `;
         } catch (e) {
-            document.getElementById("historialContent").innerHTML = `<p style="color:red;">Error: ${e.message}</p>`;
+            document.getElementById("historialContent").innerHTML = `<p style="color:red;padding:12px;">Error: ${escapeHtml(e.message)}</p>`;
         }
     }
 
