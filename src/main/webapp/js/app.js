@@ -751,8 +751,8 @@
         });
         document.getElementById("applyInventoryFilters")?.addEventListener("click", applyInventoryFilters);
         document.getElementById("clearInventoryFilters")?.addEventListener("click", clearInventoryFilters);
-        document.getElementById("exportInventoryExcel")?.addEventListener("click", exportInventoryToExcel);
-        document.getElementById("exportInventoryPdf")?.addEventListener("click", exportInventoryToPdf);
+        document.getElementById("exportInventoryExcel")?.addEventListener("click", () => openExportDialog("excel"));
+        document.getElementById("exportInventoryPdf")?.addEventListener("click", () => openExportDialog("pdf"));
         document.querySelectorAll("[data-sort]").forEach((button) => button.addEventListener("click", () => sortInventory(button.dataset.sort)));
         document.getElementById("prevPage")?.addEventListener("click", () => changePage(-1));
         document.getElementById("nextPage")?.addEventListener("click", () => changePage(1));
@@ -1175,11 +1175,11 @@
         window.location.href = `${basePrefix}/index.html`.replace("/pages/index.html", "/index.html");
     }
 
-    function openModal(title, bodyHtml, actions) {
+    function openModal(title, bodyHtml, actions, extraClass) {
         const modalRoot = document.getElementById("modalRoot");
         modalRoot.innerHTML = `
             <div class="modal-backdrop"></div>
-            <div class="modal">
+            <div class="modal${extraClass ? " " + extraClass : ""}">
                 <div class="modal__header">
                     <h3>${title}</h3>
                     <button class="modal-close" id="modalClose">×</button>
@@ -1658,8 +1658,8 @@
         });
         document.getElementById("applyInventoryFilters")?.addEventListener("click", applyInventoryFilters);
         document.getElementById("clearInventoryFilters")?.addEventListener("click", clearInventoryFilters);
-        document.getElementById("exportInventoryExcel")?.addEventListener("click", exportInventoryToExcel);
-        document.getElementById("exportInventoryPdf")?.addEventListener("click", exportInventoryToPdf);
+        document.getElementById("exportInventoryExcel")?.addEventListener("click", () => openExportDialog("excel"));
+        document.getElementById("exportInventoryPdf")?.addEventListener("click", () => openExportDialog("pdf"));
         document.querySelectorAll("[data-sort]").forEach((button) => button.addEventListener("click", () => sortInventory(button.dataset.sort)));
         document.getElementById("prevPage")?.addEventListener("click", () => changePage(-1));
         document.getElementById("nextPage")?.addEventListener("click", () => changePage(1));
@@ -2184,57 +2184,118 @@
 
         const selected = new Set((state.exportSelection?.keys || INVENTORY_EXPORT_COLUMNS.map((col) => col.key)));
         const isPdf = format === "pdf";
-        const title = isPdf ? "Exportar PDF" : "Exportar Excel";
+        const formatIcon = isPdf ? "📄" : "📊";
+        const title = isPdf ? `${formatIcon} Exportar PDF` : `${formatIcon} Exportar Excel`;
 
         openModal(
             title,
             `
-                <div class="field-group">
-                    <label>Campos a exportar</label>
-                    <div class="toolbar" style="margin-top:8px;">
-                        <button class="btn btn-secondary" type="button" id="exportSelectAll">Todos</button>
-                        <button class="btn btn-secondary" type="button" id="exportSelectNone">Ninguno</button>
+                <div class="export-dialog">
+                    <div class="export-columns-section">
+                        <div class="export-section-header">
+                            <span class="export-section-title">Campos a exportar</span>
+                            <div class="export-quick-actions">
+                                <button class="btn btn-secondary btn-sm" type="button" id="exportSelectAll">Todos</button>
+                                <button class="btn btn-secondary btn-sm" type="button" id="exportSelectNone">Ninguno</button>
+                            </div>
+                        </div>
+                        <div class="export-field-list">
+                            ${INVENTORY_EXPORT_COLUMNS.map((col) => `
+                                <label class="export-field-item">
+                                    <input type="checkbox" class="export-field-checkbox" data-export-col="${escapeHtml(col.key)}" ${selected.has(col.key) ? "checked" : ""}>
+                                    <span class="export-field-label">${escapeHtml(col.label)}</span>
+                                </label>
+                            `).join("")}
+                        </div>
+                        <small class="helper-text">Se exportarán los <strong>${rows.length}</strong> registros filtrados actualmente.</small>
                     </div>
-                    <div class="export-field-list">
-                        ${INVENTORY_EXPORT_COLUMNS.map((col) => `
-                            <label class="export-field-item">
-                                <input type="checkbox" class="export-field-checkbox" data-export-col="${escapeHtml(col.key)}" ${selected.has(col.key) ? "checked" : ""}>
-                                <span class="export-field-label">${escapeHtml(col.label)}</span>
-                            </label>
-                        `).join("")}
+                    <div class="export-preview-section">
+                        <div class="export-section-header">
+                            <span class="export-section-title">Previsualización <span class="export-preview-badge">(primeros 5 registros)</span></span>
+                        </div>
+                        <div class="export-preview-wrapper" id="exportPreviewWrapper"></div>
                     </div>
-                    <small class="helper-text">Se exportan solo los registros filtrados actualmente.</small>
                 </div>
             `,
             [
                 { label: "Cancelar", className: "btn btn-secondary", onClick: closeModal },
-                {
-                    label: "Exportar",
-                    className: "btn btn-primary",
-                    onClick: () => {
-                        const keys = readSelectedExportKeys();
-                        state.exportSelection = { keys };
-                        if (!keys.length) {
-                            showToast("Seleccione campos", "Debe seleccionar al menos un campo para exportar.", "info");
-                            return;
+                ...(isPdf ? [
+                    {
+                        label: "Imprimir",
+                        className: "btn btn-secondary",
+                        onClick: () => {
+                            const keys = readSelectedExportKeys();
+                            if (!keys.length) { showToast("Seleccione campos", "Debe seleccionar al menos un campo.", "info"); return; }
+                            closeModal();
+                            exportInventoryToPrint(keys);
                         }
-                        closeModal();
-                        if (isPdf) {
+                    },
+                    {
+                        label: "Descargar PDF",
+                        className: "btn btn-primary",
+                        onClick: () => {
+                            const keys = readSelectedExportKeys();
+                            state.exportSelection = { keys };
+                            if (!keys.length) { showToast("Seleccione campos", "Debe seleccionar al menos un campo.", "info"); return; }
+                            closeModal();
                             exportInventoryToPdf(keys);
-                        } else {
+                        }
+                    }
+                ] : [
+                    {
+                        label: "Exportar Excel",
+                        className: "btn btn-primary",
+                        onClick: () => {
+                            const keys = readSelectedExportKeys();
+                            state.exportSelection = { keys };
+                            if (!keys.length) { showToast("Seleccione campos", "Debe seleccionar al menos un campo.", "info"); return; }
+                            closeModal();
                             exportInventoryToExcel(keys);
                         }
                     }
-                }
-            ]
+                ])
+            ],
+            "modal--wide"
         );
+
+        function renderExportPreview() {
+            const keys = readSelectedExportKeys();
+            const wrapper = document.getElementById("exportPreviewWrapper");
+            if (!wrapper) return;
+            if (!keys.length) {
+                wrapper.innerHTML = '<p class="export-preview-empty">Seleccione al menos un campo para previsualizar.</p>';
+                return;
+            }
+            const cols = INVENTORY_EXPORT_COLUMNS.filter((col) => keys.includes(col.key));
+            const previewRows = rows.slice(0, 5);
+            wrapper.innerHTML = `
+                <div class="export-preview-scroll">
+                    <table class="export-preview-table">
+                        <thead>
+                            <tr>${cols.map((col) => `<th>${escapeHtml(col.label)}</th>`).join("")}</tr>
+                        </thead>
+                        <tbody>
+                            ${previewRows.map((item) => `
+                                <tr>${cols.map((col) => `<td>${escapeHtml(inventoryExportValue(item, col.key) || "—")}</td>`).join("")}</tr>
+                            `).join("")}
+                        </tbody>
+                    </table>
+                </div>
+            `;
+        }
 
         document.getElementById("exportSelectAll")?.addEventListener("click", () => {
             setAllExportCheckboxes(true);
+            renderExportPreview();
         });
         document.getElementById("exportSelectNone")?.addEventListener("click", () => {
             setAllExportCheckboxes(false);
+            renderExportPreview();
         });
+        document.querySelectorAll("[data-export-col]").forEach((input) => {
+            input.addEventListener("change", renderExportPreview);
+        });
+        renderExportPreview();
     }
 
     function setAllExportCheckboxes(checked) {
@@ -2282,31 +2343,79 @@
                 <head>
                     <meta charset="UTF-8">
                     <style>
-                        body { font-family: Calibri, Arial, sans-serif; color: #16324f; margin: 24px; }
-                        .sheet-header { margin-bottom: 18px; }
-                        .sheet-header h1 { margin: 0 0 4px; font-size: 22px; }
-                        .sheet-header p { margin: 2px 0; font-size: 12px; color: #4d6480; }
-                        table { width: 100%; border-collapse: collapse; }
-                        th { background: #d9e8f6; color: #16324f; font-weight: 700; border: 1px solid #9eb6ce; padding: 9px 8px; text-align: left; }
-                        td { border: 1px solid #c7d6e5; padding: 8px; vertical-align: top; }
-                        tbody tr:nth-child(even) { background: #f7fbff; }
+                        body { font-family: Calibri, Arial, sans-serif; color: #16324f; margin: 32px; background: #fff; }
+                        .sheet-header { margin-bottom: 24px; padding-bottom: 16px; border-bottom: 2px solid #1565c0; }
+                        .sheet-header h1 { margin: 0 0 6px; font-size: 20px; color: #0d47a1; font-weight: 700; }
+                        .sheet-header .subtitle { margin: 0 0 10px; font-size: 13px; color: #4d6480; font-weight: 600; }
+                        .sheet-meta { display: flex; gap: 24px; flex-wrap: wrap; margin-top: 8px; }
+                        .sheet-meta span { font-size: 11px; color: #6b7a8d; background: #f0f6ff; border-radius: 4px; padding: 3px 8px; }
+                        table { width: 100%; border-collapse: collapse; font-size: 12px; }
+                        thead tr { background: #1565c0; }
+                        th { background: #1565c0; color: #fff; font-weight: 700; border: 1px solid #0d47a1; padding: 10px 9px; text-align: left; white-space: nowrap; }
+                        td { border: 1px solid #d0dcea; padding: 8px 9px; vertical-align: top; color: #2c3e50; }
+                        tbody tr:nth-child(even) { background: #f3f8ff; }
+                        tbody tr:hover { background: #e8f0fb; }
+                        .sheet-footer { margin-top: 18px; font-size: 11px; color: #9aabb8; text-align: right; }
                     </style>
                 </head>
                 <body>
                     <div class="sheet-header">
-                        <h1>Reporte de Inventario Filtrado</h1>
-                        <p>Sistema de Inventario DTIC</p>
-                        <p>Fecha de emision: ${escapeHtml(generatedAt)}</p>
-                        <p>Total exportado: ${rows.length}</p>
+                        <h1>Reporte de Inventario Tecnológico</h1>
+                        <div class="subtitle">Dirección de Tecnologías de Información y Comunicación — SENADI</div>
+                        <div class="sheet-meta">
+                            <span>📅 Fecha: ${escapeHtml(generatedAt)}</span>
+                            <span>📦 Registros exportados: ${rows.length}</span>
+                            <span>📋 Campos seleccionados: ${cols.length}</span>
+                        </div>
                     </div>
                     <table>
                         <thead><tr>${header.map((cell) => `<th>${escapeHtml(cell)}</th>`).join("")}</tr></thead>
                         <tbody>${bodyRows.map((row) => `<tr>${row.map((cell) => `<td>${escapeHtml(cell || "")}</td>`).join("")}</tr>`).join("")}</tbody>
                     </table>
+                    <div class="sheet-footer">Generado por Sistema de Inventario DTIC · ${escapeHtml(generatedAt)}</div>
                 </body>
             </html>`;
         downloadBlob(new Blob([`\ufeff${documentHtml}`], { type: "application/vnd.ms-excel" }), `reporte_inventario_${timestampForFile()}.xls`);
     }
+
+    function buildReportHtml(cols, rows, now, dateStr) {
+        const headerRow = cols.map((c) => "<th>" + c.label + "</th>").join("");
+        const bodyRows = rows.map((item, i) => {
+            const cells = cols.map((c) => "<td>" + (inventoryExportValue(item, c.key) || "-") + "</td>").join("");
+            return "<tr class=\"" + (i % 2 === 0 ? "even" : "odd") + "\">" + cells + "</tr>";
+        }).join("");
+        return (
+            "<div class=\"rpt-header\"><div>" +
+            "<div class=\"rpt-org\">SENADI — Dirección de Tecnologías de la Información y Comunicación</div>" +
+            "<div class=\"rpt-sub\">Reporte de Inventario Tecnológico</div>" +
+            "</div><div class=\"rpt-meta\">" +
+            "<div>Fecha: " + dateStr + "</div>" +
+            "<div>Emitido: " + now + "</div>" +
+            "<div>Total: <strong>" + rows.length + "</strong> registro(s)</div>" +
+            "</div></div>" +
+            "<table><thead><tr>" + headerRow + "</tr></thead><tbody>" + bodyRows + "</tbody></table>" +
+            "<div class=\"rpt-footer\">" +
+            "<span>SENADI — DTIC • " + now + "</span>" +
+            "<span>" + rows.length + " registro(s) • " + cols.length + " campo(s)</span>" +
+            "</div>"
+        );
+    }
+
+    const REPORT_CSS = [
+        "* { box-sizing: border-box; margin: 0; padding: 0; }",
+        "body, div { font-family: Arial, sans-serif; font-size: 9pt; color: #111; }",
+        ".rpt-header { display: flex; justify-content: space-between; align-items: flex-start; padding: 10px 0 8px; border-bottom: 2px solid #1565c0; margin-bottom: 10px; }",
+        ".rpt-org { font-size: 12pt; font-weight: bold; color: #1565c0; }",
+        ".rpt-sub { font-size: 9pt; color: #444; margin-top: 3px; }",
+        ".rpt-meta { text-align: right; font-size: 8pt; color: #555; line-height: 1.7; }",
+        "table { width: 100%; border-collapse: collapse; table-layout: auto; }",
+        "thead tr { background: #1565c0; color: #fff; }",
+        "thead th { padding: 5px 6px; font-size: 8pt; font-weight: bold; text-align: left; border: 1px solid #0d47a1; }",
+        "tbody tr:nth-child(even) { background: #f0f5fb; }",
+        "tbody tr:nth-child(odd)  { background: #ffffff; }",
+        "tbody td { padding: 4px 6px; font-size: 8pt; border: 1px solid #cfd8e8; vertical-align: top; word-break: break-word; }",
+        ".rpt-footer { margin-top: 12px; border-top: 1px solid #bbb; padding-top: 5px; font-size: 7.5pt; color: #666; display: flex; justify-content: space-between; }"
+    ].join(" ");
 
     function exportInventoryToPdf(keys) {
         const rows = state.filteredInventory;
@@ -2314,10 +2423,160 @@
             showToast("Sin datos", "No hay resultados filtrados para exportar.", "info");
             return;
         }
-        downloadBlob(buildInventoryPdfBlob(rows, keys), `reporte_inventario_${timestampForFile()}.pdf`);
+        const blob = buildInventoryPdfBlob(rows, keys);
+        downloadBlob(blob, "reporte_inventario_" + timestampForFile() + ".pdf");
+    }
+
+    function exportInventoryToPrint(keys) {
+        const rows = state.filteredInventory;
+        if (!rows.length) {
+            showToast("Sin datos", "No hay resultados filtrados para exportar.", "info");
+            return;
+        }
+        const cols = INVENTORY_EXPORT_COLUMNS.filter((col) => keys.includes(col.key));
+        const now = new Date().toLocaleString("es-EC");
+        const dateStr = new Date().toLocaleDateString("es-EC", { year: "numeric", month: "long", day: "numeric" });
+        const body = buildReportHtml(cols, rows, now, dateStr);
+        const printCss = REPORT_CSS +
+            " @media print { @page { margin:1.2cm; size:A4 landscape; } thead { display:table-header-group; } tr { page-break-inside:avoid; } }";
+        const html = "<!DOCTYPE html><html lang='es'><head><meta charset='UTF-8'>" +
+            "<title>Reporte Inventario SENADI</title>" +
+            "<style>" + printCss + "</style></head><body style='padding:16px'>" +
+            body + "<script>window.onload=function(){window.focus();window.print();}<\/script></body></html>";
+        const win = window.open("", "_blank", "width=1100,height=800,scrollbars=yes");
+        if (!win) { showToast("Bloqueado", "Permite ventanas emergentes para imprimir.", "warning"); return; }
+        win.document.open();
+        win.document.write(html);
+        win.document.close();
     }
 
     function buildInventoryPdfBlob(rows, keys) {
+        const W = 842, H = 595, M = 20;
+        const cols = INVENTORY_EXPORT_COLUMNS.filter((c) => keys.includes(c.key));
+        const totalWeight = cols.reduce((s, c) => s + (c.weight || 1), 0) || 1;
+        const tableW = W - M * 2;
+
+        // Calcular anchos de columna
+        const colWidths = cols.map((c) => Math.max(30, Math.floor(tableW * (c.weight || 1) / totalWeight)));
+        const usedW = colWidths.reduce((s, w) => s + w, 0);
+        colWidths[colWidths.length - 1] += tableW - usedW;
+        const colX = [];
+        let cx = M;
+        colWidths.forEach((w) => { colX.push(cx); cx += w; });
+
+        const HEADER_H = 14;
+        const ROW_H = 12;
+        const FS = 7;
+        const FS_H = 7.5;
+        const PAGE_TOP = H - M - 38;   // y donde empieza la cabecera de tabla
+        const PAGE_BOT = M + 10;
+        const rowsPerPage = Math.max(1, Math.floor((PAGE_TOP - PAGE_BOT - HEADER_H) / ROW_H));
+
+        function pdfEsc(v) {
+            return String(v || "-")
+                .normalize("NFD").replace(/[̀-ͯ]/g, "")
+                .replace(/\\/g, "\\\\").replace(/\(/g, "\\(").replace(/\)/g, "\\)")
+                .replace(/[\r\n\t]/g, " ").trim();
+        }
+        function trunc(v, w) {
+            const s = pdfEsc(v);
+            const max = Math.max(2, Math.floor(w / (FS * 0.52)) - 1);
+            return s.length <= max ? s : s.slice(0, max - 1) + ".";
+        }
+        function truncH(v, w) {
+            const s = pdfEsc(v);
+            const max = Math.max(2, Math.floor(w / (FS_H * 0.52)) - 1);
+            return s.length <= max ? s : s.slice(0, max - 1) + ".";
+        }
+
+        const objects = [];
+        function addObj(content) { objects.push(content); return objects.length; }
+
+        const fontId = addObj("<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>");
+        const fontBoldId = addObj("<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding >>");
+        const pageRefs = [];
+
+        const now = pdfEsc(new Date().toLocaleString("es-EC"));
+        const totalPages = Math.max(1, Math.ceil(rows.length / rowsPerPage));
+
+        for (let p = 0; p < totalPages; p++) {
+            const pageRows = rows.slice(p * rowsPerPage, (p + 1) * rowsPerPage);
+            const ops = [];
+
+            // --- Encabezado de pagina ---
+            ops.push("0 g");
+            ops.push("BT /F2 13 Tf " + M + " " + (H - M - 13) + " Td (Reporte de Inventario - SENADI DTIC) Tj ET");
+            ops.push("BT /F1 8 Tf " + M + " " + (H - M - 25) + " Td (Emitido: " + now + "   Total: " + rows.length + " registros   Pagina " + (p + 1) + "/" + totalPages + ") Tj ET");
+
+            // --- Cabecera de tabla (fondo azul) ---
+            const thY = PAGE_TOP - HEADER_H;
+            ops.push("0.18 0.38 0.75 rg");
+            ops.push(M + " " + thY + " " + tableW + " " + HEADER_H + " re f");
+            ops.push("1 g");
+            cols.forEach((col, i) => {
+                ops.push("BT /F2 " + FS_H + " Tf " + (colX[i] + 2) + " " + (thY + 4) + " Td (" + truncH(col.label.toUpperCase(), colWidths[i] - 4) + ") Tj ET");
+            });
+
+            // --- Filas de datos ---
+            ops.push("0 g");
+            pageRows.forEach((item, ri) => {
+                const ry = thY - (ri + 1) * ROW_H;
+                if (ri % 2 === 0) {
+                    ops.push("0.93 0.96 0.99 rg");
+                    ops.push(M + " " + ry + " " + tableW + " " + ROW_H + " re f");
+                    ops.push("0 g");
+                }
+                cols.forEach((col, ci) => {
+                    const val = inventoryExportValue(item, col.key);
+                    ops.push("BT /F1 " + FS + " Tf " + (colX[ci] + 2) + " " + (ry + 3) + " Td (" + trunc(val, colWidths[ci] - 4) + ") Tj ET");
+                });
+            });
+
+            // --- Grilla (lineas horizontales y verticales) ---
+            ops.push("0.15 w");
+            ops.push("0.4 0.4 0.4 RG");
+            // Borde exterior
+            const gridH = HEADER_H + pageRows.length * ROW_H;
+            const gridY = thY - pageRows.length * ROW_H;
+            ops.push(M + " " + gridY + " " + tableW + " " + gridH + " re S");
+            // Lineas horizontales entre filas
+            for (let r = 0; r <= pageRows.length; r++) {
+                const ly = thY - r * ROW_H;
+                ops.push(M + " " + ly + " m " + (M + tableW) + " " + ly + " l S");
+            }
+            // Lineas verticales entre columnas
+            for (let ci = 1; ci < cols.length; ci++) {
+                ops.push(colX[ci] + " " + gridY + " m " + colX[ci] + " " + PAGE_TOP + " l S");
+            }
+
+            // --- Pie de pagina ---
+            ops.push("0 g");
+            ops.push("BT /F1 7 Tf " + M + " " + (M + 2) + " Td (SENADI - DTIC | " + now + ") Tj ET");
+
+            const stream = ops.join("\n");
+            const streamId = addObj("<< /Length " + stream.length + " >>\nstream\n" + stream + "\nendstream");
+            const pageId = addObj("<< /Type /Page /Parent PAGES_REF 0 R /MediaBox [0 0 " + W + " " + H + "] /Contents " + streamId + " 0 R /Resources << /Font << /F1 " + fontId + " 0 R /F2 " + fontBoldId + " 0 R >> >> >>");
+            pageRefs.push(pageId);
+        }
+
+        const pagesId = addObj("<< /Type /Pages /Count " + pageRefs.length + " /Kids [" + pageRefs.map((id) => id + " 0 R").join(" ") + "] >>");
+        const catalogId = addObj("<< /Type /Catalog /Pages " + pagesId + " 0 R >>");
+
+        const normalized = objects.map((obj, idx) =>
+            (idx + 1) + " 0 obj\n" + obj.replace(/PAGES_REF 0 R/g, pagesId + " 0 R") + "\nendobj\n"
+        );
+
+        let pdf = "%PDF-1.4\n";
+        const offsets = [];
+        normalized.forEach((obj) => { offsets.push(pdf.length); pdf += obj; });
+        const xrefStart = pdf.length;
+        pdf += "xref\n0 " + (normalized.length + 1) + "\n0000000000 65535 f \n";
+        offsets.forEach((o) => { pdf += String(o).padStart(10, "0") + " 00000 n \n"; });
+        pdf += "trailer\n<< /Size " + (normalized.length + 1) + " /Root " + catalogId + " 0 R >>\nstartxref\n" + xrefStart + "\n%%EOF";
+        return new Blob([pdf], { type: "application/pdf" });
+    }
+
+    function buildInventoryPdfBlob_UNUSED_OLD(rows, keys) {
         const pageWidth = 842;
         const pageHeight = 595;
         const margin = 28;
