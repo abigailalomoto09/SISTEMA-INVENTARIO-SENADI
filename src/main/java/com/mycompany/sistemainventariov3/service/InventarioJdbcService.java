@@ -1,5 +1,6 @@
 package com.mycompany.sistemainventariov3.service;
 
+import com.google.gson.Gson;
 import com.mycompany.sistemainventariov3.dto.InventoryItemDTO;
 
 import java.sql.Connection;
@@ -24,6 +25,7 @@ import java.util.Set;
  * Consultas JDBC contra el modelo final inventario_dtic_2026.
  */
 public class InventarioJdbcService {
+    private static final Gson GSON = new Gson();
 
     private static final List<String> TIPOS_FORMULARIO = Arrays.asList(
             "pc",
@@ -295,6 +297,7 @@ public class InventarioJdbcService {
                 if (nombreNuevo == null || nombreNuevo.trim().isEmpty()) {
                     throw new IllegalArgumentException("Custodio no valido.");
                 }
+                List<Map<String, Object>> registroAnterior = construirCamposRegistroHistorial(conn, idEquipo);
 
                 String update = "UPDATE equipo SET id_custodio_actual = ?, ultima_actualizacion = CURDATE() WHERE id_equipo = ?";
                 try (PreparedStatement ps = conn.prepareStatement(update)) {
@@ -305,9 +308,13 @@ public class InventarioJdbcService {
 
                 // Siempre registrar auditoría para todos los roles
                 asegurarTablaAuditoria(conn);
+                List<Map<String, Object>> registroNuevo = construirCamposRegistroHistorial(conn, idEquipo);
                 registrarAuditoria(conn, idEquipo, usuario, rol, "Cambio de custodio",
                         nombreAnterior != null ? nombreAnterior : "(sin custodio)",
-                        nombreNuevo);
+                        nombreNuevo,
+                        "Custodio actual",
+                        registroAnterior,
+                        registroNuevo);
 
                 conn.commit();
                 return obtenerInventarioPorId(conn, idEquipo);
@@ -343,6 +350,7 @@ public class InventarioJdbcService {
                     }
                 }
 
+                List<Map<String, Object>> registroAnterior = construirCamposRegistroHistorial(conn, idEquipo);
                 String update = "UPDATE equipo SET estado = ?, ultima_actualizacion = CURDATE() WHERE id_equipo = ?";
                 try (PreparedStatement ps = conn.prepareStatement(update)) {
                     ps.setString(1, estado);
@@ -355,10 +363,14 @@ public class InventarioJdbcService {
 
                 // Registrar auditoría
                 asegurarTablaAuditoria(conn);
+                List<Map<String, Object>> registroNuevo = construirCamposRegistroHistorial(conn, idEquipo);
                 registrarAuditoria(conn, idEquipo,
                         usuario != null ? usuario : "SISTEMA",
                         rol != null ? rol : "ADMINISTRADOR",
-                        "Cambio de estado", estadoAnterior, estado);
+                        "Cambio de estado", estadoAnterior, estado,
+                        "Estado",
+                        registroAnterior,
+                        registroNuevo);
 
                 conn.commit();
                 return obtenerInventarioPorId(conn, idEquipo);
@@ -376,9 +388,11 @@ public class InventarioJdbcService {
             asegurarTablaAuditoria(conn);
             // Incluir historial de custodio desde historial_custodio si existe
             List<Map<String, Object>> historial = new ArrayList<>();
+            List<Map<String, Object>> camposRegistro = construirCamposRegistroHistorial(conn, idEquipo);
 
             // Fuente 1: tabla de auditoría general (cambios de custodio y estado)
-            String sql1 = "SELECT id, usuario, rol, accion, valor_anterior, valor_nuevo, fecha " +
+            String sql1 = "SELECT id, usuario, rol, accion, valor_anterior, valor_nuevo, fecha, " +
+                    "campo_modificado, registro_anterior, registro_nuevo " +
                     "FROM auditoria_custodio WHERE id_equipo = ? ORDER BY fecha DESC, id DESC";
             try (PreparedStatement ps = conn.prepareStatement(sql1)) {
                 ps.setInt(1, idEquipo);
@@ -392,6 +406,13 @@ public class InventarioJdbcService {
                         item.put("valorAnterior", rs.getString("valor_anterior"));
                         item.put("valorNuevo", rs.getString("valor_nuevo"));
                         item.put("fecha", rs.getTimestamp("fecha"));
+                        String campoModificado = coalesce(rs.getString("campo_modificado"), campoDesdeAccion(rs.getString("accion")));
+                        item.put("campoModificado", campoModificado);
+                        List<Map<String, Object>> camposAntes = leerCamposHistorial(rs.getString("registro_anterior"));
+                        List<Map<String, Object>> camposDespues = leerCamposHistorial(rs.getString("registro_nuevo"));
+                        item.put("camposAntes", camposAntes.isEmpty() ? construirCamposComparativosFallback(camposRegistro, campoModificado, rs.getString("valor_anterior")) : camposAntes);
+                        item.put("camposDespues", camposDespues.isEmpty() ? construirCamposComparativosFallback(camposRegistro, campoModificado, rs.getString("valor_nuevo")) : camposDespues);
+                        item.put("camposRegistro", camposDespues.isEmpty() ? camposRegistro : camposDespues);
                         item.put("fuente", "auditoria");
                         historial.add(item);
                     }
@@ -419,6 +440,10 @@ public class InventarioJdbcService {
                             item.put("valorAnterior", "");
                             item.put("valorNuevo", rs.getString("custodio_nuevo"));
                             item.put("fecha", rs.getTimestamp("fecha"));
+                            item.put("campoModificado", "Custodio actual");
+                            item.put("camposAntes", construirCamposComparativosFallback(camposRegistro, "Custodio actual", ""));
+                            item.put("camposDespues", construirCamposComparativosFallback(camposRegistro, "Custodio actual", rs.getString("custodio_nuevo")));
+                            item.put("camposRegistro", camposRegistro);
                             item.put("fuente", "historial_custodio");
                             historial.add(item);
                         }
@@ -464,6 +489,7 @@ public class InventarioJdbcService {
                 Map<String, Object> valoresAnteriores = new LinkedHashMap<>();
                 cargarFilaComoMapa(conn, "equipo", "id_equipo", idEquipo, valoresAnteriores, false);
                 cargarFilaComoMapa(conn, tablaHijaPorTipo(tipo), "id_equipo", idEquipo, valoresAnteriores, true);
+                List<Map<String, Object>> registroAnterior = construirCamposRegistroHistorialDesdeValores(conn, idEquipo, tipo, valoresAnteriores);
 
                 // Construir SET dinámico para equipo
                 List<String> sets = new ArrayList<>();
@@ -511,16 +537,21 @@ public class InventarioJdbcService {
                 }
 
                 asegurarTablaAuditoria(conn);
+                List<Map<String, Object>> registroNuevo = construirCamposRegistroHistorial(conn, idEquipo);
                 registrarAuditoriaCambios(conn, idEquipo,
                         usuario != null ? usuario : "SISTEMA",
                         rol != null ? rol : "ADMINISTRADOR",
                         valoresAnteriores,
-                        params);
+                        params,
+                        registroAnterior,
+                        registroNuevo);
                 registrarAuditoriaCambios(conn, idEquipo,
                         usuario != null ? usuario : "SISTEMA",
                         rol != null ? rol : "ADMINISTRADOR",
                         valoresAnteriores,
-                        paramsHija);
+                        paramsHija,
+                        registroAnterior,
+                        registroNuevo);
                 registrarAuditoria(conn, idEquipo,
                         usuario != null ? usuario : "SISTEMA",
                         rol != null ? rol : "ADMINISTRADOR",
@@ -560,6 +591,174 @@ public class InventarioJdbcService {
 
             return datos;
         }
+    }
+
+    private List<Map<String, Object>> construirCamposRegistroHistorial(Connection conn, Integer idEquipo) throws Exception {
+        String tipo = obtenerTipoEquipo(conn, idEquipo);
+        if (tipo == null) {
+            return Collections.emptyList();
+        }
+
+        Map<String, Object> equipo = new LinkedHashMap<>();
+        Map<String, Object> hija = new LinkedHashMap<>();
+        cargarFilaComoMapa(conn, "equipo", "id_equipo", idEquipo, equipo, false);
+        cargarFilaComoMapa(conn, tablaHijaPorTipo(tipo), "id_equipo", idEquipo, hija, true);
+
+        List<Map<String, Object>> campos = new ArrayList<>();
+        agregarCampoHistorial(campos, "id_equipo", "ID equipo", idEquipo);
+        agregarCampoHistorial(campos, "tipo_equipo", "Tipo de equipo", etiquetaTipo(tipo));
+
+        for (String campo : camposEquipoHistorial()) {
+            agregarCampoHistorial(campos, campo, etiquetaCampo(campo), equipo.get(campo));
+        }
+
+        Integer idCustodio = leerEnteroSeguro(equipo.get("id_custodio_actual"));
+        agregarCampoHistorial(campos, "id_custodio_actual", "Custodio actual",
+                idCustodio != null ? obtenerNombreCustodio(conn, idCustodio) : "");
+
+        Map<String, String> ubicacion = obtenerUbicacionPorId(conn, leerEnteroSeguro(equipo.get("id_ubicacion")));
+        agregarCampoHistorial(campos, "id_ubicacion", "Ubicación",
+                unirNoVacios(ubicacion.get("edificio"), ubicacion.get("piso"), ubicacion.get("direccion")));
+        agregarCampoHistorial(campos, "ubicacion_edificio", "Edificio", ubicacion.get("edificio"));
+        agregarCampoHistorial(campos, "ubicacion_piso", "Piso", ubicacion.get("piso"));
+        agregarCampoHistorial(campos, "ubicacion_direccion", "Dirección / Área", ubicacion.get("direccion"));
+
+        for (Map.Entry<String, Object> entry : hija.entrySet()) {
+            agregarCampoHistorial(campos, entry.getKey(), etiquetaCampo(entry.getKey()), entry.getValue());
+        }
+
+        return campos;
+    }
+
+    private List<Map<String, Object>> construirCamposRegistroHistorialDesdeValores(
+            Connection conn,
+            Integer idEquipo,
+            String tipo,
+            Map<String, Object> valores) throws Exception {
+        List<Map<String, Object>> campos = new ArrayList<>();
+        agregarCampoHistorial(campos, "id_equipo", "ID equipo", idEquipo);
+        agregarCampoHistorial(campos, "tipo_equipo", "Tipo de equipo", etiquetaTipo(tipo));
+
+        for (String campo : camposEquipoHistorial()) {
+            agregarCampoHistorial(campos, campo, etiquetaCampo(campo), valores.get(campo));
+        }
+
+        Integer idCustodio = leerEnteroSeguro(valores.get("id_custodio_actual"));
+        agregarCampoHistorial(campos, "id_custodio_actual", "Custodio actual",
+                idCustodio != null ? obtenerNombreCustodio(conn, idCustodio) : "");
+
+        Map<String, String> ubicacion = obtenerUbicacionPorId(conn, leerEnteroSeguro(valores.get("id_ubicacion")));
+        agregarCampoHistorial(campos, "id_ubicacion", "Ubicación",
+                unirNoVacios(ubicacion.get("edificio"), ubicacion.get("piso"), ubicacion.get("direccion")));
+        agregarCampoHistorial(campos, "ubicacion_edificio", "Edificio", ubicacion.get("edificio"));
+        agregarCampoHistorial(campos, "ubicacion_piso", "Piso", ubicacion.get("piso"));
+        agregarCampoHistorial(campos, "ubicacion_direccion", "Dirección / Área", ubicacion.get("direccion"));
+
+        Set<String> omitidos = new HashSet<>(camposEquipoHistorial());
+        omitidos.addAll(Arrays.asList("id_equipo", "tipo_equipo", "id_custodio_actual", "id_ubicacion"));
+        for (Map.Entry<String, Object> entry : valores.entrySet()) {
+            if (!omitidos.contains(entry.getKey())) {
+                agregarCampoHistorial(campos, entry.getKey(), etiquetaCampo(entry.getKey()), entry.getValue());
+            }
+        }
+
+        return campos;
+    }
+
+    private List<String> camposEquipoHistorial() {
+        return Arrays.asList(
+                "codigo_megan",
+                "codigo_sbye",
+                "descripcion",
+                "marca",
+                "modelo",
+                "sn",
+                "fecha_ingreso",
+                "costo",
+                "estado",
+                "observacion",
+                "ultima_actualizacion",
+                "ultimo_mantenimiento",
+                "creado_en",
+                "actualizado_en"
+        );
+    }
+
+    private void agregarCampoHistorial(List<Map<String, Object>> campos, String campo, String label, Object valor) {
+        Map<String, Object> item = new LinkedHashMap<>();
+        item.put("campo", campo);
+        item.put("label", label);
+        item.put("valor", texto(valor));
+        campos.add(item);
+    }
+
+    @SuppressWarnings("unchecked")
+    private List<Map<String, Object>> leerCamposHistorial(String json) {
+        if (json == null || json.trim().isEmpty()) {
+            return Collections.emptyList();
+        }
+        try {
+            Object parsed = GSON.fromJson(json, Object.class);
+            if (!(parsed instanceof List)) {
+                return Collections.emptyList();
+            }
+            List<Map<String, Object>> campos = new ArrayList<>();
+            for (Object entry : (List<Object>) parsed) {
+                if (entry instanceof Map) {
+                    Map<String, Object> campo = new LinkedHashMap<>();
+                    ((Map<String, Object>) entry).forEach(campo::put);
+                    campos.add(campo);
+                }
+            }
+            return campos;
+        } catch (Exception e) {
+            return Collections.emptyList();
+        }
+    }
+
+    private List<Map<String, Object>> construirCamposComparativosFallback(
+            List<Map<String, Object>> base,
+            String campoModificado,
+            String valorCampoModificado) {
+        List<Map<String, Object>> copia = new ArrayList<>();
+        String campoNormalizado = normalizarEtiquetaHistorial(campoModificado);
+        for (Map<String, Object> original : base) {
+            Map<String, Object> item = new LinkedHashMap<>();
+            item.putAll(original);
+            String label = texto(item.get("label"));
+            if (normalizarEtiquetaHistorial(label).equals(campoNormalizado)) {
+                item.put("valor", valorCampoModificado != null ? valorCampoModificado : "");
+            }
+            copia.add(item);
+        }
+        return copia;
+    }
+
+    private String normalizarEtiquetaHistorial(String valor) {
+        return valor == null ? "" : valor.toLowerCase(Locale.ROOT)
+                .replace("id custodio actual", "custodio actual")
+                .replaceAll("[^a-z0-9]+", " ")
+                .trim();
+    }
+
+    private String campoDesdeAccion(String accion) {
+        String textoAccion = accion != null ? accion.trim() : "";
+        String textoNormalizado = textoAccion.toLowerCase(Locale.ROOT);
+        int separadorCampo = textoAccion.indexOf(':');
+        if (textoNormalizado.startsWith("edici") && separadorCampo >= 0) {
+            String campo = textoAccion.substring(separadorCampo + 1).trim();
+            if (campo.toLowerCase(Locale.ROOT).contains("id custodio")) {
+                return "Custodio actual";
+            }
+            return campo;
+        }
+        if (textoAccion.toLowerCase(Locale.ROOT).contains("custodio")) {
+            return "Custodio actual";
+        }
+        if (textoAccion.toLowerCase(Locale.ROOT).contains("estado")) {
+            return "Estado";
+        }
+        return "Equipo";
     }
 
     private String obtenerTipoEquipo(Connection conn, Integer idEquipo) throws Exception {
@@ -1057,6 +1256,27 @@ public class InventarioJdbcService {
         try (PreparedStatement ps = conn.prepareStatement(ddl)) {
             ps.execute();
         }
+        asegurarColumnaAuditoria(conn, "campo_modificado", "VARCHAR(160) NULL");
+        asegurarColumnaAuditoria(conn, "registro_anterior", "LONGTEXT NULL");
+        asegurarColumnaAuditoria(conn, "registro_nuevo", "LONGTEXT NULL");
+    }
+
+    private void asegurarColumnaAuditoria(Connection conn, String columna, String definicion) throws Exception {
+        String schema = conn.getCatalog();
+        String sql = "SELECT 1 FROM information_schema.columns " +
+                "WHERE table_schema = ? AND table_name = 'auditoria_custodio' AND column_name = ? LIMIT 1";
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, schema);
+            ps.setString(2, columna);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return;
+                }
+            }
+        }
+        try (PreparedStatement ps = conn.prepareStatement("ALTER TABLE auditoria_custodio ADD COLUMN " + columna + " " + definicion)) {
+            ps.execute();
+        }
     }
 
     private void registrarAuditoria(
@@ -1067,9 +1287,24 @@ public class InventarioJdbcService {
             String accion,
             String valorAnterior,
             String valorNuevo) throws Exception {
+        registrarAuditoria(conn, idEquipo, usuario, rol, accion, valorAnterior, valorNuevo,
+                campoDesdeAccion(accion), null, null);
+    }
+
+    private void registrarAuditoria(
+            Connection conn,
+            Integer idEquipo,
+            String usuario,
+            String rol,
+            String accion,
+            String valorAnterior,
+            String valorNuevo,
+            String campoModificado,
+            List<Map<String, Object>> registroAnterior,
+            List<Map<String, Object>> registroNuevo) throws Exception {
         String sql = "INSERT INTO auditoria_custodio " +
-                "(id_equipo, usuario, rol, accion, valor_anterior, valor_nuevo, fecha) " +
-                "VALUES (?, ?, ?, ?, ?, ?, NOW())";
+                "(id_equipo, usuario, rol, accion, valor_anterior, valor_nuevo, campo_modificado, registro_anterior, registro_nuevo, fecha) " +
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())";
         try (PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, idEquipo);
             ps.setString(2, usuario != null ? usuario : "ANONIMO");
@@ -1077,6 +1312,9 @@ public class InventarioJdbcService {
             ps.setString(4, accion);
             ps.setString(5, valorAnterior);
             ps.setString(6, valorNuevo);
+            ps.setString(7, campoModificado);
+            ps.setString(8, registroAnterior != null ? GSON.toJson(registroAnterior) : null);
+            ps.setString(9, registroNuevo != null ? GSON.toJson(registroNuevo) : null);
             ps.executeUpdate();
         }
     }
@@ -1087,7 +1325,9 @@ public class InventarioJdbcService {
             String usuario,
             String rol,
             Map<String, Object> valoresAnteriores,
-            List<Object[]> cambios) throws Exception {
+            List<Object[]> cambios,
+            List<Map<String, Object>> registroAnterior,
+            List<Map<String, Object>> registroNuevo) throws Exception {
         for (Object[] cambio : cambios) {
             String columna = (String) cambio[0];
             if ("ultima_actualizacion".equals(columna)) {
@@ -1099,9 +1339,12 @@ public class InventarioJdbcService {
                 continue;
             }
             registrarAuditoria(conn, idEquipo, usuario, rol,
-                    "Edicion de campo: " + etiquetaCampo(columna),
+                    "Edición de campo: " + etiquetaCampo(columna),
                     anterior,
-                    nuevo);
+                    nuevo,
+                    etiquetaCampo(columna),
+                    registroAnterior,
+                    registroNuevo);
         }
     }
 
@@ -1187,15 +1430,15 @@ public class InventarioJdbcService {
         switch (tipo) {
             case "pc": return "PC";
             case "laptop": return "Laptop";
-            case "periferico": return "Periferico";
+            case "periferico": return "Periférico";
             case "impresora": return "Impresora";
-            case "escaner": return "Escaner";
-            case "telefono": return "Telefono";
+            case "escaner": return "Escáner";
+            case "telefono": return "Teléfono";
             case "proyector": return "Proyector";
             case "infraestructura": return "Infraestructura";
             case "licencia": return "Licencia";
             case "bien_control_admin": return "Bien de control administrativo";
-            case "modem": return "Modem";
+            case "modem": return "Módem";
             default: return tipo;
         }
     }
@@ -1206,21 +1449,27 @@ public class InventarioJdbcService {
 
     private String etiquetaCampo(String columna) {
         switch (columna) {
-            case "codigo_megan": return "Codigo Megan";
-            case "codigo_sbye": return "Codigo SBYE";
-            case "sn": return "Numero de serie";
+            case "id_equipo": return "ID equipo";
+            case "tipo_equipo": return "Tipo de equipo";
+            case "codigo_megan": return "Código Megan";
+            case "codigo_sbye": return "Código SBYE";
+            case "sn": return "Número de serie";
             case "fecha_ingreso": return "Fecha de ingreso";
-            case "ultima_actualizacion": return "Ultima actualizacion";
-            case "ultimo_mantenimiento": return "Ultimo mantenimiento";
+            case "creado_en": return "Creado en";
+            case "actualizado_en": return "Actualizado en";
+            case "ultima_actualizacion": return "Última actualización";
+            case "ultimo_mantenimiento": return "Último mantenimiento";
+            case "id_custodio_actual": return "Custodio actual";
+            case "id_ubicacion": return "Ubicación";
             case "custodio_nombre": return "Custodio actual";
             case "ubicacion_edificio": return "Edificio";
             case "ubicacion_piso": return "Piso";
-            case "ubicacion_direccion": return "Direccion / Area";
-            case "tipo_periferico": return "Tipo de periferico";
+            case "ubicacion_direccion": return "Dirección / Área";
+            case "tipo_periferico": return "Tipo de periférico";
             case "tipo_impresora": return "Tipo de impresora";
-            case "codigo_anterior": return "Codigo anterior";
-            case "numero_contrato": return "Numero de contrato";
-            case "numero_servicio": return "Numero de servicio";
+            case "codigo_anterior": return "Código anterior";
+            case "numero_contrato": return "Número de contrato";
+            case "numero_servicio": return "Número de servicio";
             case "plan_comercial": return "Plan comercial";
             case "estado_servicio": return "Estado del servicio";
             case "anterior_custodio": return "Custodio anterior";

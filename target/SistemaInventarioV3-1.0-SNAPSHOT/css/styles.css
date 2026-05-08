@@ -653,23 +653,26 @@ textarea {
 
 .field-group {
     display: grid;
-    gap: 8px;
+    gap: 7px;
 }
 
 .field-group label,
 .field-group span {
-    font-size: 14px;
+    font-size: 13px;
     font-weight: 600;
+    color: var(--muted);
 }
 
 .field-group input,
 .field-group select,
 .field-group textarea {
     width: 100%;
-    padding: 12px 14px;
-    border-radius: 16px;
+    padding: 11px 13px;
+    border-radius: 12px;
     border: 1px solid var(--border);
     background: white;
+    color: var(--text);
+    line-height: 1.35;
 }
 
 .field-group textarea {
@@ -724,25 +727,26 @@ textarea {
 .edit-field {
     display: flex;
     flex-direction: column;
-    gap: 4px;
+    gap: 7px;
 }
 .edit-field span {
     font-size: 12px;
     font-weight: 600;
     color: var(--muted);
     text-transform: uppercase;
-    letter-spacing: 0.04em;
+    letter-spacing: 0;
 }
 .edit-field input,
 .edit-field select,
 .edit-field textarea {
-    padding: 8px 10px;
-    border-radius: 10px;
+    padding: 10px 12px;
+    border-radius: 12px;
     border: 1px solid var(--border);
     background: white;
     font: inherit;
     font-size: 13px;
     width: 100%;
+    line-height: 1.35;
 }
 .edit-field input:focus,
 .edit-field select:focus,
@@ -765,6 +769,7 @@ textarea {
 }
 @media (max-width: 700px) {
     .export-dialog { grid-template-columns: 1fr; }
+    .history-diff { grid-template-columns: 1fr; }
 }
 .export-columns-section,
 .export-preview-section {
@@ -1549,6 +1554,206 @@ th {
     border-radius: 16px;
     background: var(--surface-soft);
     border: 1px solid var(--border);
+}
+
+.history-timeline {
+    display: grid;
+    gap: 14px;
+}
+
+.history-card {
+    padding: 16px;
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    background: #fff;
+    box-shadow: 0 8px 22px rgba(15, 31, 56, 0.06);
+}
+
+.history-card__header,
+.history-card__footer {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.history-card__header {
+    margin-bottom: 12px;
+}
+
+.history-card__header strong,
+.history-card__header span {
+    display: block;
+}
+
+.history-card__header strong {
+    color: var(--primary);
+    font-size: 14px;
+}
+
+.history-card__header span,
+.history-card__header time,
+.history-card__footer {
+    color: var(--muted);
+    font-size: 12px;
+}
+
+.history-changed-label {
+    margin-top: 3px;
+    color: var(--primary) !important;
+    font-weight: 700;
+}
+
+.history-diff {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+}
+
+.history-diff > div,
+.history-field {
+    min-width: 0;
+    padding: 10px;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    background: var(--surface-soft);
+}
+
+.history-diff span,
+.history-field span {
+    display: block;
+    margin-bottom: 5px;
+    color: var(--muted);
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+
+.history-diff strong,
+.history-field strong {
+    display: block;
+    overflow-wrap: anywhere;
+    font-size: 13px;
+    line-height: 1.35;
+}
+
+.history-diff__old {
+    background: #fff8e1;
+    border-color: #ffe2a8;
+}
+
+.history-diff__new,
+.history-field--changed {
+    background: #eaf7ee;
+    border-color: #b8dec5;
+}
+
+.history-diff__new strong,
+.history-field--changed strong {
+    color: #155724;
+}
+
+.history-fields {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 10px;
+    margin-top: 12px;
+}
+
+.history-card__footer {
+    margin-top: 12px;
+    padding-top: 10px;
+    border-top: 1px solid #eef2f9;
+}
+
+.history-comparison {
+    display: grid;
+    grid-template-columns: minmax(170px, 0.9fr) minmax(180px, 1fr) minmax(180px, 1fr);
+    gap: 1px;
+    margin-top: 12px;
+    overflow: hidden;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    background: var(--border);
+}
+
+.history-comparison__head,
+.history-comparison__field,
+.history-comparison__value {
+    min-width: 0;
+    padding: 10px 12px;
+    background: #fff;
+    overflow-wrap: anywhere;
+    font-size: 13px;
+    line-height: 1.35;
+}
+
+.history-comparison__head {
+    background: #eef4fb;
+    color: #445b78;
+    font-size: 11px;
+    font-weight: 800;
+    text-transform: uppercase;
+}
+
+.history-comparison__field span,
+.history-comparison__field strong {
+    display: block;
+}
+
+.history-comparison__field span {
+    font-weight: 700;
+}
+
+.history-comparison__field strong {
+    margin-top: 4px;
+    color: #8a5b00;
+    font-size: 11px;
+    text-transform: uppercase;
+}
+
+.history-comparison__field--changed {
+    background: #fff8e1;
+}
+
+.history-comparison__value--old {
+    background: #fff8e1;
+    font-weight: 700;
+}
+
+.history-comparison__value--new {
+    background: #eaf7ee;
+    color: #155724;
+    font-weight: 800;
+}
+
+.inventory-row--updated {
+    animation: inventoryRowUpdated 2.6s ease-out;
+}
+
+@keyframes inventoryRowUpdated {
+    0% {
+        background: #eaf7ee;
+        box-shadow: inset 4px 0 0 #2e7d32;
+    }
+    100% {
+        background: transparent;
+        box-shadow: inset 0 0 0 transparent;
+    }
+}
+
+@media (max-width: 700px) {
+    .history-diff {
+        grid-template-columns: 1fr;
+    }
+
+    .history-comparison {
+        grid-template-columns: 1fr;
+    }
+
+    .history-comparison__head {
+        display: none;
+    }
 }
 
 #reportPreviewMeta {

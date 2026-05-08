@@ -24,7 +24,7 @@
         proyector: { label: "Proyector" },
         infraestructura: { label: "Infraestructura" },
         licencia: { label: "Licencia" },
-        modem: { label: "Modem" },
+        modem: { label: "Módem" },
         bien_control_admin: { label: "Control admin." }
     };
     const CATEGORY_CONFIG = {
@@ -74,7 +74,7 @@
             fields: ["numeroSerie", "caracteristicas"]
         },
         modem: {
-            label: "Modem",
+            label: "Módem",
             hint: "Equipos de conectividad mÃ³vil o fija con plan y servicio asociado.",
             fields: ["numeroSerie", "ip", "caracteristicas"]
         }
@@ -156,7 +156,7 @@
             roleLabel = "Custodio";
         } else {
             mappedRole = "tecnico";
-            roleLabel = "Tecnico";
+            roleLabel = "Técnico";
         }
 
         const permisosPorRol = {
@@ -902,7 +902,7 @@
             : "";
         const btnHistorial = `<button class="btn-action btn-history" onclick="abrirModalHistorial(${item.id})">Historial</button>`;
         return `
-            <tr>
+            <tr data-inventory-id="${item.id}">
                 <td>${escapeHtml(item.codigoSbai || "-")}</td>
                 <td>${escapeHtml(item.codigoMegan || "-")}</td>
                 <td>${escapeHtml(item.descripcion || "-")}</td>
@@ -923,7 +923,7 @@
 
     function renderMobileInventoryCard(item) {
         return `
-            <article class="mobile-card">
+            <article class="mobile-card" data-inventory-id="${item.id}">
                 <strong>${escapeHtml(item.codigoSbai || "-")} · ${escapeHtml(displayInventoryType(item))}</strong>
                 <span>Megan: ${escapeHtml(item.codigoMegan || "-")}</span>
                 <span>Descripción: ${escapeHtml(item.descripcion || "-")}</span>
@@ -1496,15 +1496,15 @@
             "acta-equipos": {
                 eyebrow: "Mantenimiento preventivo",
                 title: "Formulario de equipos",
-                description: "Registro para documentar la revision preventiva realizada sobre equipos tecnologicos.",
+                description: "Registro para documentar la revision preventiva realizada sobre equipos tecnológicos.",
                 hint: "Completa los datos principales del equipo, la revision aplicada y las observaciones finales.",
                 fields: `
                     <div class="field-group"><label for="actaFechaEquipo">Fecha</label><input id="actaFechaEquipo" name="fecha" type="date" required></div>
-                    <div class="field-group"><label for="actaTecnicoEquipo">Tecnico responsable</label><input id="actaTecnicoEquipo" name="tecnico" type="text" required></div>
+                    <div class="field-group"><label for="actaTecnicoEquipo">Técnico responsable</label><input id="actaTecnicoEquipo" name="tecnico" type="text" required></div>
                     <div class="field-group"><label for="actaCustodioEquipo">Custodio</label><input id="actaCustodioEquipo" name="custodio" type="text"></div>
-                    <div class="field-group"><label for="actaAreaEquipo">Area</label><input id="actaAreaEquipo" name="area" type="text"></div>
-                    <div class="field-group"><label for="actaCodigoEquipo">Codigo del equipo</label><input id="actaCodigoEquipo" name="codigoEquipo" type="text"></div>
-                    <div class="field-group"><label for="actaSerieEquipo">Numero de serie</label><input id="actaSerieEquipo" name="numeroSerie" type="text"></div>
+                    <div class="field-group"><label for="actaAreaEquipo">Área</label><input id="actaAreaEquipo" name="area" type="text"></div>
+                    <div class="field-group"><label for="actaCodigoEquipo">Código del equipo</label><input id="actaCodigoEquipo" name="codigoEquipo" type="text"></div>
+                    <div class="field-group"><label for="actaSerieEquipo">Número de serie</label><input id="actaSerieEquipo" name="numeroSerie" type="text"></div>
                     <div class="field-group"><label for="actaTipoEquipo">Tipo de equipo</label><input id="actaTipoEquipo" name="tipoEquipo" type="text"></div>
                     <div class="field-group"><label for="actaMarcaEquipo">Marca y modelo</label><input id="actaMarcaEquipo" name="marcaModelo" type="text"></div>
                     <div class="field-group"><label for="actaLimpiezaEquipo">Limpieza</label><select id="actaLimpiezaEquipo" name="limpieza"><option value="">Seleccione</option><option>Realizada</option><option>No aplica</option></select></div>
@@ -1521,10 +1521,10 @@
                 hint: "Utiliza este formato para dejar constancia del software validado o instalado durante la intervencion.",
                 fields: `
                     <div class="field-group"><label for="actaFechaSoftware">Fecha</label><input id="actaFechaSoftware" name="fecha" type="date" required></div>
-                    <div class="field-group"><label for="actaTecnicoSoftware">Tecnico responsable</label><input id="actaTecnicoSoftware" name="tecnico" type="text" required></div>
+                    <div class="field-group"><label for="actaTecnicoSoftware">Técnico responsable</label><input id="actaTecnicoSoftware" name="tecnico" type="text" required></div>
                     <div class="field-group"><label for="actaUsuarioSoftware">Usuario o custodio</label><input id="actaUsuarioSoftware" name="usuarioCustodio" type="text"></div>
                     <div class="field-group"><label for="actaEquipoSoftware">Equipo</label><input id="actaEquipoSoftware" name="equipo" type="text"></div>
-                    <div class="field-group"><label for="actaCodigoSoftware">Codigo del equipo</label><input id="actaCodigoSoftware" name="codigoEquipo" type="text"></div>
+                    <div class="field-group"><label for="actaCodigoSoftware">Código del equipo</label><input id="actaCodigoSoftware" name="codigoEquipo" type="text"></div>
                     <div class="field-group"><label for="actaSistemaSoftware">Sistema operativo</label><input id="actaSistemaSoftware" name="sistemaOperativo" type="text"></div>
                     <div class="field-group field-group--wide"><label for="actaSoftwareInstalado">Programas instalados</label><textarea id="actaSoftwareInstalado" name="programasInstalados" rows="5"></textarea></div>
                     <div class="field-group"><label for="actaLicenciaSoftware">Licenciamiento</label><select id="actaLicenciaSoftware" name="licenciamiento"><option value="">Seleccione</option><option>Verificado</option><option>Pendiente</option><option>No aplica</option></select></div>
@@ -1540,10 +1540,10 @@
                 hint: "Documenta los datos del recurso, el mantenimiento efectuado y el estado de cierre.",
                 fields: `
                     <div class="field-group"><label for="actaFechaRc">Fecha</label><input id="actaFechaRc" name="fecha" type="date" required></div>
-                    <div class="field-group"><label for="actaTecnicoRc">Tecnico responsable</label><input id="actaTecnicoRc" name="tecnico" type="text" required></div>
+                    <div class="field-group"><label for="actaTecnicoRc">Técnico responsable</label><input id="actaTecnicoRc" name="tecnico" type="text" required></div>
                     <div class="field-group"><label for="actaDependenciaRc">Dependencia</label><input id="actaDependenciaRc" name="dependencia" type="text"></div>
-                    <div class="field-group"><label for="actaUbicacionRc">Ubicacion</label><input id="actaUbicacionRc" name="ubicacion" type="text"></div>
-                    <div class="field-group"><label for="actaCodigoRc">Codigo RC</label><input id="actaCodigoRc" name="codigoRc" type="text"></div>
+                    <div class="field-group"><label for="actaUbicacionRc">Ubicación</label><input id="actaUbicacionRc" name="ubicacion" type="text"></div>
+                    <div class="field-group"><label for="actaCodigoRc">Código RC</label><input id="actaCodigoRc" name="codigoRc" type="text"></div>
                     <div class="field-group"><label for="actaEquipoRc">Equipo o recurso</label><input id="actaEquipoRc" name="equipoRecurso" type="text"></div>
                     <div class="field-group"><label for="actaEstadoRc">Estado inicial</label><select id="actaEstadoRc" name="estadoInicial"><option value="">Seleccione</option><option>Operativo</option><option>Con novedad</option><option>Fuera de servicio</option></select></div>
                     <div class="field-group"><label for="actaResultadoRc">Resultado</label><select id="actaResultadoRc" name="resultado"><option value="">Seleccione</option><option>Atendido</option><option>Pendiente</option><option>Escalado</option></select></div>
@@ -1650,7 +1650,7 @@
                             </select>
                         </div>
                         <div class="field-group acta-search-panel__query">
-                            <label for="actaEquipoBusqueda">Campo de busqueda</label>
+                            <label for="actaEquipoBusqueda">Campo de búsqueda</label>
                             <input id="actaEquipoBusqueda" type="search" placeholder="Ej. custodio, SBYE, marca, serie...">
                         </div>
                         <button type="button" class="btn btn-primary" id="actaEquipoBuscarButton">Buscar</button>
@@ -1990,7 +1990,7 @@
             return;
         }
         if (!items.length) {
-            container.innerHTML = '<div class="empty-state">Ingrese un criterio de busqueda o cambie el tipo de equipo.</div>';
+            container.innerHTML = '<div class="empty-state">Ingrese un criterio de búsqueda o cambie el tipo de equipo.</div>';
             return;
         }
         container.innerHTML = `
@@ -2639,7 +2639,7 @@
                 </div>
                 <div class="stats-grid stats-grid--compact">
                     <article class="stat-card"><span>Total filtrado</span><strong id="inventoryStatTotal">--</strong></article>
-                    <article class="stat-card"><span>Rol en uso</span><strong>${role === "admin" ? "Administrador" : "Tecnico"}</strong></article>
+                    <article class="stat-card"><span>Rol en uso</span><strong>${role === "admin" ? "Administrador" : "Técnico"}</strong></article>
                 </div>
                 <div class="filters-grid filters-grid--inventory">
                     <div class="field-group">
@@ -2649,12 +2649,12 @@
                             ${buildTypeOptions()}
                         </select>
                     </div>
-                    ${renderAutocompleteField("filterCodigoSbai", "Codigo SBYE", "Filtrar por codigo")}
-                    ${renderAutocompleteField("filterCodigoMegan", "Codigo Megan", "Filtrar por codigo")}
-                    ${renderAutocompleteField("filterDescripcion", "Descripcion", "Filtrar por descripcion")}
+                    ${renderAutocompleteField("filterCodigoSbai", "Código SBYE", "Filtrar por código")}
+                    ${renderAutocompleteField("filterCodigoMegan", "Código Megan", "Filtrar por código")}
+                    ${renderAutocompleteField("filterDescripcion", "Descripción", "Filtrar por descripción")}
                     ${renderAutocompleteField("filterMarca", "Marca", "Filtrar por marca")}
                     ${renderAutocompleteField("filterModelo", "Modelo", "Filtrar por modelo")}
-                    ${renderAutocompleteField("filterSerie", "Numero de serie", "Filtrar por numero")}
+                    ${renderAutocompleteField("filterSerie", "Número de serie", "Filtrar por número")}
                     ${renderAutocompleteField("filterCustodio", "Custodio", "Filtrar por custodio")}
                     ${renderAutocompleteField("filterEdificio", "Edificio", "Filtrar por edificio")}
                     ${renderAutocompleteField("filterPiso", "Piso", "Filtrar por piso")}
@@ -2708,7 +2708,7 @@
                     </div>
                 </div>
                 <div class="field-group">
-                    <label for="equipmentCategory">Categoria</label>
+                    <label for="equipmentCategory">Categoría</label>
                     <select id="equipmentCategory">
                         <option value="">Cargando tipos...</option>
                     </select>
@@ -2926,7 +2926,7 @@
         const groupDefinitions = [
             { title: "Identificacion", names: ["codigo_megan", "codigo_sbye", "codigo_anterior", "descripcion", "marca", "modelo", "sn", "serie", "numero_serie", "estado", "costo"] },
             { title: "Custodio y ubicacion", names: ["custodio_nombre", "id_custodio_actual", "anterior_custodio", "id_ubicacion", "ubicacion_edificio", "ubicacion_piso", "ubicacion_direccion"] },
-            { title: "Caracteristicas tecnicas", names: ["procesador", "ram", "disco_duro", "so", "ip", "mac", "tipo_periferico", "tipo_impresora", "resolucion", "conexion", "tecnologia", "compatibilidad", "lumenes", "subtipo", "megas"] },
+            { title: "Características técnicas", names: ["procesador", "ram", "disco_duro", "so", "ip", "mac", "tipo_periferico", "tipo_impresora", "resolucion", "conexion", "tecnologia", "compatibilidad", "lumenes", "subtipo", "megas"] },
             { title: "Fechas", names: ["fecha_ingreso", "ultima_actualizacion", "ultimo_mantenimiento"] },
             { title: "Contrato y servicio", names: ["numero_contrato", "numero_servicio", "plan_comercial", "estado_servicio"] },
             { title: "Observaciones", names: ["caracteristicas", "anotaciones", "observacion", "observaciones"] }
@@ -3084,15 +3084,15 @@
     }
 
     const INVENTORY_EXPORT_COLUMNS = [
-        { key: "codigoSbai", label: "Codigo SBYE", weight: 1.1 },
-        { key: "codigoMegan", label: "Codigo Megan", weight: 1.1 },
-        { key: "descripcion", label: "Descripcion", weight: 3.2 },
+        { key: "codigoSbai", label: "Código SBYE", weight: 1.1 },
+        { key: "codigoMegan", label: "Código Megan", weight: 1.1 },
+        { key: "descripcion", label: "Descripción", weight: 3.2 },
         { key: "tipo", label: "Tipo", weight: 1.2 },
         { key: "marca", label: "Marca", weight: 1.2 },
         { key: "modelo", label: "Modelo", weight: 1.6 },
-        { key: "numeroSerie", label: "Numero de serie", weight: 1.6 },
+        { key: "numeroSerie", label: "Número de serie", weight: 1.6 },
         { key: "custodio", label: "Custodio", weight: 2.0 },
-        { key: "ubicacion", label: "Ubicacion", weight: 2.2 },
+        { key: "ubicacion", label: "Ubicación", weight: 2.2 },
         { key: "detalle", label: "Detalle", weight: 2.4 },
         { key: "estado", label: "Estado", weight: 1.4 },
         { key: "ip", label: "IP", weight: 1.0 },
@@ -3427,7 +3427,7 @@
             const pageRows = rows.slice(p * rowsPerPage, (p + 1) * rowsPerPage);
             const ops = [];
 
-            // --- Encabezado de pagina ---
+            // --- Encabezado de página ---
             ops.push("0 g");
             ops.push("BT /F2 13 Tf " + M + " " + (H - M - 13) + " Td (Reporte de Inventario - SENADI DTIC) Tj ET");
             ops.push("BT /F1 8 Tf " + M + " " + (H - M - 25) + " Td (Emitido: " + now + "   Total: " + rows.length + " registros   Pagina " + (p + 1) + "/" + totalPages + ") Tj ET");
@@ -3473,7 +3473,7 @@
                 ops.push(colX[ci] + " " + gridY + " m " + colX[ci] + " " + PAGE_TOP + " l S");
             }
 
-            // --- Pie de pagina ---
+            // --- Pie de página ---
             ops.push("0 g");
             ops.push("BT /F1 7 Tf " + M + " " + (M + 2) + " Td (SENADI - DTIC | " + now + ") Tj ET");
 
@@ -3811,46 +3811,46 @@
 
     function labelForColumn(key) {
         const labels = {
-            codigoSbai: "Codigo SBYE",
-            codigoMegan: "Codigo Megan",
-            descripcion: "Descripcion",
+            codigoSbai: "Código SBYE",
+            codigoMegan: "Código Megan",
+            descripcion: "Descripción",
             tipo: "Tipo",
             marca: "Marca",
             modelo: "Modelo",
-            numeroSerie: "Numero de serie",
+            numeroSerie: "Número de serie",
             custodio: "Custodio",
-            ubicacion: "Ubicacion",
+            ubicacion: "Ubicación",
             ubicacionEdificio: "Edificio",
             ubicacionPiso: "Piso",
             ubicacionDireccion: "Dirección",
             estado: "Estado",
             procesador: "Detalle",
-            caracteristicas: "Caracteristicas",
+            caracteristicas: "Características",
             observacion: "Observaciones",
             sistemaOperativo: "SO",
             ram: "RAM",
             discoDuro: "Disco duro",
-            linea: "Linea",
+            linea: "Línea",
             imei: "IMEI",
-            resolucion: "Resolucion",
-            conexion: "Conexion",
-            tecnologia: "Tecnologia",
+            resolucion: "Resolución",
+            conexion: "Conexión",
+            tecnologia: "Tecnología",
             compatibilidad: "Compatibilidad",
             lumenes: "Lumenes",
-            codigo_megan: "Codigo Megan",
-            codigo_sbye: "Codigo SBYE",
-            sn: "Numero de serie",
+            codigo_megan: "Código Megan",
+            codigo_sbye: "Código SBYE",
+            sn: "Número de serie",
             fecha_ingreso: "Fecha de ingreso",
             costo: "Costo",
-            ultima_actualizacion: "Ultima actualizacion",
-            ultimo_mantenimiento: "Ultimo mantenimiento",
+            ultima_actualizacion: "Última actualización",
+            ultimo_mantenimiento: "Último mantenimiento",
             id_custodio_actual: "Custodio actual (ID)",
-            id_ubicacion: "Ubicacion (ID)",
-            tipo_periferico: "Tipo de periferico",
+            id_ubicacion: "Ubicación (ID)",
+            tipo_periferico: "Tipo de periférico",
             tipo_impresora: "Tipo de impresora",
-            codigo_anterior: "Codigo anterior",
-            numero_contrato: "Numero de contrato",
-            numero_servicio: "Numero de servicio",
+            codigo_anterior: "Código anterior",
+            numero_contrato: "Número de contrato",
+            numero_servicio: "Número de servicio",
             plan_comercial: "Plan comercial",
             estado_servicio: "Estado del servicio",
             anterior_custodio: "Custodio anterior",
@@ -3908,7 +3908,7 @@
 
         const roleLabel = role === "admin"
             ? "Administrador"
-            : (role === "custodio" ? "Custodio" : "Tecnico");
+            : (role === "custodio" ? "Custodio" : "Técnico");
 
         const fallbackName = data?.nombreCompleto || data?.usuario || data?.username || "Usuario";
         const permissions = Object.assign({}, defaultPermissionsByRole(role), data?.permisos || {});
@@ -4079,7 +4079,7 @@
                         </div>
                     </div>
                     <nav class="sidebar__nav">${buildNav()}</nav>
-                    <button class="sidebar__logout" id="logoutButton">Cerrar sesion</button>
+                    <button class="sidebar__logout" id="logoutButton">Cerrar sesión</button>
                 </aside>
                 <div class="app-main">
                     <header class="topbar">
@@ -4104,7 +4104,7 @@
     function pageDescription(pageName) {
         const descriptions = {
             dashboard: "Resumen visual del sistema y accesos directos por rol.",
-            inventario: "Consulta y gestion del inventario con control por rol.",
+            inventario: "Consulta y gestión del inventario con control por rol.",
             busqueda: "Busqueda multi-criterio en cliente sobre el inventario cargado.",
             "nuevo-equipo": "Formulario preparado con los campos definidos en la base de datos.",
             actas: "Acceso a las actas de mantenimiento y control disponibles en el sistema.",
@@ -4161,12 +4161,12 @@
                             ${buildTypeOptions()}
                         </select>
                     </div>
-                    ${renderAutocompleteField("filterCodigoSbai", "Codigo SBYE", "Filtrar por codigo")}
-                    ${renderAutocompleteField("filterCodigoMegan", "Codigo Megan", "Filtrar por codigo")}
-                    ${renderAutocompleteField("filterDescripcion", "Descripcion", "Filtrar por descripcion")}
+                    ${renderAutocompleteField("filterCodigoSbai", "Código SBYE", "Filtrar por código")}
+                    ${renderAutocompleteField("filterCodigoMegan", "Código Megan", "Filtrar por código")}
+                    ${renderAutocompleteField("filterDescripcion", "Descripción", "Filtrar por descripción")}
                     ${renderAutocompleteField("filterMarca", "Marca", "Filtrar por marca")}
                     ${renderAutocompleteField("filterModelo", "Modelo", "Filtrar por modelo")}
-                    ${renderAutocompleteField("filterSerie", "Numero de serie", "Filtrar por numero")}
+                    ${renderAutocompleteField("filterSerie", "Número de serie", "Filtrar por número")}
                     ${renderAutocompleteField("filterCustodio", "Custodio", "Filtrar por custodio")}
                     ${renderAutocompleteField("filterEdificio", "Edificio", "Filtrar por edificio")}
                     ${renderAutocompleteField("filterPiso", "Piso", "Filtrar por piso")}
@@ -4233,7 +4233,7 @@
 
     function renderInventoryRow(item) {
         return `
-            <tr>
+            <tr data-inventory-id="${item.id}">
                 <td>${escapeHtml(item.codigoSbai || "-")}</td>
                 <td>${escapeHtml(item.codigoMegan || "-")}</td>
                 <td>${escapeHtml(item.descripcion || "-")}</td>
@@ -4254,13 +4254,13 @@
 
     function renderMobileInventoryCard(item) {
         return `
-            <article class="mobile-card">
+            <article class="mobile-card" data-inventory-id="${item.id}">
                 <strong>${escapeHtml(item.codigoSbai || "-")} · ${escapeHtml(displayInventoryType(item))}</strong>
                 <span>Megan: ${escapeHtml(item.codigoMegan || "-")}</span>
-                <span>Descripcion: ${escapeHtml(item.descripcion || "-")}</span>
+                <span>Descripción: ${escapeHtml(item.descripcion || "-")}</span>
                 <span>Marca / Modelo: ${escapeHtml(item.marca || "-")} ${escapeHtml(item.modelo || "")}</span>
                 <span>Custodio: ${escapeHtml(item.custodio || "-")}</span>
-                <span>Ubicacion: ${escapeHtml(item.ubicacion || "-")}</span>
+                <span>Ubicación: ${escapeHtml(item.ubicacion || "-")}</span>
                 <span>Detalle: ${escapeHtml(item.procesador || item.caracteristicas || "-")}</span>
                 <span>Estado: ${stripHtml(stateBadge(item.estado))}</span>
                 <div class="action-row" style="margin-top:10px;">${buildInventoryActionButtons(item, { wrap: false })}</div>
@@ -4281,7 +4281,7 @@
         const pageItems = state.filteredInventory.slice(start, start + PAGE_SIZE);
 
         updateInventoryStats();
-        setText("inventoryMeta", `${total} resultados filtrados · pagina ${state.inventoryPage} de ${totalPages}`);
+        setText("inventoryMeta", `${total} resultados filtrados · página ${state.inventoryPage} de ${totalPages}`);
         setText("inventoryPaginationMeta", pageItems.length ? `Mostrando ${start + 1}-${start + pageItems.length}` : "Sin resultados");
         tbody.innerHTML = pageItems.length
             ? pageItems.map(renderInventoryRow).join("")
@@ -4512,12 +4512,44 @@
         } else {
             state.inventory.push(normalized);
         }
-        state.filteredInventory = [normalized];
-        state.inventoryPage = 1;
-        renderInventory();
+        const filteredIndex = state.filteredInventory.findIndex((row) => row.id === normalized.id);
+        if (filteredIndex >= 0) {
+            state.filteredInventory[filteredIndex] = normalized;
+        }
+        refreshVisibleInventoryRow(normalized);
         if (typeof refreshInventoryAutocompletes === "function") {
             refreshInventoryAutocompletes();
         }
+    }
+
+    function refreshVisibleInventoryRow(item) {
+        const totalPages = Math.max(1, Math.ceil(state.filteredInventory.length / PAGE_SIZE));
+        state.inventoryPage = Math.min(state.inventoryPage, totalPages);
+        const start = (state.inventoryPage - 1) * PAGE_SIZE;
+        const visibleIds = state.filteredInventory.slice(start, start + PAGE_SIZE).map((row) => Number(row.id));
+        if (!visibleIds.includes(Number(item.id))) {
+            return;
+        }
+
+        const tableRow = document.querySelector(`#inventoryBody tr[data-inventory-id="${item.id}"]`);
+        if (tableRow) {
+            const wrapper = document.createElement("tbody");
+            wrapper.innerHTML = renderInventoryRow(item).trim();
+            const updatedRow = wrapper.firstElementChild;
+            updatedRow.classList.add("inventory-row--updated");
+            tableRow.replaceWith(updatedRow);
+        }
+
+        const mobileCard = document.querySelector(`#inventoryMobile [data-inventory-id="${item.id}"]`);
+        if (mobileCard) {
+            const wrapper = document.createElement("div");
+            wrapper.innerHTML = renderMobileInventoryCard(item).trim();
+            const updatedCard = wrapper.firstElementChild;
+            updatedCard.classList.add("inventory-row--updated");
+            mobileCard.replaceWith(updatedCard);
+        }
+
+        updateInventoryStats();
     }
 
     async function saveStateChange(item, estado) {
@@ -4539,7 +4571,7 @@
         }
     }
 
-    function renderHistoryVersionCards(historial) {
+    function renderHistoryVersionCardsLegacy(historial) {
         const usableRows = historial.filter((h) => {
             const accion = String(h.accion || "").toLowerCase();
             return !accion.includes("completa del equipo") && !String(h.valorNuevo || "").toLowerCase().includes("campos actualizados:");
@@ -4570,6 +4602,118 @@
                 }).join("")}
             </div>
         `;
+    }
+
+    function renderHistoryVersionCards(historial) {
+        const usableRows = historial.filter((h) => {
+            const accion = String(h.accion || "").toLowerCase();
+            return !accion.includes("completa del equipo") && !String(h.valorNuevo || "").toLowerCase().includes("campos actualizados:");
+        });
+        const rows = usableRows.length ? usableRows : historial;
+        return `
+            <div class="history-timeline">
+                ${rows.map((h, index) => {
+                    const version = rows.length - index;
+                    const ant = h.valorAnterior && h.valorAnterior !== "?" ? escapeHtml(h.valorAnterior) : "Sin dato anterior";
+                    const nvo = h.valorNuevo && h.valorNuevo !== "?" ? escapeHtml(h.valorNuevo) : "Sin dato actualizado";
+                    const rol = escapeHtml(h.rol || "ADMINISTRADOR");
+                    const usuario = escapeHtml(h.usuario || "-");
+                    const fecha = h.fecha ? new Date(h.fecha).toLocaleString("es-EC") : "-";
+                    const campo = h.campoModificado || h.campo || h.campo_modificado || extractHistoryFieldName(h.accion);
+                    const fieldsHtml = renderHistoryComparisonRows(h, campo);
+                    return `<article class="history-card">
+                        <div class="history-card__header">
+                            <div>
+                                <strong>Versión ${version} - ${escapeHtml(h.accion || "Cambio")}</strong>
+                                <span class="history-changed-label">Campo cambiado: ${escapeHtml(campo || "No especificado")}</span>
+                            </div>
+                            <time>${fecha}</time>
+                        </div>
+                        <div class="history-diff">
+                            <div class="history-diff__old"><span>Valor anterior</span><strong>${ant}</strong></div>
+                            <div class="history-diff__new"><span>Valor nuevo</span><strong>${nvo}</strong></div>
+                        </div>
+                        ${fieldsHtml}
+                        <div class="history-card__footer">
+                            <span>Usuario: <strong>${usuario}</strong></span>
+                            <span>Rol: <strong>${rol}</strong></span>
+                            <span>Fecha y hora: <strong>${fecha}</strong></span>
+                        </div>
+                    </article>`;
+                }).join("")}
+            </div>
+        `;
+    }
+
+    function renderHistoryComparisonRows(historyItem, campo) {
+        const before = Array.isArray(historyItem.camposAntes) ? historyItem.camposAntes : [];
+        const after = Array.isArray(historyItem.camposDespues) ? historyItem.camposDespues : [];
+        const fallback = Array.isArray(historyItem.camposRegistro) ? historyItem.camposRegistro : [];
+        const beforeMap = mapHistoryFields(before.length ? before : fallback);
+        const afterMap = mapHistoryFields(after.length ? after : fallback);
+        const keys = Array.from(new Set(Object.keys(beforeMap).concat(Object.keys(afterMap))));
+        const normalizedChanged = normalizeHistoryFieldLabel(campo);
+
+        if (!keys.length) {
+            return "";
+        }
+
+        return `<div class="history-comparison">
+            <div class="history-comparison__head">Campo</div>
+            <div class="history-comparison__head">Antes</div>
+            <div class="history-comparison__head">Después</div>
+            ${keys.map((key) => {
+                const beforeField = beforeMap[key] || afterMap[key] || {};
+                const afterField = afterMap[key] || beforeMap[key] || {};
+                const label = afterField.label || beforeField.label || key;
+                const changed = normalizeHistoryFieldLabel(label) === normalizedChanged;
+                const beforeValue = beforeField.valor ?? beforeField.value ?? "";
+                const afterValue = afterField.valor ?? afterField.value ?? "";
+                return `<div class="history-comparison__field ${changed ? "history-comparison__field--changed" : ""}">
+                    <span>${escapeHtml(label)}</span>
+                    ${changed ? '<strong>Campo cambiado</strong>' : ""}
+                </div>
+                <div class="history-comparison__value ${changed ? "history-comparison__value--old" : ""}">${escapeHtml(beforeValue === "" || beforeValue == null ? "-" : beforeValue)}</div>
+                <div class="history-comparison__value ${changed ? "history-comparison__value--new" : ""}">${escapeHtml(afterValue === "" || afterValue == null ? "-" : afterValue)}</div>`;
+            }).join("")}
+        </div>`;
+    }
+
+    function mapHistoryFields(fields) {
+        return fields.reduce((acc, field) => {
+            const label = field.label || field.campo || field.name || "";
+            const key = normalizeHistoryFieldLabel(label);
+            if (key) {
+                acc[key] = field;
+            }
+            return acc;
+        }, {});
+    }
+
+    function extractHistoryFieldName(action) {
+        const text = String(action || "").trim();
+        const lower = text.toLowerCase();
+        const separator = text.indexOf(":");
+        if (lower.startsWith("edici") && separator >= 0) {
+            const field = text.slice(separator + 1).trim();
+            return normalizeHistoryFieldLabel(field).includes("id custodio") ? "Custodio actual" : field;
+        }
+        if (text.toLowerCase().includes("custodio")) {
+            return "Custodio actual";
+        }
+        if (text.toLowerCase().includes("estado")) {
+            return "Estado";
+        }
+        return "Equipo";
+    }
+
+    function normalizeHistoryFieldLabel(value) {
+        return String(value || "")
+            .normalize("NFD")
+            .replace(/[\u0300-\u036f]/g, "")
+            .toLowerCase()
+            .replace(/[^a-z0-9]+/g, " ")
+            .trim();
     }
 
     async function openHistoryViewer(item) {
@@ -4625,7 +4769,7 @@
                     </div>
                 </div>
                 <div class="field-group">
-                    <label for="equipmentCategory">Categoria</label>
+                    <label for="equipmentCategory">Categoría</label>
                     <select id="equipmentCategory">
                         <option value="">Cargando tipos...</option>
                     </select>
