@@ -524,6 +524,31 @@ public class InventarioJdbcService {
         }
     }
 
+    public Map<String, Object> obtenerDatosEdicionEquipo(Integer idEquipo) throws Exception {
+        try (Connection conn = DatabaseService.getConnection()) {
+            String tipo = obtenerTipoEquipo(conn, idEquipo);
+            if (tipo == null) {
+                throw new IllegalArgumentException("Equipo no encontrado.");
+            }
+
+            Map<String, Object> datos = new LinkedHashMap<>();
+            cargarFilaComoMapa(conn, "equipo", "id_equipo", idEquipo, datos, false);
+            cargarFilaComoMapa(conn, tablaHijaPorTipo(tipo), "id_equipo", idEquipo, datos, true);
+
+            Integer idCustodioActual = obtenerIdCustodioActual(conn, idEquipo);
+            datos.put("custodio_nombre", idCustodioActual != null ? obtenerNombreCustodio(conn, idCustodioActual) : "");
+
+            Integer idUbicacion = leerEnteroSeguro(datos.get("id_ubicacion"));
+            Map<String, String> ubicacion = obtenerUbicacionPorId(conn, idUbicacion);
+            datos.put("ubicacion_edificio", ubicacion.get("edificio"));
+            datos.put("ubicacion_piso", ubicacion.get("piso"));
+            datos.put("ubicacion_direccion", ubicacion.get("direccion"));
+            datos.put("tipo", tipo);
+
+            return datos;
+        }
+    }
+
     private String obtenerTipoEquipo(Connection conn, Integer idEquipo) throws Exception {
         String sql = "SELECT tipo_equipo FROM equipo WHERE id_equipo = ?";
         try (PreparedStatement ps = conn.prepareStatement(sql)) {
@@ -923,6 +948,67 @@ public class InventarioJdbcService {
             }
         }
         return null;
+    }
+
+    private void cargarFilaComoMapa(Connection conn, String tabla, String columnaId, Integer id, Map<String, Object> destino, boolean ignorarLlave) throws Exception {
+        String sql = "SELECT * FROM " + tabla + " WHERE " + columnaId + " = ?";
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, id);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (!rs.next()) {
+                    return;
+                }
+                int totalColumnas = rs.getMetaData().getColumnCount();
+                for (int i = 1; i <= totalColumnas; i++) {
+                    String nombre = rs.getMetaData().getColumnLabel(i);
+                    if (ignorarLlave && columnaId.equalsIgnoreCase(nombre)) {
+                        continue;
+                    }
+                    destino.put(nombre, rs.getObject(i));
+                }
+            }
+        }
+    }
+
+    private Map<String, String> obtenerUbicacionPorId(Connection conn, Integer idUbicacion) throws Exception {
+        Map<String, String> ubicacion = new LinkedHashMap<>();
+        ubicacion.put("edificio", "");
+        ubicacion.put("piso", "");
+        ubicacion.put("direccion", "");
+        if (idUbicacion == null) {
+            return ubicacion;
+        }
+
+        String sql = "SELECT edificio, piso, direccion FROM ubicacion WHERE id_ubicacion = ?";
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, idUbicacion);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    ubicacion.put("edificio", coalesce(rs.getString("edificio"), ""));
+                    ubicacion.put("piso", coalesce(rs.getString("piso"), ""));
+                    ubicacion.put("direccion", coalesce(rs.getString("direccion"), ""));
+                }
+            }
+        }
+        return ubicacion;
+    }
+
+    private Integer leerEnteroSeguro(Object valor) {
+        if (valor == null) {
+            return null;
+        }
+        if (valor instanceof Number) {
+            return ((Number) valor).intValue();
+        }
+        String texto = String.valueOf(valor).trim();
+        if (texto.isEmpty()) {
+            return null;
+        }
+        try {
+            return Integer.valueOf(texto);
+        } catch (NumberFormatException e) {
+            return null;
+        }
     }
 
     private String obtenerNombreCustodio(Connection conn, Integer idCustodio) throws Exception {

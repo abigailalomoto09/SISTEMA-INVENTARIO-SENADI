@@ -2159,6 +2159,62 @@
         list.innerHTML = unique.map((value) => `<option value="${escapeHtml(value)}"></option>`).join("");
     }
 
+    function formatFieldValueForInput(field, value) {
+        if (value === null || value === undefined) {
+            return "";
+        }
+        if (field?.inputType === "date") {
+            const text = String(value).trim();
+            return text.length >= 10 ? text.slice(0, 10) : text;
+        }
+        return String(value);
+    }
+
+    function renderDynamicDbEditField(field, value) {
+        const name = field.name;
+        const label = displayDbFieldLabel(field);
+        const required = field.required ? "required" : "";
+        const autocompleteCatalog = autocompleteCatalogForField(name);
+        const safeValue = escapeHtml(formatFieldValueForInput(field, value));
+
+        if (field.inputType === "textarea") {
+            return `<label class="field-group field-group--wide"><span>${escapeHtml(label)}</span><textarea name="${escapeHtml(name)}" ${required}>${safeValue}</textarea></label>`;
+        }
+        if (name === "estado" || field.inputType === "select") {
+            const selected = normalizeState(value || "");
+            return `<label class="field-group"><span>${escapeHtml(label)}</span><select name="${escapeHtml(name)}" ${required}>${VALID_STATES.map((item) => `<option value="${item}" ${selected === item ? "selected" : ""}>${item}</option>`).join("")}</select></label>`;
+        }
+
+        const htmlType = field.inputType === "number" ? "number" : (field.inputType === "date" ? "date" : "text");
+        if (autocompleteCatalog) {
+            const listId = `edit_${name}_list`;
+            return `<label class="field-group"><span>${escapeHtml(label)}</span><input type="${htmlType}" name="${escapeHtml(name)}" value="${safeValue}" list="${listId}" autocomplete="off" data-catalog="${autocompleteCatalog}" ${required}><datalist id="${listId}"></datalist></label>`;
+        }
+        return `<label class="field-group"><span>${escapeHtml(label)}</span><input type="${htmlType}" name="${escapeHtml(name)}" value="${safeValue}" ${required}></label>`;
+    }
+
+    function renderDynamicDbEditFieldGroups(fields, values) {
+        const groups = groupDynamicDbFields(fields);
+        return groups.map((group) => `
+            <section class="equipment-field-section">
+                <div class="equipment-field-section__header">
+                    <h3>${escapeHtml(group.title)}</h3>
+                </div>
+                <div class="equipment-field-section__grid">
+                    ${group.fields.map((field) => renderDynamicDbEditField(field, values?.[field.name])).join("")}
+                </div>
+            </section>
+        `).join("");
+    }
+
+    function setupEditEquipmentAutocompletes() {
+        document.querySelectorAll("#editEquipmentForm [data-catalog]").forEach((input) => {
+            const load = debounce(() => loadNewEquipmentSuggestions(input), 220);
+            input.addEventListener("input", load);
+            loadNewEquipmentSuggestions(input);
+        });
+    }
+
     const INVENTORY_EXPORT_COLUMNS = [
         { key: "codigoSbai", label: "Codigo SBYE", weight: 1.1 },
         { key: "codigoMegan", label: "Codigo Megan", weight: 1.1 },
@@ -3188,6 +3244,10 @@
         return Boolean(state.session?.permissions?.puedeEditarCustodio);
     }
 
+    function canEditAll() {
+        return Boolean(state.session?.permissions?.puedeEditarTodos);
+    }
+
     function canChangeState() {
         return Boolean(state.session?.permissions?.puedeActualizarEstado);
     }
@@ -3278,7 +3338,9 @@
     function buildInventoryActionButtons(item, options) {
         const buttons = [];
         const wrap = options?.wrap !== false;
-        if (canEditCustodio()) {
+        if (canEditAll()) {
+            buttons.push(`<button class="icon-btn" type="button" data-inv-action="editar" data-id="${item.id}" aria-label="Editar equipo" title="Editar equipo">${iconMarkup("edit")}</button>`);
+        } else if (canEditCustodio()) {
             buttons.push(`<button class="icon-btn" type="button" data-inv-action="editar" data-id="${item.id}" aria-label="Editar custodio" title="Editar custodio">${iconMarkup("edit")}</button>`);
         }
         if (canChangeState()) {
@@ -3386,7 +3448,11 @@
             return;
         }
         if (action === "editar") {
-            await openCustodioEditor(item);
+            if (canEditAll()) {
+                await abrirModalEditar(item.id);
+            } else {
+                await openCustodioEditor(item);
+            }
             return;
         }
         if (action === "estado") {
@@ -3801,6 +3867,75 @@
 
     async function abrirModalCustodio(idEquipo) {
         return abrirModalEditar(idEquipo);
+    }
+
+    async function abrirModalEditar(idEquipo) {
+        const item = state.inventory.find((i) => i.id === idEquipo);
+        if (!item) { showToast("Error", "Equipo no encontrado en el inventario cargado.", "danger"); return; }
+
+        try {
+            if (!state.equipmentFieldCatalog || !Object.keys(state.equipmentFieldCatalog).length) {
+                await loadEquipmentFieldCatalog();
+            }
+
+            const categoryConfig = state.equipmentFieldCatalog[item.tipo];
+            if (!categoryConfig) {
+                throw new Error("No se pudo cargar la definicion del formulario para este tipo de equipo.");
+            }
+
+            const detailResponse = await apiFetch(`/inventario/${idEquipo}/edicion`);
+            const detailPayload = await detailResponse.json();
+            if (!detailResponse.ok || !detailPayload.success) {
+                throw new Error(detailPayload.message || "No se pudo cargar la informacion completa del equipo.");
+            }
+
+            const editValues = detailPayload.data || {};
+            const fields = Array.isArray(categoryConfig.fields) ? categoryConfig.fields : [];
+            const bodyHtml = `
+                <div class="helper-banner" style="margin-bottom:16px;">Rol administrativo con edicion completa habilitada para todos los campos del formulario.</div>
+                <form id="editEquipmentForm">
+                    <div class="form-grid" id="editFormGrid">${renderDynamicDbEditFieldGroups(fields, editValues)}</div>
+                </form>`;
+
+            openModal(`Editar equipo #${idEquipo} - ${(categoryConfig.label || item.tipo || "").toUpperCase()}`, bodyHtml, [
+                {
+                    label: "Guardar cambios", className: "btn btn-primary", onClick: async () => {
+                        const form = document.getElementById("editEquipmentForm");
+                        if (!form) return;
+                        const payload = collectEquipmentFormPayload(form);
+                        try {
+                            const r = await apiFetch(`/inventario/${item.tipo}/${idEquipo}`, {
+                                method: "PUT",
+                                headers: { "Content-Type": "application/json" },
+                                body: JSON.stringify(payload)
+                            });
+                            const p = await r.json();
+                            if (!r.ok || !p.success) throw new Error(p.message || "Error al guardar");
+                            await loadInventory();
+                            applyInventoryFilters();
+                            showToast("Guardado", "Equipo actualizado correctamente.", "success");
+                            closeModal();
+                        } catch (err) {
+                            showToast("Error", err.message, "danger");
+                        }
+                    }
+                },
+                { label: "Cancelar", className: "btn btn-secondary", onClick: closeModal }
+            ]);
+
+            setupEditEquipmentAutocompletes();
+        } catch (error) {
+            showToast("Error", error.message || "No se pudo abrir el editor completo.", "danger");
+        }
+    }
+
+    async function abrirModalCustodio(idEquipo) {
+        const item = state.inventory.find((i) => i.id === idEquipo);
+        if (!item) {
+            showToast("Error", "Equipo no encontrado en el inventario cargado.", "danger");
+            return;
+        }
+        return openCustodioEditor(item);
     }
 
     async function abrirModalEstado(idEquipo, estadoActual) {

@@ -220,6 +220,28 @@ public class InventarioResource {
         }
     }
 
+    @GET
+    @Path("{id}/edicion")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response obtenerDatosEdicion(@PathParam("id") Integer idEquipo) {
+        try {
+            Usuario usuario = validarAutenticacion();
+            validarRoles(usuario, "ADMINISTRADOR");
+
+            Map<String, Object> datos = inventarioJdbcService.obtenerDatosEdicionEquipo(idEquipo);
+            ApiResponse<Map<String, Object>> response = ApiResponse.success("Datos de edicion obtenidos", datos);
+            return Response.ok(gson.toJson(response)).build();
+        } catch (SecurityException e) {
+            ApiResponse<?> resp = ApiResponse.error("FORBIDDEN", e.getMessage());
+            return Response.status(Response.Status.FORBIDDEN).entity(gson.toJson(resp)).build();
+        } catch (IllegalArgumentException e) {
+            ApiResponse<?> resp = ApiResponse.error("VALIDATION_ERROR", e.getMessage());
+            return Response.status(Response.Status.BAD_REQUEST).entity(gson.toJson(resp)).build();
+        } catch (Exception e) {
+            return errorInterno(e);
+        }
+    }
+
     @PUT
     @Path("{tipo}/{id}")
     @Consumes(MediaType.APPLICATION_JSON)
