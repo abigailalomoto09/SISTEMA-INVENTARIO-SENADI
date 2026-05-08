@@ -1631,19 +1631,44 @@
 
                 <div class="acta-subtabs" aria-label="Subapartados de mantenimiento preventivo de equipos">
                     ${ACTA_PC_SUBSECTIONS.map((item) => `
-                        <button type="button" class="acta-subtab${item.active ? " is-active" : ""}" ${item.active ? "" : "disabled"}>${item.label}</button>
+                        <button type="button" class="acta-subtab${item.key === "pc" ? " is-active" : ""}" ${item.key === "pc" || item.key === "laptop" ? `data-acta-type="${item.key}"` : "disabled"}>${item.label}</button>
                     `).join("")}
+                </div>
+
+                <div class="acta-search-panel">
+                    <div>
+                        <div class="eyebrow">Buscador inicial</div>
+                        <h3>Seleccione el equipo para generar el acta</h3>
+                        <p>Busque por custodio, codigo SBYE, codigo Megan, marca, modelo, serie, edificio o estado.</p>
+                    </div>
+                    <div class="acta-search-panel__grid">
+                        <div class="field-group">
+                            <label for="actaEquipoTipoBusqueda">Tipo</label>
+                            <select id="actaEquipoTipoBusqueda">
+                                <option value="pc">PC</option>
+                                <option value="laptop">Laptop</option>
+                            </select>
+                        </div>
+                        <div class="field-group acta-search-panel__query">
+                            <label for="actaEquipoBusqueda">Campo de busqueda</label>
+                            <input id="actaEquipoBusqueda" type="search" placeholder="Ej. custodio, SBYE, marca, serie...">
+                        </div>
+                        <button type="button" class="btn btn-primary" id="actaEquipoBuscarButton">Buscar</button>
+                    </div>
+                    <div id="actaEquipoResultados" class="acta-search-results"></div>
                 </div>
 
                 <div class="acta-toolbar">
                     <div class="field-group acta-toolbar__field">
-                        <label for="actaPcSelector">PC a autocompletar</label>
+                        <label for="actaPcSelector">Equipo seleccionado</label>
                         <select id="actaPcSelector" required>
-                            <option value="">Seleccione un equipo PC</option>
+                            <option value="">Seleccione un equipo desde el buscador</option>
                         </select>
                     </div>
                     <div class="acta-toolbar__actions">
                         <button type="button" class="btn btn-primary" id="actaPcPreviewButton">Previsualizar</button>
+                        <button type="button" class="btn btn-secondary" id="actaPcExportDocxButton">Exportar DOCX</button>
+                        <button type="button" class="btn btn-secondary" id="actaPcExportPdfButton">Exportar PDF</button>
                         <button type="button" class="btn btn-secondary" id="actaPcResetButton">Limpiar</button>
                     </div>
                 </div>
@@ -1689,7 +1714,7 @@
                                 <th>CODIGO</th>
                             </tr>
                             <tr>
-                                <td><input id="actaDesktopTipo" class="acta-input" value="DESKTOP"></td>
+                                <td><input id="actaDesktopTipo" class="acta-input" value="PC"></td>
                                 <td><input id="actaDesktopMarca" class="acta-input"></td>
                                 <td><input id="actaDesktopModelo" class="acta-input"></td>
                                 <td><input id="actaDesktopSerial" class="acta-input"></td>
@@ -1843,6 +1868,199 @@
         loadActaPcInitialData();
     }
 
+    function getActaSelectedType() {
+        return document.getElementById("actaEquipoTipoBusqueda")?.value || "pc";
+    }
+
+    function getActaEquipoItems(type = getActaSelectedType()) {
+        return state.inventory.filter((item) => String(item.tipo || "").toLowerCase() === type);
+    }
+
+    function loadActaPcInitialData() {
+        const select = document.getElementById("actaPcSelector");
+        if (!select) {
+            return;
+        }
+        const selectedType = getActaSelectedType();
+        const items = getActaEquipoItems(selectedType);
+        select.innerHTML = `<option value="">Seleccione un equipo ${escapeHtml(typeLabel(selectedType))} desde el buscador</option>` + items.map((item) => `
+            <option value="${item.id}">${escapeHtml(actaEquipoOptionLabel(item))}</option>
+        `).join("");
+        renderActaEquipoResults(items.slice(0, 8));
+
+        const today = new Date().toISOString().slice(0, 10);
+        ["actaEntregaFecha", "actaRecibeFecha"].forEach((id) => {
+            const input = document.getElementById(id);
+            if (input && !input.value) {
+                input.value = today;
+            }
+        });
+        if (state.session?.displayName) {
+            const entrega = document.getElementById("actaEntregaNombre");
+            if (entrega && !entrega.value) {
+                entrega.value = state.session.displayName;
+            }
+        }
+    }
+
+    function bindActaPcEvents() {
+        document.getElementById("actaPcSelector")?.addEventListener("change", (event) => {
+            const item = state.inventory.find((row) => String(row.id) === String(event.target.value));
+            if (item) {
+                selectActaEquipo(item.id);
+            }
+        });
+        document.getElementById("actaEquipoBuscarButton")?.addEventListener("click", runActaEquipoSearch);
+        document.getElementById("actaEquipoBusqueda")?.addEventListener("keydown", (event) => {
+            if (event.key === "Enter") {
+                event.preventDefault();
+                runActaEquipoSearch();
+            }
+        });
+        document.getElementById("actaEquipoTipoBusqueda")?.addEventListener("change", (event) => {
+            syncActaTypeTab(event.target.value);
+            clearSelectedActaEquipo();
+            loadActaPcInitialData();
+        });
+        document.querySelectorAll("[data-acta-type]").forEach((button) => {
+            button.addEventListener("click", () => {
+                const type = button.dataset.actaType || "pc";
+                const typeSelect = document.getElementById("actaEquipoTipoBusqueda");
+                if (typeSelect) {
+                    typeSelect.value = type;
+                }
+                syncActaTypeTab(type);
+                clearSelectedActaEquipo();
+                loadActaPcInitialData();
+            });
+        });
+        document.getElementById("actaPcPreviewButton")?.addEventListener("click", openActaPcPreview);
+        document.getElementById("actaPcExportDocxButton")?.addEventListener("click", () => exportActaPc("docx"));
+        document.getElementById("actaPcExportPdfButton")?.addEventListener("click", () => exportActaPc("pdf"));
+        document.getElementById("actaPcResetButton")?.addEventListener("click", resetActaPcForm);
+    }
+
+    function actaEquipoOptionLabel(item) {
+        return [
+            item.codigoSbai || item.codigoMegan || `ID ${item.id}`,
+            displayInventoryType(item),
+            item.marca,
+            item.modelo,
+            item.custodio
+        ].filter(Boolean).join(" · ");
+    }
+
+    function syncActaTypeTab(type) {
+        document.querySelectorAll("[data-acta-type]").forEach((button) => {
+            button.classList.toggle("is-active", button.dataset.actaType === type);
+        });
+    }
+
+    function runActaEquipoSearch() {
+        const term = (document.getElementById("actaEquipoBusqueda")?.value || "").trim().toLowerCase();
+        const type = getActaSelectedType();
+        const items = getActaEquipoItems(type).filter((item) => {
+            if (!term) {
+                return true;
+            }
+            return [
+                item.codigoSbai,
+                item.codigoMegan,
+                item.descripcion,
+                item.marca,
+                item.modelo,
+                item.numeroSerie,
+                item.custodio,
+                item.ubicacion,
+                item.ubicacionEdificio,
+                item.ubicacionPiso,
+                item.ubicacionDireccion,
+                item.estado
+            ].some((value) => String(value || "").toLowerCase().includes(term));
+        });
+        renderActaEquipoResults(items.slice(0, 25));
+        if (!items.length) {
+            showToast("Sin resultados", "No se encontraron equipos con ese criterio.", "info");
+        }
+    }
+
+    function renderActaEquipoResults(items) {
+        const container = document.getElementById("actaEquipoResultados");
+        if (!container) {
+            return;
+        }
+        if (!items.length) {
+            container.innerHTML = '<div class="empty-state">Ingrese un criterio de busqueda o cambie el tipo de equipo.</div>';
+            return;
+        }
+        container.innerHTML = `
+            <div class="acta-search-results__meta">${items.length} coincidencia(s) visibles. Seleccione una para autocompletar el acta.</div>
+            <div class="acta-search-results__list">
+                ${items.map((item) => `
+                    <button type="button" class="acta-search-card" data-acta-select="${item.id}">
+                        <strong>${escapeHtml(item.codigoSbai || item.codigoMegan || `ID ${item.id}`)} · ${escapeHtml(displayInventoryType(item))}</strong>
+                        <span>${escapeHtml([item.marca, item.modelo, item.numeroSerie].filter(Boolean).join(" / ") || "Sin marca/modelo registrado")}</span>
+                        <span>Custodio: ${escapeHtml(item.custodio || "-")} · Edificio: ${escapeHtml(item.ubicacionEdificio || "-")}</span>
+                    </button>
+                `).join("")}
+            </div>
+        `;
+        container.querySelectorAll("[data-acta-select]").forEach((button) => {
+            button.addEventListener("click", () => selectActaEquipo(button.dataset.actaSelect));
+        });
+    }
+
+    function selectActaEquipo(id) {
+        const item = state.inventory.find((row) => String(row.id) === String(id));
+        if (!item) {
+            return;
+        }
+        const typeSelect = document.getElementById("actaEquipoTipoBusqueda");
+        if (typeSelect) {
+            typeSelect.value = item.tipo || "pc";
+        }
+        syncActaTypeTab(item.tipo || "pc");
+        document.getElementById("actaPcSelector").value = item.id;
+        autofillActaPcForm(item);
+        document.querySelectorAll(".acta-search-card").forEach((card) => {
+            card.classList.toggle("is-selected", String(card.dataset.actaSelect) === String(item.id));
+        });
+        showToast("Equipo seleccionado", "El acta se autocompleto con los datos del inventario.", "success");
+    }
+
+    function autofillActaPcForm(item) {
+        const selectedType = String(item.tipo || "pc").toLowerCase();
+        setInputValue("actaFuncionarioNombre", item.custodio || "");
+        setInputValue("actaFuncionarioEdificio", item.ubicacionEdificio || "");
+        setInputValue("actaFuncionarioArea", item.ubicacionDireccion || item.ubicacion || "");
+        setInputValue("actaDesktopTipo", selectedType === "laptop" ? "LAPTOP" : "PC");
+        setInputValue("actaDesktopMarca", item.marca || "");
+        setInputValue("actaDesktopModelo", item.modelo || "");
+        setInputValue("actaDesktopSerial", item.numeroSerie || "");
+        setInputValue("actaDesktopCodigo", item.codigoSbai || item.codigoMegan || "");
+        setInputValue("actaLaptopMarca", selectedType === "laptop" ? item.marca || "" : "");
+        setInputValue("actaLaptopModelo", selectedType === "laptop" ? item.modelo || "" : "");
+        setInputValue("actaLaptopSerial", selectedType === "laptop" ? item.numeroSerie || "" : "");
+        setInputValue("actaLaptopCodigo", selectedType === "laptop" ? item.codigoSbai || item.codigoMegan || "" : "");
+        setInputValue("actaRecibeNombre", item.custodio || "");
+    }
+
+    function resetActaPcForm() {
+        document.getElementById("actaPcForm")?.reset();
+        clearSelectedActaEquipo();
+        setInputValue("actaDesktopTipo", getActaSelectedType() === "laptop" ? "LAPTOP" : "PC");
+        setInputValue("actaLaptopTipo", "LAPTOP");
+        loadActaPcInitialData();
+    }
+
+    function clearSelectedActaEquipo() {
+        const selector = document.getElementById("actaPcSelector");
+        if (selector) {
+            selector.value = "";
+        }
+        document.querySelectorAll(".acta-search-card").forEach((card) => card.classList.remove("is-selected"));
+    }
+
     function setInputValue(id, value) {
         const input = document.getElementById(id);
         if (input) {
@@ -1854,7 +2072,7 @@
         const form = document.getElementById("actaPcForm");
         const selector = document.getElementById("actaPcSelector");
         if (!form || !selector?.value) {
-            showToast("Equipo requerido", "Seleccione un equipo PC para autocompletar el acta.", "warning");
+            showToast("Equipo requerido", "Seleccione un equipo desde el buscador inicial para autocompletar el acta.", "warning");
             return;
         }
         if (!form.reportValidity()) {
@@ -1862,7 +2080,7 @@
         }
         const payload = buildActaPcPayload();
         openModal(
-            "Previsualización del Acta PC",
+            "Previsualización del Acta de Equipo",
             `<div class="acta-preview">${renderActaPcPreview(payload)}</div>`,
             [
                 { label: "Exportar DOCX", className: "btn btn-primary", onClick: () => exportActaPc("docx") },
@@ -1874,8 +2092,9 @@
     }
 
     function buildActaPcPayload() {
+        const selectedType = getActaSelectedType();
         return {
-            subapartado: "pc",
+            subapartado: selectedType,
             equipoSeleccionado: document.getElementById("actaPcSelector")?.value || "",
             funcionario: {
                 nombre: document.getElementById("actaFuncionarioNombre")?.value.trim() || "",
@@ -1886,7 +2105,7 @@
                 edificio: document.getElementById("actaFuncionarioEdificio")?.value.trim() || ""
             },
             desktop: {
-                tipo: document.getElementById("actaDesktopTipo")?.value.trim() || "DESKTOP",
+                tipo: document.getElementById("actaDesktopTipo")?.value.trim() || (selectedType === "laptop" ? "LAPTOP" : "PC"),
                 marca: document.getElementById("actaDesktopMarca")?.value.trim() || "",
                 modelo: document.getElementById("actaDesktopModelo")?.value.trim() || "",
                 serial: document.getElementById("actaDesktopSerial")?.value.trim() || "",
@@ -1998,6 +2217,15 @@
 
     async function exportActaPc(format) {
         try {
+            const form = document.getElementById("actaPcForm");
+            const selector = document.getElementById("actaPcSelector");
+            if (!form || !selector?.value) {
+                showToast("Equipo requerido", "Seleccione un equipo desde el buscador inicial para autocompletar el acta.", "warning");
+                return;
+            }
+            if (!form.reportValidity()) {
+                return;
+            }
             const payload = buildActaPcPayload();
             const response = await apiFetch(`/actas/equipos/pc/export/${format}`, {
                 method: "POST",
@@ -2249,7 +2477,7 @@
     }
 
     async function loadInitialData() {
-        if (page === "dashboard" || page === "inventario" || page === "busqueda") {
+        if (page === "dashboard" || page === "inventario" || page === "busqueda" || page === "acta-equipos") {
             await loadInventory();
             updateDashboardStats();
         }
@@ -2499,7 +2727,7 @@
     }
 
     async function loadInitialData() {
-        if (page === "dashboard" || page === "inventario" || page === "busqueda") {
+        if (page === "dashboard" || page === "inventario" || page === "busqueda" || page === "acta-equipos") {
             await loadInventory();
             updateDashboardStats();
         }
@@ -4209,8 +4437,7 @@
                                 const p = await r.json();
                                 if (!r.ok || !p.success) throw new Error(p.message || "Error al guardar");
                                 closeModal();
-                                await loadInventory();
-                                applyInventoryFilters();
+                                showUpdatedInventoryRow(p.data);
                                 showToast("Custodio actualizado", "El cambio se guardó correctamente en el historial.", "success");
                             } catch (err) {
                                 showToast("Error", err.message, "danger");
@@ -4242,8 +4469,7 @@
                 throw new Error(payload.message || "No se pudo actualizar el custodio.");
             }
             closeModal();
-            await loadInventory();
-            applyInventoryFilters();
+            showUpdatedInventoryRow(payload.data);
             showToast("Custodio actualizado", "El cambio se guardo correctamente.", "success");
         } catch (error) {
             showToast("Error", error.message || "No se pudo guardar el cambio de custodio.", "danger");
@@ -4275,6 +4501,25 @@
         );
     }
 
+    function showUpdatedInventoryRow(updated) {
+        if (!updated) {
+            return;
+        }
+        const normalized = normalizeItems([updated])[0];
+        const index = state.inventory.findIndex((row) => row.id === normalized.id);
+        if (index >= 0) {
+            state.inventory[index] = normalized;
+        } else {
+            state.inventory.push(normalized);
+        }
+        state.filteredInventory = [normalized];
+        state.inventoryPage = 1;
+        renderInventory();
+        if (typeof refreshInventoryAutocompletes === "function") {
+            refreshInventoryAutocompletes();
+        }
+    }
+
     async function saveStateChange(item, estado) {
         try {
             const response = await apiFetch(`/inventario/${item.id}/estado`, {
@@ -4287,12 +4532,44 @@
                 throw new Error(payload.message || "No se pudo actualizar el estado.");
             }
             closeModal();
-            await loadInventory();
-            applyInventoryFilters();
+            showUpdatedInventoryRow(payload.data);
             showToast("Estado actualizado", "El estado del equipo fue actualizado.", "success");
         } catch (error) {
             showToast("Error", error.message || "No se pudo guardar el estado.", "danger");
         }
+    }
+
+    function renderHistoryVersionCards(historial) {
+        const usableRows = historial.filter((h) => {
+            const accion = String(h.accion || "").toLowerCase();
+            return !accion.includes("completa del equipo") && !String(h.valorNuevo || "").toLowerCase().includes("campos actualizados:");
+        });
+        const rows = usableRows.length ? usableRows : historial;
+        return `
+            <div style="display:grid;gap:12px;">
+                ${rows.map((h, index) => {
+                    const version = rows.length - index;
+                    const ant = h.valorAnterior && h.valorAnterior !== "?" ? escapeHtml(h.valorAnterior) : "Sin dato anterior";
+                    const nvo = h.valorNuevo && h.valorNuevo !== "?" ? escapeHtml(h.valorNuevo) : "Sin dato actualizado";
+                    const rol = escapeHtml(h.rol || "ADMINISTRADOR");
+                    const usuario = escapeHtml(h.usuario || "-");
+                    const fecha = h.fecha ? new Date(h.fecha).toLocaleString("es-EC") : "-";
+                    return `<article style="border:1px solid #dce7f3;border-radius:14px;background:#fff;padding:14px;box-shadow:0 8px 20px rgba(15,31,56,.05);">
+                        <div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:10px;">
+                            <strong style="color:var(--primary);">Versión ${version} · ${escapeHtml(h.accion || "Cambio")}</strong>
+                            <span style="color:#61708a;font-size:12px;">${fecha}</span>
+                        </div>
+                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+                            <div style="background:#fff8e1;border:1px solid #ffe2a8;border-radius:10px;padding:10px;"><strong>Antes</strong><div style="margin-top:6px;">${ant}</div></div>
+                            <div style="background:#eaf7ee;border:1px solid #ccebd5;border-radius:10px;padding:10px;"><strong>Después</strong><div style="margin-top:6px;color:#155724;font-weight:600;">${nvo}</div></div>
+                        </div>
+                        <div style="margin-top:10px;color:#61708a;font-size:12px;border-top:1px solid #eef2f9;padding-top:8px;">
+                            Cambio realizado por: <strong>${usuario}</strong> · Rol: <strong>${rol}</strong>
+                        </div>
+                    </article>`;
+                }).join("")}
+            </div>
+        `;
     }
 
     async function openHistoryViewer(item) {
@@ -4330,7 +4607,7 @@
 
             openModal(
                 `Historial — ${escapeHtml(item.codigoSbai || item.id)}`,
-                bodyHtml,
+                historial.length ? renderHistoryVersionCards(historial) : bodyHtml,
                 [{ label: "Cerrar", className: "btn btn-secondary", onClick: closeModal }]
             );
         } catch (error) {
@@ -4558,8 +4835,7 @@
                             });
                             const p = await r.json();
                             if (!r.ok || !p.success) throw new Error(p.message || "Error al guardar");
-                            await loadInventory();
-                            applyInventoryFilters();
+                            showUpdatedInventoryRow(p.data);
                             showToast("Guardado", "Equipo actualizado correctamente.", "success");
                             closeModal();
                         } catch (err) {
@@ -4633,6 +4909,8 @@
                 container.innerHTML = `<p style="color:#61708a;text-align:center;padding:24px;">Sin registros de historial para este equipo.</p>`;
                 return;
             }
+            container.innerHTML = renderHistoryVersionCards(historial);
+            return;
             container.innerHTML = `
                 <div style="overflow-x:auto;">
                     <table style="width:100%;border-collapse:collapse;font-size:13px;">

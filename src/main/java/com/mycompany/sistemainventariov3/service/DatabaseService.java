@@ -14,7 +14,7 @@ public class DatabaseService {
 
     private static final String URL = "jdbc:mysql://localhost:3306/inventario_dtic_2026?useSSL=false&serverTimezone=America/Lima";
     private static final String USER = "root";
-    private static final String PASSWORD = "123456";
+    private static final String PASSWORD = "1234";
 
     static {
         try {

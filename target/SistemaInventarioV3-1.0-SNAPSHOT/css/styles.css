@@ -963,6 +963,78 @@ textarea {
     margin-bottom: 18px;
 }
 
+.acta-search-panel {
+    display: grid;
+    gap: 14px;
+    margin: 0 0 18px;
+    padding: 18px;
+    border: 1px solid rgba(21, 101, 192, 0.16);
+    border-radius: 20px;
+    background: linear-gradient(135deg, #f7fbff, #ffffff);
+}
+
+.acta-search-panel h3 {
+    margin: 4px 0 6px;
+    color: #0f2f55;
+}
+
+.acta-search-panel p {
+    margin: 0;
+    color: var(--muted);
+}
+
+.acta-search-panel__grid {
+    display: grid;
+    grid-template-columns: minmax(140px, 180px) minmax(220px, 1fr) auto;
+    gap: 12px;
+    align-items: end;
+}
+
+.acta-search-panel__query {
+    min-width: 0;
+}
+
+.acta-search-results {
+    display: grid;
+    gap: 10px;
+}
+
+.acta-search-results__meta {
+    color: var(--muted);
+    font-size: 13px;
+}
+
+.acta-search-results__list {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 10px;
+}
+
+.acta-search-card {
+    display: grid;
+    gap: 5px;
+    width: 100%;
+    padding: 12px 14px;
+    border: 1px solid #dce7f3;
+    border-radius: 14px;
+    background: #fff;
+    color: #0f1f38;
+    text-align: left;
+    cursor: pointer;
+    box-shadow: 0 8px 18px rgba(15, 31, 56, 0.05);
+}
+
+.acta-search-card:hover,
+.acta-search-card.is-selected {
+    border-color: rgba(21, 101, 192, 0.48);
+    background: #eef6ff;
+}
+
+.acta-search-card span {
+    color: var(--muted);
+    font-size: 13px;
+}
+
 .acta-toolbar__field {
     flex: 1 1 380px;
 }
@@ -974,12 +1046,13 @@ textarea {
 }
 
 .acta-sheet {
-    width: min(100%, 920px);
+    width: min(100%, 980px);
     margin: 0 auto;
     padding: 18px 20px 22px;
     background: #fff;
     border: 1px solid #d5dbe5;
     box-shadow: 0 12px 34px rgba(15, 31, 56, 0.08);
+    overflow-x: auto;
 }
 
 .acta-sheet--preview {
@@ -1030,6 +1103,7 @@ textarea {
 
 .acta-table {
     width: 100%;
+    min-width: 0;
     margin-top: 18px;
     border-collapse: collapse;
     table-layout: fixed;
@@ -1042,6 +1116,8 @@ textarea {
     border: 1px solid #222;
     padding: 4px 6px;
     vertical-align: middle;
+    overflow-wrap: anywhere;
+    word-break: break-word;
 }
 
 .acta-table th {
@@ -1106,6 +1182,9 @@ textarea {
     padding: 0;
     background: transparent;
     color: #111;
+    box-sizing: border-box;
+    font: inherit;
+    min-width: 0;
 }
 
 .acta-input:focus {
@@ -1163,6 +1242,10 @@ textarea {
 }
 
 @media (max-width: 900px) {
+    .acta-search-panel__grid {
+        grid-template-columns: 1fr;
+    }
+
     .acta-sheet {
         padding: 16px 12px 18px;
         overflow-x: auto;

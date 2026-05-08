@@ -461,6 +461,9 @@ public class InventarioJdbcService {
                         new HashSet<>(Arrays.asList("id_equipo", "tipo_equipo", "creado_en", "actualizado_en")));
                 Set<String> columnasHija = obtenerColumnasPermitidas(conn, schema, tablaHijaPorTipo(tipo),
                         new HashSet<>(Arrays.asList("id_equipo")));
+                Map<String, Object> valoresAnteriores = new LinkedHashMap<>();
+                cargarFilaComoMapa(conn, "equipo", "id_equipo", idEquipo, valoresAnteriores, false);
+                cargarFilaComoMapa(conn, tablaHijaPorTipo(tipo), "id_equipo", idEquipo, valoresAnteriores, true);
 
                 // Construir SET dinámico para equipo
                 List<String> sets = new ArrayList<>();
@@ -508,6 +511,16 @@ public class InventarioJdbcService {
                 }
 
                 asegurarTablaAuditoria(conn);
+                registrarAuditoriaCambios(conn, idEquipo,
+                        usuario != null ? usuario : "SISTEMA",
+                        rol != null ? rol : "ADMINISTRADOR",
+                        valoresAnteriores,
+                        params);
+                registrarAuditoriaCambios(conn, idEquipo,
+                        usuario != null ? usuario : "SISTEMA",
+                        rol != null ? rol : "ADMINISTRADOR",
+                        valoresAnteriores,
+                        paramsHija);
                 registrarAuditoria(conn, idEquipo,
                         usuario != null ? usuario : "SISTEMA",
                         rol != null ? rol : "ADMINISTRADOR",
@@ -1066,6 +1079,42 @@ public class InventarioJdbcService {
             ps.setString(6, valorNuevo);
             ps.executeUpdate();
         }
+    }
+
+    private void registrarAuditoriaCambios(
+            Connection conn,
+            Integer idEquipo,
+            String usuario,
+            String rol,
+            Map<String, Object> valoresAnteriores,
+            List<Object[]> cambios) throws Exception {
+        for (Object[] cambio : cambios) {
+            String columna = (String) cambio[0];
+            if ("ultima_actualizacion".equals(columna)) {
+                continue;
+            }
+            String anterior = valorAuditoriaCampo(conn, columna, valoresAnteriores.get(columna));
+            String nuevo = valorAuditoriaCampo(conn, columna, cambio[1]);
+            if (anterior.equals(nuevo)) {
+                continue;
+            }
+            registrarAuditoria(conn, idEquipo, usuario, rol,
+                    "Edicion de campo: " + etiquetaCampo(columna),
+                    anterior,
+                    nuevo);
+        }
+    }
+
+    private String valorAuditoriaCampo(Connection conn, String columna, Object valor) throws Exception {
+        if ("id_custodio_actual".equals(columna)) {
+            Integer idCustodio = leerEnteroSeguro(valor);
+            return idCustodio != null ? coalesce(obtenerNombreCustodio(conn, idCustodio), "") : "";
+        }
+        if ("id_ubicacion".equals(columna)) {
+            Map<String, String> ubicacion = obtenerUbicacionPorId(conn, leerEnteroSeguro(valor));
+            return unirNoVacios(ubicacion.get("edificio"), ubicacion.get("piso"), ubicacion.get("direccion"));
+        }
+        return texto(valor);
     }
 
     private void setValorParametro(PreparedStatement ps, int index, String columna, Object valor) throws Exception {

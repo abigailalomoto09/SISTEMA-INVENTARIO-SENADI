@@ -80,7 +80,7 @@ public class ActasResource {
             throw new IllegalArgumentException("El nombre del funcionario es obligatorio.");
         }
         if (request.getDesktop() == null || isBlank(request.getDesktop().getCodigo())) {
-            throw new IllegalArgumentException("Debe seleccionar un equipo PC válido.");
+            throw new IllegalArgumentException("Debe seleccionar un equipo valido.");
         }
         if (request.getActividades() == null || request.getActividades().isEmpty()) {
             throw new IllegalArgumentException("Las actividades del acta son obligatorias.");
@@ -90,7 +90,8 @@ public class ActasResource {
     private String buildFileName(ActaMantenimientoPcRequest request, String extension) {
         String codigo = sanitizeSegment(request.getDesktop() != null ? request.getDesktop().getCodigo() : "equipo");
         String fecha = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd_HHmm"));
-        return "acta_mantenimiento_pc_" + codigo + "_" + fecha + "." + extension;
+        String tipo = sanitizeSegment(request.getSubapartado() != null ? request.getSubapartado() : "equipo");
+        return "acta_mantenimiento_" + tipo + "_" + codigo + "_" + fecha + "." + extension;
     }
 
     private String sanitizeSegment(String value) {
