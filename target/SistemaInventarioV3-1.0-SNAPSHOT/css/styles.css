@@ -307,6 +307,13 @@ textarea {
         linear-gradient(135deg, #ffffff, #eef7ff);
 }
 
+.hero--actas {
+    background:
+        radial-gradient(circle at top right, rgba(13, 99, 183, 0.14), transparent 26%),
+        radial-gradient(circle at bottom left, rgba(21, 101, 192, 0.08), transparent 22%),
+        linear-gradient(135deg, #ffffff, #f3f8ff);
+}
+
 .hero h2,
 .section-heading h2,
 .panel h3 {
@@ -525,6 +532,11 @@ textarea {
     max-width: 1040px;
 }
 
+.acta-form-panel {
+    background:
+        linear-gradient(180deg, rgba(247, 251, 255, 0.96), rgba(255, 255, 255, 0.98));
+}
+
 .inventory-panel {
     background:
         linear-gradient(180deg, rgba(247, 251, 255, 0.96), rgba(255, 255, 255, 0.98));
@@ -598,6 +610,11 @@ textarea {
 
 .form-grid > * {
     flex: 1 1 220px;
+}
+
+.form-grid > .field-group--wide,
+.form-grid > .acta-form__actions {
+    flex-basis: 100%;
 }
 
 .form-grid {
@@ -893,6 +910,277 @@ textarea {
 
 .helper-banner {
     display: none;
+}
+
+.acta-form .helper-banner,
+.acta-form-panel .helper-banner {
+    display: block;
+    margin-bottom: 18px;
+    padding: 14px 16px;
+    border-radius: 18px;
+    background: rgba(21, 101, 192, 0.08);
+    color: #174372;
+}
+
+.acta-form__grid {
+    margin-top: 4px;
+}
+
+.acta-subtabs {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 18px;
+}
+
+.acta-subtab {
+    min-width: 108px;
+    padding: 10px 16px;
+    border: 1px solid rgba(21, 101, 192, 0.18);
+    border-radius: 999px;
+    background: #fff;
+    color: #174372;
+    font-weight: 700;
+}
+
+.acta-subtab.is-active {
+    background: linear-gradient(135deg, #0d63b7, #1565c0);
+    color: #fff;
+    border-color: transparent;
+}
+
+.acta-subtab:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.acta-toolbar {
+    display: flex;
+    gap: 16px;
+    align-items: end;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    margin-bottom: 18px;
+}
+
+.acta-toolbar__field {
+    flex: 1 1 380px;
+}
+
+.acta-toolbar__actions {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.acta-sheet {
+    width: min(100%, 920px);
+    margin: 0 auto;
+    padding: 18px 20px 22px;
+    background: #fff;
+    border: 1px solid #d5dbe5;
+    box-shadow: 0 12px 34px rgba(15, 31, 56, 0.08);
+}
+
+.acta-sheet--preview {
+    width: min(100%, 880px);
+}
+
+.acta-sheet__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 20px;
+}
+
+.acta-sheet__logo--ecuador {
+    width: 220px;
+    height: auto;
+}
+
+.acta-sheet__logo--senadi {
+    width: 220px;
+    height: auto;
+}
+
+.acta-sheet__titles {
+    margin: 6px 0 18px;
+    text-align: center;
+    color: #111;
+}
+
+.acta-sheet__titles h2,
+.acta-sheet__titles h3,
+.acta-sheet__titles h4 {
+    margin: 0;
+}
+
+.acta-sheet__titles h3,
+.acta-sheet__titles h4 {
+    font-size: 18px;
+    font-weight: 800;
+}
+
+.acta-sheet__titles h2 {
+    margin-top: 28px;
+    font-size: 19px;
+    font-weight: 800;
+    text-decoration: underline;
+}
+
+.acta-table {
+    width: 100%;
+    margin-top: 18px;
+    border-collapse: collapse;
+    table-layout: fixed;
+    color: #111;
+    font-size: 12px;
+}
+
+.acta-table th,
+.acta-table td {
+    border: 1px solid #222;
+    padding: 4px 6px;
+    vertical-align: middle;
+}
+
+.acta-table th {
+    background: #d9d9d9;
+    font-size: 11px;
+    font-weight: 800;
+    text-align: center;
+}
+
+.acta-table__label,
+.acta-table__activity,
+.acta-table__label-large {
+    background: #f2f2f2;
+    font-weight: 700;
+}
+
+.acta-table__label-large {
+    width: 28%;
+    text-align: center;
+}
+
+.acta-table__activity {
+    font-size: 11px;
+}
+
+.acta-table__label-value {
+    background: #fff;
+}
+
+.acta-table__title-dark {
+    background: #7f7f7f !important;
+    color: #fff;
+    font-size: 14px !important;
+    height: 46px;
+}
+
+.acta-table--equipos th,
+.acta-table--equipos td,
+.acta-table--firma th,
+.acta-table--firma td {
+    text-align: left;
+}
+
+.acta-table--equipos th,
+.acta-table--firma th {
+    text-align: center;
+}
+
+.acta-table__row--tall td {
+    min-height: 96px;
+}
+
+.acta-table__row--firma td {
+    height: 92px;
+    vertical-align: top;
+}
+
+.acta-input {
+    width: 100%;
+    min-height: 26px;
+    border: 0;
+    padding: 0;
+    background: transparent;
+    color: #111;
+}
+
+.acta-input:focus {
+    outline: none;
+    box-shadow: inset 0 -1px 0 #1565c0;
+}
+
+.acta-input--textarea {
+    resize: vertical;
+    padding-top: 2px;
+    font-family: inherit;
+}
+
+.acta-certification {
+    margin: 12px 0 14px;
+    color: #111;
+    font-size: 11px;
+    line-height: 1.4;
+    text-align: justify;
+}
+
+.acta-signature-field {
+    display: block;
+    font-weight: 700;
+    font-size: 12px;
+}
+
+.acta-signature-field .acta-input {
+    margin-top: 4px;
+    font-weight: 400;
+}
+
+.acta-sheet__footer {
+    margin-top: 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: end;
+    gap: 18px;
+}
+
+.acta-sheet__footer-text {
+    display: grid;
+    gap: 4px;
+    color: #666;
+    font-size: 11px;
+}
+
+.acta-sheet__footer-logo {
+    width: 170px;
+    height: auto;
+}
+
+.acta-preview__observation {
+    white-space: pre-wrap;
+}
+
+@media (max-width: 900px) {
+    .acta-sheet {
+        padding: 16px 12px 18px;
+        overflow-x: auto;
+    }
+
+    .acta-sheet__header {
+        gap: 12px;
+    }
+
+    .acta-sheet__logo--ecuador,
+    .acta-sheet__logo--senadi {
+        width: 160px;
+    }
+
+    .acta-sheet__footer {
+        flex-direction: column;
+        align-items: flex-start;
+    }
 }
 
 .table-wrap {
