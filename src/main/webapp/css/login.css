@@ -80,18 +80,24 @@ body {
 
 .hero-pill-row {
     display: flex;
-    gap: 12px;
+    gap: 0;
     flex-wrap: wrap;
     margin-top: 28px;
+    color: rgba(255, 255, 255, 0.82);
+    font-size: 14px;
+    font-weight: 600;
 }
 
 .hero-pill {
-    padding: 10px 16px;
-    border-radius: 999px;
-    background: rgba(255, 255, 255, 0.12);
-    border: 1px solid rgba(255, 255, 255, 0.18);
-    font-size: 14px;
-    font-weight: 600;
+    padding: 0;
+    background: transparent;
+    border: 0;
+}
+
+.hero-pill:not(:last-child)::after {
+    content: "/";
+    margin: 0 10px;
+    color: rgba(255, 255, 255, 0.48);
 }
 
 .login-panel {

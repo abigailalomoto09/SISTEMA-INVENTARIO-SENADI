@@ -496,11 +496,16 @@ public class InventarioJdbcService {
                 List<Object[]> params = new ArrayList<>();
                 for (String col : columnasEquipo) {
                     if (payload.containsKey(col) && !"costo".equals(col)) {
-                        sets.add(col + " = ?");
                         params.add(new Object[]{col, payload.get(col)});
                     }
                 }
-                sets.add("ultima_actualizacion = CURDATE()");
+                params = filtrarCambiosAuditoria(conn, valoresAnteriores, params);
+                for (Object[] param : params) {
+                    sets.add(param[0] + " = ?");
+                }
+                if (!params.isEmpty()) {
+                    sets.add("ultima_actualizacion = CURDATE()");
+                }
 
                 if (!sets.isEmpty()) {
                     String updateSql = "UPDATE equipo SET " + String.join(", ", sets) + " WHERE id_equipo = ?";
@@ -519,9 +524,12 @@ public class InventarioJdbcService {
                 List<Object[]> paramsHija = new ArrayList<>();
                 for (String col : columnasHija) {
                     if (payload.containsKey(col)) {
-                        setsHija.add(col + " = ?");
                         paramsHija.add(new Object[]{col, payload.get(col)});
                     }
+                }
+                paramsHija = filtrarCambiosAuditoria(conn, valoresAnteriores, paramsHija);
+                for (Object[] param : paramsHija) {
+                    setsHija.add(param[0] + " = ?");
                 }
                 if (!setsHija.isEmpty()) {
                     String tabla = tablaHijaPorTipo(tipo);
@@ -1302,6 +1310,9 @@ public class InventarioJdbcService {
             String campoModificado,
             List<Map<String, Object>> registroAnterior,
             List<Map<String, Object>> registroNuevo) throws Exception {
+        if (accion != null && accion.toLowerCase(Locale.ROOT).contains("completa del equipo")) {
+            return;
+        }
         String sql = "INSERT INTO auditoria_custodio " +
                 "(id_equipo, usuario, rol, accion, valor_anterior, valor_nuevo, campo_modificado, registro_anterior, registro_nuevo, fecha) " +
                 "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())";
@@ -1346,6 +1357,25 @@ public class InventarioJdbcService {
                     registroAnterior,
                     registroNuevo);
         }
+    }
+
+    private List<Object[]> filtrarCambiosAuditoria(
+            Connection conn,
+            Map<String, Object> valoresAnteriores,
+            List<Object[]> cambios) throws Exception {
+        List<Object[]> filtrados = new ArrayList<>();
+        for (Object[] cambio : cambios) {
+            String columna = (String) cambio[0];
+            if ("ultima_actualizacion".equals(columna)) {
+                continue;
+            }
+            String anterior = valorAuditoriaCampo(conn, columna, valoresAnteriores.get(columna));
+            String nuevo = valorAuditoriaCampo(conn, columna, cambio[1]);
+            if (!anterior.equals(nuevo)) {
+                filtrados.add(cambio);
+            }
+        }
+        return filtrados;
     }
 
     private String valorAuditoriaCampo(Connection conn, String columna, Object valor) throws Exception {

@@ -892,7 +892,7 @@ JOIN (VALUES
   ROW('141.01.07.1778.194','35777939','MXL8380BY5','CORE 2 DUO','4GB','150GB','WIN 10'),
   ROW('S/N','25208273','S/N','CORE I7','8GB','500GB','WIN 10'),
   ROW('S/N','25208344','S/N','CORE I7','8GB','500GB','WIN 10'),
-  ROW('141.01.07.1778.215','25208254','SMXJ91807LS','CORE 2 DUO','4GB','1500GB','WIN 10')
+  ROW('141.01.07.1778.215','25208254','SMXJ91807LS','CORE 2 DUO','4GB','500GB','WIN 10')
 ) AS v(cm,cs,vsn,procesador,ram,disco_duro,so)
 ON (e.codigo_megan = v.cm OR (e.codigo_megan IS NULL AND v.cm IS NULL))
    AND (e.codigo_sbye = v.cs OR (e.codigo_sbye IS NULL AND v.cs IS NULL))

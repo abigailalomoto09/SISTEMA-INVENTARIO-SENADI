@@ -908,6 +908,11 @@ textarea {
     color: white;
 }
 
+.field-invalid {
+    border-color: #c62828 !important;
+    box-shadow: 0 0 0 3px rgba(198, 40, 40, 0.12);
+}
+
 .btn-ghost {
     background: transparent;
     border: 1px dashed var(--border);
@@ -1564,9 +1569,9 @@ th {
 .history-card {
     padding: 16px;
     border: 1px solid var(--border);
-    border-radius: 14px;
+    border-radius: 8px;
     background: #fff;
-    box-shadow: 0 8px 22px rgba(15, 31, 56, 0.06);
+    box-shadow: none;
 }
 
 .history-card__header,
@@ -1614,7 +1619,7 @@ th {
 .history-field {
     min-width: 0;
     padding: 10px;
-    border-radius: 10px;
+    border-radius: 8px;
     border: 1px solid var(--border);
     background: var(--surface-soft);
 }
@@ -1673,7 +1678,7 @@ th {
     margin-top: 12px;
     overflow: hidden;
     border: 1px solid var(--border);
-    border-radius: 12px;
+    border-radius: 8px;
     background: var(--border);
 }
 

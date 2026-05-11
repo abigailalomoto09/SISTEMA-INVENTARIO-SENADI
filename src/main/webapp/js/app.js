@@ -2468,7 +2468,7 @@
                 <form id="newEquipmentForm">
                     <div class="form-grid" id="dynamicEquipmentFields"></div>
                     <div class="form-actions" style="margin-top:18px;">
-                        <button class="btn btn-primary" type="submit">Guardar equipo</button>
+                        <button class="btn btn-primary" type="button" id="saveNewEquipmentButton">Guardar equipo</button>
                         <button class="btn btn-secondary" type="reset">Limpiar</button>
                     </div>
                 </form>
@@ -2717,7 +2717,7 @@
                 <form id="newEquipmentForm">
                     <div class="form-grid" id="dynamicEquipmentFields"></div>
                     <div class="form-actions" style="margin-top:18px;">
-                        <button class="btn btn-primary" type="submit">Guardar equipo</button>
+                        <button class="btn btn-primary" type="button" id="saveNewEquipmentButton">Guardar equipo</button>
                         <button class="btn btn-secondary" type="reset">Limpiar</button>
                     </div>
                 </form>
@@ -2781,11 +2781,25 @@
 
     function bindNewEquipmentEvents() {
         document.getElementById("equipmentCategory")?.addEventListener("change", (event) => renderDynamicFields(event.target.value));
-        document.getElementById("newEquipmentForm")?.addEventListener("submit", async (event) => {
+        document.getElementById("newEquipmentForm")?.addEventListener("submit", (event) => {
             event.preventDefault();
-            const form = event.currentTarget;
+        });
+        document.getElementById("newEquipmentForm")?.addEventListener("keydown", (event) => {
+            if (event.key === "Enter") {
+                event.preventDefault();
+            }
+        });
+        document.getElementById("saveNewEquipmentButton")?.addEventListener("click", async () => {
+            const form = document.getElementById("newEquipmentForm");
+            if (!form) {
+                return;
+            }
             const category = document.getElementById("equipmentCategory").value;
-            const button = form.querySelector('button[type="submit"]');
+            const button = document.getElementById("saveNewEquipmentButton");
+            if (!validateRequiredEquipmentFields(form)) {
+                showToast("Campos obligatorios", "Complete todos los campos antes de guardar.", "warning");
+                return;
+            }
             button.disabled = true;
             try {
                 const payload = collectEquipmentFormPayload(form);
@@ -2842,6 +2856,22 @@
         return payload;
     }
 
+    function validateRequiredEquipmentFields(form) {
+        let valid = true;
+        Array.from(form.elements).forEach((element) => {
+            if (!element.name || element.disabled) {
+                return;
+            }
+            const empty = !String(element.value || "").trim();
+            element.classList.toggle("field-invalid", empty);
+            if (empty) {
+                valid = false;
+            }
+        });
+        form.querySelector(".field-invalid")?.focus();
+        return valid;
+    }
+
     function renderDynamicFields(category) {
         const container = document.getElementById("dynamicEquipmentFields");
         const hint = document.getElementById("equipmentCategoryHint");
@@ -2875,7 +2905,7 @@
     function renderDynamicDbField(field) {
         const name = field.name;
         const label = displayDbFieldLabel(field);
-        const required = field.required ? "required" : "";
+        const required = "required";
         const autocompleteCatalog = autocompleteCatalogForField(name);
         if (field.inputType === "textarea") {
             return `<label class="field-group field-group--wide"><span>${escapeHtml(label)}</span><textarea name="${escapeHtml(name)}" ${required}></textarea></label>`;
@@ -4630,8 +4660,8 @@
                             <time>${fecha}</time>
                         </div>
                         <div class="history-diff">
-                            <div class="history-diff__old"><span>Valor anterior</span><strong>${ant}</strong></div>
-                            <div class="history-diff__new"><span>Valor nuevo</span><strong>${nvo}</strong></div>
+                            <div class="history-diff__old"><span>Antes</span><strong>${ant}</strong></div>
+                            <div class="history-diff__new"><span>Después</span><strong>${nvo}</strong></div>
                         </div>
                         ${fieldsHtml}
                         <div class="history-card__footer">
@@ -4651,8 +4681,8 @@
         const fallback = Array.isArray(historyItem.camposRegistro) ? historyItem.camposRegistro : [];
         const beforeMap = mapHistoryFields(before.length ? before : fallback);
         const afterMap = mapHistoryFields(after.length ? after : fallback);
-        const keys = Array.from(new Set(Object.keys(beforeMap).concat(Object.keys(afterMap))));
         const normalizedChanged = normalizeHistoryFieldLabel(campo);
+        const keys = Array.from(new Set(Object.keys(beforeMap).concat(Object.keys(afterMap))));
 
         if (!keys.length) {
             return "";
@@ -4778,7 +4808,7 @@
                 <form id="newEquipmentForm">
                     <div class="form-grid" id="dynamicEquipmentFields"></div>
                     <div class="form-actions" style="margin-top:18px;">
-                        <button class="btn btn-primary" type="submit">Guardar equipo</button>
+                        <button class="btn btn-primary" type="button" id="saveNewEquipmentButton">Guardar equipo</button>
                         <button class="btn btn-secondary" type="reset">Limpiar</button>
                     </div>
                 </form>
@@ -4965,7 +4995,7 @@
                     <div class="form-grid" id="editFormGrid">${renderDynamicDbEditFieldGroups(fields, editValues)}</div>
                 </form>`;
 
-            openModal(`Editar equipo #${idEquipo} - ${(categoryConfig.label || item.tipo || "").toUpperCase()}`, bodyHtml, [
+            openModal(`Editar equipo ${escapeHtml(item.codigoSbai || String(idEquipo))} - ${(categoryConfig.label || item.tipo || "").toUpperCase()}`, bodyHtml, [
                 {
                     label: "Guardar cambios", className: "btn btn-primary", onClick: async () => {
                         const form = document.getElementById("editEquipmentForm");
