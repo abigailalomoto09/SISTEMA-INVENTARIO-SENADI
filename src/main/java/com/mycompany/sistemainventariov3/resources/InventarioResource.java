@@ -23,7 +23,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * API de inventario sobre el modelo final equipo + tablas hijas.
+ * Recurso para gestionar el inventario sobre el modelo final equipo + tablas hijas.
  */
 @Path("inventario")
 public class InventarioResource {
@@ -31,6 +31,7 @@ public class InventarioResource {
     private final InventarioJdbcService inventarioJdbcService = new InventarioJdbcService();
     private final Gson gson = new Gson();
 
+    // Endpoint para listar todo el inventario, con opción de filtrar por custodio si el usuario es custodio
     @GET
     @Path("todos")
     @Produces(MediaType.APPLICATION_JSON)

@@ -6,6 +6,7 @@ C:\Users\mayer\Documents\NetBeansProjects\SistemaInventarioV3\src\main\java\com\
 C:\Users\mayer\Documents\NetBeansProjects\SistemaInventarioV3\src\main\java\com\mycompany\sistemainventariov3\model\Laptop.java
 C:\Users\mayer\Documents\NetBeansProjects\SistemaInventarioV3\src\main\java\com\mycompany\sistemainventariov3\service\BienService.java
 C:\Users\mayer\Documents\NetBeansProjects\SistemaInventarioV3\src\main\java\com\mycompany\sistemainventariov3\dao\UbicacionDAO.java
+C:\Users\mayer\Documents\NetBeansProjects\SistemaInventarioV3\src\main\java\com\mycompany\sistemainventariov3\util\LDAP.java
 C:\Users\mayer\Documents\NetBeansProjects\SistemaInventarioV3\src\main\java\com\mycompany\sistemainventariov3\dao\EscanerDAO.java
 C:\Users\mayer\Documents\NetBeansProjects\SistemaInventarioV3\src\main\java\com\mycompany\sistemainventariov3\model\Proyector.java
 C:\Users\mayer\Documents\NetBeansProjects\SistemaInventarioV3\src\main\java\com\mycompany\sistemainventariov3\ConnectionTest.java
@@ -27,9 +28,11 @@ C:\Users\mayer\Documents\NetBeansProjects\SistemaInventarioV3\src\main\java\com\
 C:\Users\mayer\Documents\NetBeansProjects\SistemaInventarioV3\src\main\java\com\mycompany\sistemainventariov3\resources\TestResource.java
 C:\Users\mayer\Documents\NetBeansProjects\SistemaInventarioV3\src\main\java\com\mycompany\sistemainventariov3\dao\ImpresoraDAO.java
 C:\Users\mayer\Documents\NetBeansProjects\SistemaInventarioV3\src\main\java\com\mycompany\sistemainventariov3\service\HistoricoService.java
+C:\Users\mayer\Documents\NetBeansProjects\SistemaInventarioV3\src\main\java\com\mycompany\sistemainventariov3\service\inventory\InventarioSql.java
 C:\Users\mayer\Documents\NetBeansProjects\SistemaInventarioV3\src\main\java\com\mycompany\sistemainventariov3\model\Licencia.java
 C:\Users\mayer\Documents\NetBeansProjects\SistemaInventarioV3\src\main\java\com\mycompany\sistemainventariov3\dao\PCDAO.java
 C:\Users\mayer\Documents\NetBeansProjects\SistemaInventarioV3\src\main\java\com\mycompany\sistemainventariov3\dao\InfraestructuraDAO.java
+C:\Users\mayer\Documents\NetBeansProjects\SistemaInventarioV3\src\main\java\com\mycompany\sistemainventariov3\bean\LoginBean.java
 C:\Users\mayer\Documents\NetBeansProjects\SistemaInventarioV3\src\main\java\com\mycompany\sistemainventariov3\model\Custodio.java
 C:\Users\mayer\Documents\NetBeansProjects\SistemaInventarioV3\src\main\java\com\mycompany\sistemainventariov3\util\SessionRequestFilter.java
 C:\Users\mayer\Documents\NetBeansProjects\SistemaInventarioV3\src\main\java\com\mycompany\sistemainventariov3\dao\TelefonoDAO.java
@@ -46,6 +49,7 @@ C:\Users\mayer\Documents\NetBeansProjects\SistemaInventarioV3\src\main\java\com\
 C:\Users\mayer\Documents\NetBeansProjects\SistemaInventarioV3\src\main\java\com\mycompany\sistemainventariov3\model\BienId.java
 C:\Users\mayer\Documents\NetBeansProjects\SistemaInventarioV3\src\main\java\com\mycompany\sistemainventariov3\dto\ApiResponse.java
 C:\Users\mayer\Documents\NetBeansProjects\SistemaInventarioV3\src\main\java\com\mycompany\sistemainventariov3\resources\ActasResource.java
+C:\Users\mayer\Documents\NetBeansProjects\SistemaInventarioV3\src\main\java\com\mycompany\sistemainventariov3\service\LDAPAuthService.java
 C:\Users\mayer\Documents\NetBeansProjects\SistemaInventarioV3\src\main\java\com\mycompany\sistemainventariov3\dto\LoginRequest.java
 C:\Users\mayer\Documents\NetBeansProjects\SistemaInventarioV3\src\main\java\com\mycompany\sistemainventariov3\model\Periferico.java
 C:\Users\mayer\Documents\NetBeansProjects\SistemaInventarioV3\src\main\java\com\mycompany\sistemainventariov3\model\Telefono.java

@@ -68,20 +68,42 @@ public class UsuarioService {
     public Usuario autenticar(String usuario, String password) throws Exception {
         return autenticar(usuario, password, null);
     }
-
+    // Obtiene roles desde la base y deja un punto claro para reemplazar esta logica por Active Directory.
     private List<String> obtenerRolesDisponibles(UsuarioAuthRecord record) {
         List<String> roles = new ArrayList<>();
         String rolPrincipal = normalizarRol(record.rol);
-        roles.add(rolPrincipal);
+        agregarRolSiNoExiste(roles, rolPrincipal);
         if (record.rolesExtra != null && !record.rolesExtra.trim().isEmpty()) {
             for (String extra : record.rolesExtra.split(",")) {
                 String r = normalizarRol(extra.trim());
-                if (!r.isEmpty() && !roles.contains(r)) {
-                    roles.add(r);
-                }
+                agregarRolSiNoExiste(roles, r);
             }
         }
+        aplicarRolesDinamicosTransitorios(record, roles);
         return roles;
+    }
+
+    // Simula reglas que luego vendran desde grupos de Active Directory mediante LDAP.
+    private void aplicarRolesDinamicosTransitorios(UsuarioAuthRecord record, List<String> roles) {
+        String username = record.username == null ? "" : record.username.trim().toLowerCase(Locale.ROOT);
+        if ("porozco".equals(username) || "eceracapa".equals(username)) {
+            agregarRolSiNoExiste(roles, "ADMINISTRADOR");
+            agregarRolSiNoExiste(roles, "CUSTODIO");
+        }
+        if (roles.contains("TECNICO")) {
+            agregarRolSiNoExiste(roles, "CUSTODIO");
+        }
+    }
+
+    // Evita roles duplicados y mantiene el orden de prioridad recibido.
+    private void agregarRolSiNoExiste(List<String> roles, String rol) {
+        if (rol == null || rol.trim().isEmpty()) {
+            return;
+        }
+        String rolNormalizado = normalizarRol(rol);
+        if (!rolNormalizado.isEmpty() && !roles.contains(rolNormalizado)) {
+            roles.add(rolNormalizado);
+        }
     }
 
     /**
@@ -105,7 +127,7 @@ public class UsuarioService {
     public boolean esTecnico() {
         return SesionUsuario.esTecnico();
     }
-
+// Busca el usuario en la base de datos, primero intentando en la tabla "usuario" y luego en "usuarios" para mantener compatibilidad con diferentes esquemas. Devuelve un registro con la información necesaria para autenticación y autorización.
     private UsuarioAuthRecord buscarUsuario(Connection conn, String username) throws SQLException {
         if (existeTabla(conn, "usuario")) {
             boolean tieneRolesExtra = existeColumna(conn, "usuario", "roles_extra");
@@ -169,9 +191,10 @@ public class UsuarioService {
         String md5 = EncriptacionUtil.encriptarMD5(passwordIngresado);
         return passwordPersistido.equalsIgnoreCase(md5);
     }
-
+// Normaliza el rol ingresado para compararlo con los roles disponibles. Si no reconoce el rol, devuelve "TECNICO" por defecto.
     private String normalizarRol(String rol) {
         String valor = rol == null ? "" : rol.trim().toUpperCase(Locale.ROOT);
+        // Se pueden agregar más roles y sinónimos aquí según sea necesario
         if ("ADMIN".equals(valor) || "ADMINISTRADOR".equals(valor)) {
             return "ADMINISTRADOR";
         }

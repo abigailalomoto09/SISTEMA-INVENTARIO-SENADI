@@ -10,6 +10,7 @@ com\mycompany\sistemainventariov3\dao\LicenciaDAO.class
 com\mycompany\sistemainventariov3\util\JPAUtil.class
 com\mycompany\sistemainventariov3\service\UsuarioService.class
 com\mycompany\sistemainventariov3\dao\CustodioDAO.class
+com\mycompany\sistemainventariov3\util\LDAP.class
 com\mycompany\sistemainventariov3\util\SesionUsuario.class
 com\mycompany\sistemainventariov3\ConnectionTest.class
 com\mycompany\sistemainventariov3\model\Escaner.class
@@ -28,9 +29,11 @@ com\mycompany\sistemainventariov3\service\DatabaseService.class
 com\mycompany\sistemainventariov3\model\Laptop.class
 com\mycompany\sistemainventariov3\service\ActaMantenimientoPcDocumentService.class
 com\mycompany\sistemainventariov3\resources\BusquedaResource.class
+com\mycompany\sistemainventariov3\service\LDAPAuthService.class
 com\mycompany\sistemainventariov3\model\Telefono.class
 com\mycompany\sistemainventariov3\dao\LaptopDAO.class
 com\mycompany\sistemainventariov3\model\BienControlAdministrativo.class
+com\mycompany\sistemainventariov3\service\inventory\InventarioSql.class
 com\mycompany\sistemainventariov3\dao\HistoricoCambioDAO.class
 com\mycompany\sistemainventariov3\dto\LoginRequest.class
 com\mycompany\sistemainventariov3\dao\TelefonoDAO.class
@@ -43,6 +46,7 @@ com\mycompany\sistemainventariov3\model\PC.class
 senadi\gob\ec\busfonetico\util\LDAP.class
 com\mycompany\sistemainventariov3\model\Proyector.class
 com\mycompany\sistemainventariov3\service\BienService.class
+com\mycompany\sistemainventariov3\bean\LoginBean.class
 com\mycompany\sistemainventariov3\dao\PeriferícoDAO.class
 com\mycompany\sistemainventariov3\dao\BienControlAdministrativoDAO.class
 com\mycompany\sistemainventariov3\JAXRSConfiguration.class
@@ -50,6 +54,7 @@ com\mycompany\sistemainventariov3\resources\LoginResource.class
 com\mycompany\sistemainventariov3\dao\PCDAO.class
 com\mycompany\sistemainventariov3\dto\ActaMantenimientoPcRequest.class
 com\mycompany\sistemainventariov3\resources\DatabaseResource.class
+com\mycompany\sistemainventariov3\util\LDAP$RolPermisos.class
 com\mycompany\sistemainventariov3\util\DataLoader.class
 com\mycompany\sistemainventariov3\dto\ApiResponse.class
 com\mycompany\sistemainventariov3\service\HistoricoService.class

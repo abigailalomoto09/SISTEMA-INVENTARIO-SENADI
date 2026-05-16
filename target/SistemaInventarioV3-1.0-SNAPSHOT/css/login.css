@@ -205,6 +205,14 @@ body {
     transform: translateY(0);
 }
 
+.btn-login--secondary {
+    width: 100%;
+    margin-top: 12px;
+    background: rgba(16, 37, 66, 0.08);
+    color: var(--login-text);
+    box-shadow: none;
+}
+
 .login-alert {
     padding: 12px 14px;
     border-radius: 14px;
@@ -227,6 +235,7 @@ body {
     background: rgba(16, 37, 66, 0.05);
 }
 
+--- Estilos patalla sección perfil ---
 .demo-access small,
 .demo-access strong {
     display: block;
@@ -239,6 +248,53 @@ body {
 
 .demo-access strong {
     font-size: 14px;
+}
+
+.profile-selection {
+    display: grid;
+    gap: 14px;
+}
+
+.profile-selection h3 {
+    margin: 0;
+    font-size: 1.35rem;
+}
+
+.profile-options {
+    display: grid;
+    gap: 12px;
+}
+
+.profile-option {
+    width: 100%;
+    padding: 14px 16px;
+    border: 1px solid rgba(16, 37, 66, 0.14);
+    border-radius: 16px;
+    background: rgba(255, 255, 255, 0.9);
+    color: var(--login-text);
+    cursor: pointer;
+    font: inherit;
+    text-align: left;
+}
+
+.profile-option strong,
+.profile-option span {
+    display: block;
+}
+
+.profile-option strong {
+    font-size: 15px;
+}
+
+.profile-option span {
+    margin-top: 4px;
+    color: var(--login-muted);
+    font-size: 13px;
+}
+
+.profile-option:hover {
+    border-color: var(--login-secondary);
+    box-shadow: 0 0 0 4px rgba(25, 118, 210, 0.12);
 }
 
 .select-rol {

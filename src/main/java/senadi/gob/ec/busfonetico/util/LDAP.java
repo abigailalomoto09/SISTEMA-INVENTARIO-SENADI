@@ -22,7 +22,7 @@ import javax.naming.directory.SearchResult;
 
 /**
  *
- * @author Michael Yanangómez
+ * @author Abigail
  */
 public class LDAP {
 

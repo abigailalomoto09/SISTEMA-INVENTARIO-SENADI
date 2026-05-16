@@ -6,6 +6,7 @@ import com.google.gson.JsonObject;
 import com.mycompany.sistemainventariov3.dto.LoginRequest;
 import com.mycompany.sistemainventariov3.model.Usuario;
 import com.mycompany.sistemainventariov3.service.UsuarioService;
+import com.mycompany.sistemainventariov3.service.LDAPAuthService;
 import com.mycompany.sistemainventariov3.util.SesionUsuario;
 
 import javax.servlet.http.HttpServletRequest;
@@ -20,6 +21,7 @@ import javax.ws.rs.core.Response;
 
 /**
  * Controlador REST para autenticacion de usuarios.
+ * Integra autenticación contra LDAP (SC_Inventario) y base de datos local.
  */
 @Path("login")
 public class LoginResource {
@@ -28,24 +30,57 @@ public class LoginResource {
     private HttpServletRequest request;
 
     private final UsuarioService usuarioService;
+    private final LDAPAuthService ldapAuthService;
     private final Gson gson = new Gson();
+    
+    // Flag para usar LDAP como método principal (true) o como fallback (false)
+    private static final boolean USAR_LDAP_PRINCIPAL = true;
 
     public LoginResource() {
         this.usuarioService = new UsuarioService();
+        this.ldapAuthService = new LDAPAuthService();
     }
 
     @POST
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
+    // Endpoint para autenticar usuarios. Retorna información del usuario y si es necesario seleccionar un perfil.
+    // Integra autenticación LDAP (SC_Inventario) como método principal o fallback
     public Response autenticar(String json) {
         try {
             LoginRequest loginRequest = gson.fromJson(json, LoginRequest.class);
-            Usuario usuario = usuarioService.autenticar(loginRequest.getUsername(), loginRequest.getPassword(), loginRequest.getRolElegido());
-            SesionUsuario.setUsuarioActual(request, usuario);
+            Usuario usuario = null;
+            String metodoAutenticacion = "BD LOCAL";
+
+            // Intentar autenticación contra LDAP primero
+            if (USAR_LDAP_PRINCIPAL) {
+                try {
+                    usuario = ldapAuthService.autenticarLDAP(loginRequest.getUsername(), loginRequest.getPassword());
+                    metodoAutenticacion = "LDAP (SC_Inventario)";
+                    System.out.println("Autenticación exitosa via LDAP para: " + loginRequest.getUsername());
+                } catch (Exception ldapEx) {
+                    // Si LDAP falla, intentar BD local
+                    System.out.println("Autenticación LDAP fallida, intentando BD local: " + ldapEx.getMessage());
+                    usuario = usuarioService.autenticar(loginRequest.getUsername(), loginRequest.getPassword(), loginRequest.getRolElegido());
+                    metodoAutenticacion = "BD LOCAL";
+                }
+            } else {
+                // Usar BD local como principal
+                usuario = usuarioService.autenticar(loginRequest.getUsername(), loginRequest.getPassword(), loginRequest.getRolElegido());
+            }
+
+            boolean rolSeleccionado = loginRequest.getRolElegido() != null && !loginRequest.getRolElegido().trim().isEmpty();
+            boolean requiereSeleccionPerfil = !rolSeleccionado
+                    && usuario.getRolesDisponibles() != null
+                    && usuario.getRolesDisponibles().size() > 1;
+            if (!requiereSeleccionPerfil) {
+                SesionUsuario.setUsuarioActual(request, usuario);
+            }
 
             JsonObject response = new JsonObject();
             response.addProperty("success", true);
-            response.addProperty("message", "Autenticacion exitosa");
+            response.addProperty("message", "Autenticacion exitosa (" + metodoAutenticacion + ")");
+            response.addProperty("requiereSeleccionPerfil", requiereSeleccionPerfil);
             response.add("data", construirUsuarioResponse(usuario));
             return Response.ok(response.toString()).build();
         } catch (Exception e) {
@@ -137,10 +172,10 @@ public class LoginResource {
             permisos.addProperty("puedeVerHistorial", true);
         } else if ("TECNICO".equals(rol)) {
             permisos.addProperty("puedeEditarTodos", false);
-            permisos.addProperty("puedeActualizarEstado", false);
+            permisos.addProperty("puedeActualizarEstado", true);
             permisos.addProperty("puedeVer", true);
-            permisos.addProperty("puedeCrearEquipo", false);
-            permisos.addProperty("puedeEditarCustodio", true);
+            permisos.addProperty("puedeCrearEquipo", true);
+            permisos.addProperty("puedeEditarCustodio", false);
             permisos.addProperty("puedeExportarInventario", true);
             permisos.addProperty("puedeVerHistorial", true);
         } else if ("CUSTODIO".equals(rol)) {
