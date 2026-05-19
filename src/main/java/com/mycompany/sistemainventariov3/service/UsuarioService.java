@@ -11,8 +11,10 @@ import java.sql.SQLException;
 import java.text.Normalizer;
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -68,6 +70,48 @@ public class UsuarioService {
     public Usuario autenticar(String usuario, String password) throws Exception {
         return autenticar(usuario, password, null);
     }
+
+    /**
+     * Completa un usuario autenticado por LDAP con el id_custodio de la base local.
+     *
+     * LDAP valida identidad y grupos; la base local sabe que equipos pertenecen a
+     * cada custodio. Sin este enlace, un rol CUSTODIO queda con idCustodio null.
+     */
+    public void enlazarUsuarioLDAPConCustodioLocal(Usuario usuarioLDAP, Map<String, String> infoLDAP) throws Exception {
+        if (usuarioLDAP == null) {
+            return;
+        }
+
+        try (Connection conn = DatabaseService.getConnection()) {
+            provisionarCustodios(conn);
+
+            UsuarioAuthRecord local = buscarUsuarioPorCandidatos(conn, construirCandidatosUsuario(usuarioLDAP, infoLDAP));
+            if (local != null) {
+                usuarioLDAP.setIdCustodio(local.idCustodio);
+                if (usuarioLDAP.getNombreCompleto() == null || usuarioLDAP.getNombreCompleto().trim().isEmpty()) {
+                    usuarioLDAP.setNombreCompleto(local.nombreCompleto);
+                }
+                System.out.println("[UsuarioService] Usuario LDAP enlazado por usuario local: "
+                        + usuarioLDAP.getUsuario() + " -> id_custodio=" + local.idCustodio);
+            }
+
+            if (usuarioLDAP.getIdCustodio() == null) {
+                CustodioLocal custodio = buscarCustodioPorNombre(conn, nombreLDAP(usuarioLDAP, infoLDAP));
+                if (custodio != null) {
+                    usuarioLDAP.setIdCustodio(custodio.idCustodio);
+                    usuarioLDAP.setNombreCompleto(custodio.nombre);
+                    System.out.println("[UsuarioService] Usuario LDAP enlazado por nombre de custodio: "
+                            + usuarioLDAP.getUsuario() + " -> id_custodio=" + custodio.idCustodio);
+                }
+            }
+
+            if (usuarioLDAP.getIdCustodio() == null) {
+                System.out.println("[UsuarioService] No se encontro id_custodio local para el usuario LDAP: "
+                        + usuarioLDAP.getUsuario() + ". Revise tabla usuario/custodio.");
+            }
+        }
+    }
+
     // Obtiene roles desde la base y deja un punto claro para reemplazar esta logica por Active Directory.
     private List<String> obtenerRolesDisponibles(UsuarioAuthRecord record) {
         List<String> roles = new ArrayList<>();
@@ -191,6 +235,115 @@ public class UsuarioService {
         String md5 = EncriptacionUtil.encriptarMD5(passwordIngresado);
         return passwordPersistido.equalsIgnoreCase(md5);
     }
+
+    private UsuarioAuthRecord buscarUsuarioPorCandidatos(Connection conn, Set<String> candidatos) throws SQLException {
+        for (String candidato : candidatos) {
+            if (candidato == null || candidato.trim().isEmpty()) {
+                continue;
+            }
+            UsuarioAuthRecord record = buscarUsuario(conn, candidato.trim());
+            if (record != null && record.activo) {
+                return record;
+            }
+        }
+        return null;
+    }
+
+    private Set<String> construirCandidatosUsuario(Usuario usuarioLDAP, Map<String, String> infoLDAP) {
+        Set<String> candidatos = new LinkedHashSet<>();
+        agregarCandidato(candidatos, usuarioLDAP.getUsuario());
+        if (infoLDAP != null) {
+            agregarCandidato(candidatos, infoLDAP.get("sAMAccountName"));
+            agregarCandidato(candidatos, infoLDAP.get("userPrincipalName"));
+            agregarCandidato(candidatos, infoLDAP.get("mail"));
+            agregarCandidato(candidatos, generarClaveNombre(infoLDAP.get("displayName")));
+        }
+        agregarCandidato(candidatos, generarClaveNombre(usuarioLDAP.getNombreCompleto()));
+        return candidatos;
+    }
+
+    private void agregarCandidato(Set<String> candidatos, String valor) {
+        String limpio = limpiarUsuario(valor);
+        if (!limpio.isEmpty()) {
+            candidatos.add(limpio);
+        }
+        if (limpio.contains(".")) {
+            String[] partes = limpio.split("\\.");
+            if (partes.length >= 2 && !partes[0].isEmpty() && !partes[partes.length - 1].isEmpty()) {
+                candidatos.add((partes[0].substring(0, 1) + partes[partes.length - 1]).toLowerCase(Locale.ROOT));
+            }
+        }
+    }
+
+    private String limpiarUsuario(String valor) {
+        if (valor == null) {
+            return "";
+        }
+        String limpio = valor.trim();
+        int slash = limpio.indexOf('\\');
+        if (slash >= 0 && slash < limpio.length() - 1) {
+            limpio = limpio.substring(slash + 1);
+        }
+        int at = limpio.indexOf('@');
+        if (at > 0) {
+            limpio = limpio.substring(0, at);
+        }
+        return normalizarTexto(limpio).replaceAll("[^a-z0-9.]", "");
+    }
+
+    private String nombreLDAP(Usuario usuarioLDAP, Map<String, String> infoLDAP) {
+        if (infoLDAP != null) {
+            String displayName = infoLDAP.get("displayName");
+            if (displayName != null && !displayName.trim().isEmpty()) {
+                return displayName;
+            }
+        }
+        return usuarioLDAP.getNombreCompleto();
+    }
+
+    private CustodioLocal buscarCustodioPorNombre(Connection conn, String nombre) throws SQLException {
+        if (nombre == null || nombre.trim().isEmpty()) {
+            return null;
+        }
+
+        String nombreNormalizado = normalizarTexto(nombre);
+        String claveNombre = generarClaveNombre(nombre);
+        String sql = "SELECT id_custodio, nombre FROM custodio WHERE activo = 1 ORDER BY nombre";
+        try (PreparedStatement ps = conn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+            while (rs.next()) {
+                String nombreLocal = rs.getString("nombre");
+                if (nombreNormalizado.equals(normalizarTexto(nombreLocal))
+                        || (!claveNombre.isEmpty() && claveNombre.equals(generarClaveNombre(nombreLocal)))) {
+                    CustodioLocal custodio = new CustodioLocal();
+                    custodio.idCustodio = rs.getInt("id_custodio");
+                    custodio.nombre = nombreLocal;
+                    return custodio;
+                }
+            }
+        }
+        return null;
+    }
+
+    private String generarClaveNombre(String nombreCompleto) {
+        String limpio = normalizarTexto(nombreCompleto).replaceAll("[^a-z0-9 ]", " ").trim().replaceAll("\\s+", " ");
+        if (limpio.isEmpty()) {
+            return "";
+        }
+        String[] partes = limpio.split(" ");
+        if (partes.length == 1) {
+            return partes[0];
+        }
+        return (partes[0].substring(0, 1) + partes[partes.length - 1]).replaceAll("[^a-z0-9]", "");
+    }
+
+    private String normalizarTexto(String texto) {
+        return Normalizer.normalize(texto == null ? "" : texto, Normalizer.Form.NFD)
+                .replaceAll("[\\p{InCombiningDiacriticalMarks}]", "")
+                .toLowerCase(Locale.ROOT)
+                .trim();
+    }
+
 // Normaliza el rol ingresado para compararlo con los roles disponibles. Si no reconoce el rol, devuelve "TECNICO" por defecto.
     private String normalizarRol(String rol) {
         String valor = rol == null ? "" : rol.trim().toUpperCase(Locale.ROOT);
@@ -354,5 +507,10 @@ public class UsuarioService {
         String nombreCompleto;
         Integer idCustodio;
         boolean activo;
+    }
+
+    private static class CustodioLocal {
+        Integer idCustodio;
+        String nombre;
     }
 }

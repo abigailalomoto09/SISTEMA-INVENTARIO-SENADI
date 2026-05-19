@@ -8,6 +8,7 @@ import com.mycompany.sistemainventariov3.model.Usuario;
 import com.mycompany.sistemainventariov3.service.UsuarioService;
 import com.mycompany.sistemainventariov3.service.LDAPAuthService;
 import com.mycompany.sistemainventariov3.util.SesionUsuario;
+import com.mycompany.sistemainventariov3.util.LDAPConfig;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.Consumes;
@@ -52,30 +53,52 @@ public class LoginResource {
             Usuario usuario = null;
             String metodoAutenticacion = "BD LOCAL";
 
+            System.out.println("\n═══════════════════════════════════════════════════════════");
+            System.out.println("  INTENTO DE AUTENTICACIÓN - Usuario: " + loginRequest.getUsername());
+            System.out.println("═══════════════════════════════════════════════════════════");
+            
+            // Imprimir configuración LDAP
+            LDAPConfig.printConfig();
+
             // Intentar autenticación contra LDAP primero
             if (USAR_LDAP_PRINCIPAL) {
+                System.out.println("→ Intentando autenticación LDAP...");
                 try {
                     usuario = ldapAuthService.autenticarLDAP(loginRequest.getUsername(), loginRequest.getPassword());
                     metodoAutenticacion = "LDAP (SC_Inventario)";
-                    System.out.println("Autenticación exitosa via LDAP para: " + loginRequest.getUsername());
+                    System.out.println("✓ Autenticación exitosa via LDAP para: " + loginRequest.getUsername());
                 } catch (Exception ldapEx) {
                     // Si LDAP falla, intentar BD local
-                    System.out.println("Autenticación LDAP fallida, intentando BD local: " + ldapEx.getMessage());
+                    System.out.println("⚠ Autenticación LDAP fallida: " + ldapEx.getMessage());
+                    System.out.println("→ Intentando autenticación en BD local...");
                     usuario = usuarioService.autenticar(loginRequest.getUsername(), loginRequest.getPassword(), loginRequest.getRolElegido());
                     metodoAutenticacion = "BD LOCAL";
                 }
             } else {
                 // Usar BD local como principal
+                System.out.println("→ Intentando autenticación en BD local (configuración)...");
                 usuario = usuarioService.autenticar(loginRequest.getUsername(), loginRequest.getPassword(), loginRequest.getRolElegido());
             }
 
             boolean rolSeleccionado = loginRequest.getRolElegido() != null && !loginRequest.getRolElegido().trim().isEmpty();
+            if (rolSeleccionado && usuario.getRolesDisponibles() != null) {
+                String rolElegido = loginRequest.getRolElegido().trim().toUpperCase();
+                if (usuario.getRolesDisponibles().contains(rolElegido)) {
+                    usuario.setRol(rolElegido);
+                }
+            }
             boolean requiereSeleccionPerfil = !rolSeleccionado
                     && usuario.getRolesDisponibles() != null
                     && usuario.getRolesDisponibles().size() > 1;
+            if (!requiereSeleccionPerfil && "CUSTODIO".equals(usuario.getRol()) && usuario.getIdCustodio() == null) {
+                throw new Exception("Usuario LDAP autenticado, pero no esta enlazado a un custodio local. "
+                        + "Revise la tabla usuario/custodio para asociar el usuario AD con id_custodio.");
+            }
             if (!requiereSeleccionPerfil) {
                 SesionUsuario.setUsuarioActual(request, usuario);
             }
+
+            System.out.println("═══════════════════════════════════════════════════════════\n");
 
             JsonObject response = new JsonObject();
             response.addProperty("success", true);
@@ -84,6 +107,11 @@ public class LoginResource {
             response.add("data", construirUsuarioResponse(usuario));
             return Response.ok(response.toString()).build();
         } catch (Exception e) {
+            System.out.println("═══════════════════════════════════════════════════════════");
+            System.out.println(" ERROR DE AUTENTICACIÓN: " + (e.getMessage() != null ? e.getMessage() : "Error desconocido"));
+            e.printStackTrace();
+            System.out.println("═══════════════════════════════════════════════════════════\n");
+            
             JsonObject errorResponse = new JsonObject();
             errorResponse.addProperty("success", false);
             errorResponse.addProperty("error", "AUTH_ERROR");
@@ -175,7 +203,7 @@ public class LoginResource {
             permisos.addProperty("puedeActualizarEstado", true);
             permisos.addProperty("puedeVer", true);
             permisos.addProperty("puedeCrearEquipo", true);
-            permisos.addProperty("puedeEditarCustodio", false);
+            permisos.addProperty("puedeEditarCustodio", true);
             permisos.addProperty("puedeExportarInventario", true);
             permisos.addProperty("puedeVerHistorial", true);
         } else if ("CUSTODIO".equals(rol)) {

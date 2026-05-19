@@ -127,27 +127,20 @@ public class InventarioResource {
     @Path("{id}/custodio")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    public Response actualizarCustodio(@PathParam("id") Integer idEquipo, String json) {
+    public Response actualizarCustodio(@PathParam("id") Integer idEquipo, Map<String, Object> payload) {
         try {
             Usuario usuario = validarAutenticacion();
             validarRoles(usuario, "ADMINISTRADOR", "TECNICO");
 
-            Map<String, Object> payload = gson.fromJson(json, new TypeToken<Map<String, Object>>() {}.getType());
-            if (payload == null) {
-                payload = Collections.emptyMap();
-            }
-            Integer idCustodioNuevo = leerEntero(payload.get("idCustodio"));
-            if (idCustodioNuevo == null) {
-                idCustodioNuevo = leerEntero(payload.get("custodioId"));
-            }
-            if (idCustodioNuevo == null) {
+            if (payload == null || payload.get("idCustodio") == null) {
                 ApiResponse<?> resp = ApiResponse.error("VALIDATION_ERROR", "El id del custodio es obligatorio.");
                 return Response.status(Response.Status.BAD_REQUEST).entity(gson.toJson(resp)).build();
             }
+            Integer idCustodioNuevo = leerEntero(payload.get("idCustodio"));
 
-            String registradoPor = (payload.containsKey("registradoPor") && payload.get("registradoPor") != null
-                    && !String.valueOf(payload.get("registradoPor")).trim().isEmpty())
-                    ? String.valueOf(payload.get("registradoPor")).trim()
+            Object registradoPorObj = payload.get("registradoPor");
+            String registradoPor = (registradoPorObj != null && !String.valueOf(registradoPorObj).trim().isEmpty())
+                    ? String.valueOf(registradoPorObj).trim()
                     : usuario.getUsuario();
 
             InventoryItemDTO item = inventarioJdbcService.actualizarCustodioEquipo(
@@ -178,7 +171,7 @@ public class InventarioResource {
     public Response actualizarEstado(@PathParam("id") Integer idEquipo, String json) {
         try {
             Usuario usuario = validarAutenticacion();
-            validarRoles(usuario, "ADMINISTRADOR");
+            validarRoles(usuario, "ADMINISTRADOR", "TECNICO");
 
             Map<String, Object> payload = gson.fromJson(json, new TypeToken<Map<String, Object>>() {}.getType());
             if (payload == null) {
@@ -247,13 +240,11 @@ public class InventarioResource {
     @Path("{tipo}/{id}")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    public Response actualizar(@PathParam("tipo") String tipo, @PathParam("id") String id, String json) {
+    public Response actualizar(@PathParam("tipo") String tipo, @PathParam("id") Integer idEquipo, Map<String, Object> payload) {
         try {
             Usuario usuario = validarAutenticacion();
             validarRoles(usuario, "ADMINISTRADOR");
 
-            Integer idEquipo = Integer.parseInt(id);
-            Map<String, Object> payload = gson.fromJson(json, new TypeToken<Map<String, Object>>() {}.getType());
             if (payload == null) {
                 payload = Collections.emptyMap();
             }
@@ -281,7 +272,7 @@ public class InventarioResource {
     public Response crear(@PathParam("tipo") String tipo, String json) {
         try {
             Usuario usuario = validarAutenticacion();
-            validarRoles(usuario, "ADMINISTRADOR");
+            validarRoles(usuario, "ADMINISTRADOR", "TECNICO");
 
             Map<String, Object> payload = gson.fromJson(json, new TypeToken<Map<String, Object>>() {}.getType());
             InventoryItemDTO creado = inventarioJdbcService.crearEquipo(tipo, payload);

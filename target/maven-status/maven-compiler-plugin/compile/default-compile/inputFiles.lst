@@ -21,6 +21,7 @@ C:\Users\mayer\Documents\NetBeansProjects\SistemaInventarioV3\src\main\java\com\
 C:\Users\mayer\Documents\NetBeansProjects\SistemaInventarioV3\src\main\java\com\mycompany\sistemainventariov3\resources\LoginResource.java
 C:\Users\mayer\Documents\NetBeansProjects\SistemaInventarioV3\src\main\java\com\mycompany\sistemainventariov3\model\Ubicacion.java
 C:\Users\mayer\Documents\NetBeansProjects\SistemaInventarioV3\src\main\java\com\mycompany\sistemainventariov3\util\EncriptacionUtil.java
+C:\Users\mayer\Documents\NetBeansProjects\SistemaInventarioV3\src\main\java\com\mycompany\sistemainventariov3\LDAPConnectionTest.java
 C:\Users\mayer\Documents\NetBeansProjects\SistemaInventarioV3\src\main\java\senadi\gob\ec\busfonetico\util\LDAP.java
 C:\Users\mayer\Documents\NetBeansProjects\SistemaInventarioV3\src\main\java\com\mycompany\sistemainventariov3\model\HistoricoCambio.java
 C:\Users\mayer\Documents\NetBeansProjects\SistemaInventarioV3\src\main\java\com\mycompany\sistemainventariov3\util\SesionUsuario.java
@@ -30,6 +31,7 @@ C:\Users\mayer\Documents\NetBeansProjects\SistemaInventarioV3\src\main\java\com\
 C:\Users\mayer\Documents\NetBeansProjects\SistemaInventarioV3\src\main\java\com\mycompany\sistemainventariov3\service\HistoricoService.java
 C:\Users\mayer\Documents\NetBeansProjects\SistemaInventarioV3\src\main\java\com\mycompany\sistemainventariov3\service\inventory\InventarioSql.java
 C:\Users\mayer\Documents\NetBeansProjects\SistemaInventarioV3\src\main\java\com\mycompany\sistemainventariov3\model\Licencia.java
+C:\Users\mayer\Documents\NetBeansProjects\SistemaInventarioV3\src\main\java\com\mycompany\sistemainventariov3\util\LDAPConfig.java
 C:\Users\mayer\Documents\NetBeansProjects\SistemaInventarioV3\src\main\java\com\mycompany\sistemainventariov3\dao\PCDAO.java
 C:\Users\mayer\Documents\NetBeansProjects\SistemaInventarioV3\src\main\java\com\mycompany\sistemainventariov3\dao\InfraestructuraDAO.java
 C:\Users\mayer\Documents\NetBeansProjects\SistemaInventarioV3\src\main\java\com\mycompany\sistemainventariov3\bean\LoginBean.java

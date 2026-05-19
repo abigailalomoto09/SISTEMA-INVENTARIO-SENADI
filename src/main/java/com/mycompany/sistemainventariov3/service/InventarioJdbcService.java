@@ -28,6 +28,24 @@ import java.util.Set;
 public class InventarioJdbcService {
     private static final Gson GSON = new Gson();
 
+    // --- Sugerencia: Centralizar nombres de columnas, tablas y valores fijos como constantes ---
+    private static final class DbConstants {
+        // Tablas
+        static final String TABLE_EQUIPO = "equipo";
+        static final String TABLE_CUSTODIO = "custodio";
+        static final String TABLE_UBICACION = "ubicacion";
+        static final String TABLE_AUDITORIA_CUSTODIO = "auditoria_custodio";
+
+        // Columnas
+        static final String COL_ID_EQUIPO = "id_equipo";
+        static final String COL_ID_CUSTODIO_ACTUAL = "id_custodio_actual";
+
+        // Roles
+        static final String ROLE_ADMINISTRADOR = "ADMINISTRADOR";
+        static final String ROLE_SISTEMA = "SISTEMA";
+    }
+    // --- Fin de la sugerencia ---
+
 //Consulta 
     public List<InventoryItemDTO> obtenerInventarioCompleto() throws Exception {
         return consultarInventario(null);
@@ -106,7 +124,7 @@ public class InventarioJdbcService {
 
     public List<String> obtenerValoresDistintos(String campo, String query, Integer limit) throws Exception {
         if (!"marca".equals(campo) && !"modelo".equals(campo)) {
-            throw new IllegalArgumentException("Catalogo no permitido.");
+            throw new IllegalArgumentException("Catálogo no permitido para el campo: " + campo);
         }
         List<String> valores = new ArrayList<>();
         String term = query == null ? "" : query.trim().toLowerCase(Locale.ROOT);
@@ -198,7 +216,7 @@ public class InventarioJdbcService {
     }
 
     private boolean existeTabla(Connection conn, String tabla) throws SQLException {
-        String sql = "SELECT 1 FROM information_schema.tables WHERE table_schema = DATABASE() AND table_name = ? LIMIT 1";
+        String sql = "SELECT 1 FROM information_schema.tables WHERE table_schema = DATABASE() AND table_name = ? LIMIT 1"; // Nota: Esto es correcto para MySQL
         try (PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, tabla);
             try (ResultSet rs = ps.executeQuery()) {
@@ -208,7 +226,7 @@ public class InventarioJdbcService {
     }
 
     public boolean equipoPerteneceACustodio(Integer idEquipo, Integer idCustodio) throws Exception {
-        String sql = "SELECT 1 FROM equipo WHERE id_equipo = ? AND id_custodio_actual = ? LIMIT 1";
+        String sql = "SELECT 1 FROM " + DbConstants.TABLE_EQUIPO + " WHERE " + DbConstants.COL_ID_EQUIPO + " = ? AND " + DbConstants.COL_ID_CUSTODIO_ACTUAL + " = ? LIMIT 1";
         try (Connection conn = DatabaseService.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, idEquipo);
@@ -240,7 +258,7 @@ public class InventarioJdbcService {
                 }
                 List<Map<String, Object>> registroAnterior = construirCamposRegistroHistorial(conn, idEquipo);
 
-                String update = "UPDATE equipo SET id_custodio_actual = ?, ultima_actualizacion = CURDATE() WHERE id_equipo = ?";
+                String update = "UPDATE " + DbConstants.TABLE_EQUIPO + " SET id_custodio_actual = ?, ultima_actualizacion = CURDATE() WHERE id_equipo = ?";
                 try (PreparedStatement ps = conn.prepareStatement(update)) {
                     ps.setInt(1, nuevoIdCustodio);
                     ps.setInt(2, idEquipo);

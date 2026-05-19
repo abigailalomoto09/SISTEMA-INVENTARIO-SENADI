@@ -63,6 +63,12 @@
             <artifactId>jldap</artifactId>
             <version>2009-10-07</version>
         </dependency>
+        <!-- PrimeFaces para la interfaz gráfica y funciones AJAX en el Login -->
+        <dependency>
+            <groupId>org.primefaces</groupId>
+            <artifactId>primefaces</artifactId>
+            <version>10.0.0</version>
+        </dependency>
     </dependencies>
     
      <build>

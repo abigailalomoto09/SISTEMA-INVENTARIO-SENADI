@@ -1,4 +1,4 @@
-﻿(function () {
+﻿﻿(function () {
     const body = document.body;
     const page = body.dataset.page || "login";
     const role = body.dataset.role || null;
@@ -428,7 +428,7 @@
             bindActasEvents();
         }
     }
-
+// Funciones relacionadas con el módulo de inventario
     async function loadInventory() {
         const items = await fetchInventoryType("todos");
         state.inventory = normalizeItems(items);
@@ -1290,7 +1290,7 @@
             </section>
         `;
     }
-
+// Filtra los ítems del inventario para obtener solo aquellos que son de tipo PC o Laptop, dependiendo de la selección actual en el formulario del acta.
     function getActaPcItems() {
         return state.inventory.filter((item) => String(item.tipo || "").toLowerCase() === "pc");
     }
@@ -2822,9 +2822,9 @@
         }
         return {
             puedeEditarTodos: false,
-            puedeActualizarEstado: false,
+            puedeActualizarEstado: true,
             puedeVer: true,
-            puedeCrearEquipo: false,
+            puedeCrearEquipo: true,
             puedeEditarCustodio: true,
             puedeExportarInventario: true,
             puedeVerHistorial: true
@@ -3057,7 +3057,7 @@
             }
         }
     }
-
+// Función para configurar los eventos relacionados con el acta de entrega/recepción
     function bindActaPcEvents() {
         prepareActaEquiposLayout();
         document.getElementById("actaPcSelector")?.addEventListener("change", (event) => {
@@ -3085,7 +3085,7 @@
         document.getElementById("actaPcExportPdfButton")?.addEventListener("click", () => exportActaPc("pdf"));
         document.getElementById("actaPcResetButton")?.addEventListener("click", resetActaPcForm);
     }
-
+// Función para recolectar los criterios de búsqueda del acta desde los campos del formulario
     function collectActaSearchCriteria() {
         return {
             tipo: document.getElementById("actaFilterTipo")?.value || "",
@@ -3102,7 +3102,7 @@
             estado: document.getElementById("actaFilterEstado")?.value || ""
         };
     }
-
+// Función para verificar si un equipo cumple con los criterios de búsqueda del acta
     function matchesActaCriteria(item, criteria) {
         return Object.keys(criteria).every((key) => {
             const expected = String(criteria[key] || "").trim().toLowerCase();
@@ -3112,7 +3112,7 @@
             return String(item[key] || "").toLowerCase().includes(expected);
         });
     }
-
+// Función para ejecutar la búsqueda de equipos en el acta
     function runActaEquipoSearch() {
         const criteria = collectActaSearchCriteria();
         const items = getActaEquipoItems(criteria.tipo).filter((item) => matchesActaCriteria(item, criteria));
@@ -3260,10 +3260,11 @@
     function pageDescription(pageName) {
         const descriptions = {
             dashboard: "Resumen visual del sistema y accesos directos por rol.",
-            inventario: "Consulta y gestiÁ³n del inventario con control por rol.",
+            dashboard: "",
+            inventario: "Consulta y gestión del inventario con control por rol.",
             busqueda: "Busqueda multi-criterio en cliente sobre el inventario cargado.",
-            "nuevo-equipo": "Formulario preparado con los campos definidos en la base de datos.",
-            actas: "Acceso a las actas de mantenimiento y control disponibles en el sistema.",
+            "nuevo-equipo": "",
+            actas: "",
             "acta-equipos": "Formulario para registrar mantenimiento preventivo de equipos.",
             "acta-software": "Formulario para registrar programas y aplicaciones instaladas.",
             "acta-rc": "Formulario para registrar mantenimiento preventivo RC."
@@ -3357,9 +3358,16 @@
             });
         });
         document.getElementById("applyInventoryFilters")?.addEventListener("click", applyInventoryFilters);
+        
+        const btnExcel = document.getElementById("exportInventoryExcel");
+        const btnPdf = document.getElementById("exportInventoryPdf");
+        
         if (canExportInventory()) {
-            document.getElementById("exportInventoryExcel")?.addEventListener("click", () => openExportDialog("excel"));
-            document.getElementById("exportInventoryPdf")?.addEventListener("click", () => openExportDialog("pdf"));
+            btnExcel?.addEventListener("click", () => openExportDialog("excel"));
+            btnPdf?.addEventListener("click", () => openExportDialog("pdf"));
+        } else {
+            if (btnExcel) btnExcel.style.display = "none";
+            if (btnPdf) btnPdf.style.display = "none";
         }
         document.querySelectorAll("[data-sort]").forEach((button) => button.addEventListener("click", () => sortInventory(button.dataset.sort)));
         document.getElementById("prevPage")?.addEventListener("click", () => changePage(-1));
@@ -3440,7 +3448,7 @@
                 `<div>
                     <div style="background:#fff8e1;border:1px solid #ffe082;border-radius:8px;padding:9px 14px;margin-bottom:14px;font-size:13px;color:#7a5f00;display:flex;align-items:center;gap:8px;">
                         <span style="font-size:16px;">AVISO:</span>
-                        <span>Los campos en gris son de <strong>solo lectura</strong>. ùnicamente puede modificar el <strong>custodio</strong>.</span>
+                        <span>Modo solo lectura: únicamente puede modificar el custodio.</span>
                     </div>
                     <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;" id="editFormGrid2">
                         <label class="edit-field"><span>Còdigo SBYE</span><input value="${escapeHtml(item.codigoSbai || "")}" disabled style="${roSt}"></label>
@@ -3462,13 +3470,12 @@
                         <label class="edit-field" style="grid-column:span 2;"><span>Detalle</span><textarea disabled rows="2" style="${roSt}">${escapeHtml(item.observacion || item.caracteristicas || "")}</textarea></label>
                         <hr style="grid-column:span 2;border:none;border-top:1px solid #dce7f3;margin:2px 0 4px;">
                         <label class="edit-field" style="grid-column:span 2;">
-                            <span>Registrado por <em style="color:var(--primary);font-weight:600;font-style:normal;">(requerido)</em></span>
-                            <input id="registradoPorInput" list="listCustodiosSug" autocomplete="off" placeholder="Escriba su nombre completo..." style="font-weight:500;">
-                            <datalist id="listCustodiosSug">${datalistOpts}</datalist>
+                            <span>Registrado por <em style="color:var(--primary);font-weight:600;font-style:normal;">(automático)</em></span>
+                            <input id="registradoPorInput" value="${escapeHtml(state.session.displayName)}" disabled style="${roSt}">
                         </label>
                         <label class="edit-field">
-                            <span>Fecha del cambio</span>
-                            <input type="date" id="fechaCambioInput" value="${hoy}">
+                            <span>Fecha y Hora del cambio</span>
+                            <input type="text" id="fechaCambioInput" value="${new Date().toLocaleString("es-EC")}" disabled style="${roSt}">
                         </label>
                     </div>
                 </div>`,
@@ -3479,16 +3486,15 @@
                         className: "btn btn-primary",
                         onClick: async () => {
                             const sel = document.getElementById("custodioSelectEdit");
-                            const regPor = document.getElementById("registradoPorInput");
+                            const regPor = state.session.displayName;
                             if (!sel?.value) { showToast("Aviso", "Seleccione un custodio.", "warning"); return; }
-                            if (!regPor?.value.trim()) { showToast("Aviso", "Ingrese el nombre de quien registra el cambio.", "warning"); return; }
                             try {
                                 const r = await apiFetch(`/inventario/${item.id}/custodio`, {
                                     method: "PUT",
                                     headers: { "Content-Type": "application/json" },
                                     body: JSON.stringify({
                                         idCustodio: parseInt(sel.value),
-                                        registradoPor: regPor.value.trim()
+                                        registradoPor: regPor
                                     })
                                 });
                                 const p = await r.json();
@@ -4025,6 +4031,3 @@
         window.abrirModalHistorial = abrirModalHistorial;
     }
 })();
-
-
-

@@ -1,9 +1,9 @@
 com\mycompany\sistemainventariov3\dto\ActaMantenimientoPcRequest$Funcionario.class
 com\mycompany\sistemainventariov3\resources\JavaEE8Resource.class
+com\mycompany\sistemainventariov3\service\InventarioJdbcService$DbConstants.class
 com\mycompany\sistemainventariov3\resources\HistoricoResource.class
 com\mycompany\sistemainventariov3\dto\InventoryItemDTO.class
 com\mycompany\sistemainventariov3\model\Impresora.class
-com\mycompany\sistemainventariov3\resources\InventarioResource$4.class
 com\mycompany\sistemainventariov3\service\InventarioJdbcService.class
 com\mycompany\sistemainventariov3\util\SessionRequestFilter.class
 com\mycompany\sistemainventariov3\dao\LicenciaDAO.class
@@ -16,7 +16,6 @@ com\mycompany\sistemainventariov3\ConnectionTest.class
 com\mycompany\sistemainventariov3\model\Escaner.class
 com\mycompany\sistemainventariov3\resources\ActasResource.class
 com\mycompany\sistemainventariov3\dao\InfraestructuraDAO.class
-com\mycompany\sistemainventariov3\resources\InventarioResource$3.class
 com\mycompany\sistemainventariov3\dao\EscanerDAO.class
 com\mycompany\sistemainventariov3\dao\UsuarioDAO.class
 com\mycompany\sistemainventariov3\service\UsuarioService$UsuarioAuthRecord.class
@@ -28,6 +27,7 @@ com\mycompany\sistemainventariov3\model\Custodio.class
 com\mycompany\sistemainventariov3\service\DatabaseService.class
 com\mycompany\sistemainventariov3\model\Laptop.class
 com\mycompany\sistemainventariov3\service\ActaMantenimientoPcDocumentService.class
+com\mycompany\sistemainventariov3\LDAPConnectionTest.class
 com\mycompany\sistemainventariov3\resources\BusquedaResource.class
 com\mycompany\sistemainventariov3\service\LDAPAuthService.class
 com\mycompany\sistemainventariov3\model\Telefono.class
@@ -41,6 +41,7 @@ com\mycompany\sistemainventariov3\model\Usuario.class
 com\mycompany\sistemainventariov3\dao\ProyectorDAO.class
 com\mycompany\sistemainventariov3\util\EncriptacionUtil.class
 com\mycompany\sistemainventariov3\dao\UbicacionDAO.class
+com\mycompany\sistemainventariov3\util\LDAPConfig.class
 com\mycompany\sistemainventariov3\model\Licencia.class
 com\mycompany\sistemainventariov3\model\PC.class
 senadi\gob\ec\busfonetico\util\LDAP.class
@@ -66,5 +67,6 @@ com\mycompany\sistemainventariov3\dto\ActaMantenimientoPcRequest$FirmaRecepcion.
 com\mycompany\sistemainventariov3\dto\ActaMantenimientoPcRequest$EquipoRow.class
 com\mycompany\sistemainventariov3\resources\InventarioResource$2.class
 com\mycompany\sistemainventariov3\dao\ImpresoraDAO.class
+com\mycompany\sistemainventariov3\service\UsuarioService$CustodioLocal.class
 com\mycompany\sistemainventariov3\dao\DAOGenerico.class
 com\mycompany\sistemainventariov3\model\Infraestructura.class

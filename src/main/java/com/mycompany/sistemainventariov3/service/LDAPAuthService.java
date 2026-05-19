@@ -3,127 +3,97 @@ package com.mycompany.sistemainventariov3.service;
 import com.mycompany.sistemainventariov3.model.Usuario;
 import com.mycompany.sistemainventariov3.util.LDAP;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
 /**
- * Servicio de autenticación contra LDAP/Active Directory (SC_Inventario)
- * Integra con la base de datos local para información complementaria
+ * Adapta la validacion LDAP al modelo de sesion de la aplicacion.
  */
 public class LDAPAuthService {
 
     private final LDAP ldap = new LDAP();
+    private final UsuarioService usuarioService = new UsuarioService();
 
     /**
-     * Autentica usuario contra LDAP y obtiene sus roles
-     * @param usuario Usuario sin dominio (ej: "jdoe")
-     * @param password Contraseña
-     * @return Usuario con roles, o null si la autenticación falla
+     * Mantiene compatibilidad con llamadas sin rolElegido.
      */
     public Usuario autenticarLDAP(String usuario, String password) throws Exception {
+        return autenticarLDAP(usuario, password, null);
+    }
+
+    public Usuario autenticarLDAP(String usuario, String password, String rolElegido) throws Exception {
         if (usuario == null || usuario.trim().isEmpty() || password == null || password.trim().isEmpty()) {
-            throw new Exception("Usuario y contraseña son requeridos");
+            throw new Exception("Usuario y contrasena son requeridos");
         }
 
         usuario = usuario.trim();
-
-        // Validar credenciales contra LDAP
-        int resultadoValidacion = ldap.validarIngresoLDAPRestringido(usuario, password);
-
+        int resultadoValidacion = ldap.validarIngresoLDAP_FlexibleGroups(usuario, password);
         if (resultadoValidacion != 1) {
             if (resultadoValidacion == -1) {
-                throw new Exception("El usuario no está autorizado para acceder a SC_Inventario");
-            } else {
-                throw new Exception("Credenciales inválidas");
+                throw new Exception("El usuario no esta autorizado para acceder al sistema. "
+                        + "Verifique que pertenece a SC_Inv_Admin, SC_Inv_Tecnico o SC_Inv_Custodio (o sus equivalentes anteriores).");
             }
+            throw new Exception("Credenciales invalidas o error de conexion con LDAP");
         }
 
-        // Obtener roles desde LDAP
         List<String> rolesLDAP = ldap.obtenerRolesLDAP(usuario, password);
         if (rolesLDAP.isEmpty()) {
-            throw new Exception("No se pudieron obtener los roles del usuario desde LDAP");
+            rolesLDAP.add("CUSTODIO");
         }
 
-        // Obtener información del usuario desde LDAP
+        String rolFinal;
+        if (rolElegido != null && !rolElegido.trim().isEmpty()) {
+            String rolNormalizado = rolElegido.trim().toUpperCase();
+            if (!rolesLDAP.contains(rolNormalizado)) {
+                throw new Exception("No tiene permiso para el rol seleccionado: " + rolNormalizado);
+            }
+            rolFinal = rolNormalizado;
+        } else {
+            rolFinal = rolesLDAP.get(0);
+        }
+
         Map<String, String> infoLDAP = ldap.obtenerInfoUsuarioLDAP(usuario, password);
         String nombreCompleto = infoLDAP.getOrDefault("displayName", usuario);
 
-        // Crear objeto Usuario
-        Usuario u = new Usuario(usuario, null, rolesLDAP.get(0), nombreCompleto, null, true);
+        Usuario u = new Usuario(usuario, null, rolFinal, nombreCompleto, null, true);
         u.setRolesDisponibles(rolesLDAP);
+        enlazarUsuarioConBDLocal(u, infoLDAP);
 
-        // Opcional: Sincronizar con base de datos local
-        sincronizarUsuarioEnBD(u, infoLDAP);
-
-        System.out.println("Autenticación LDAP exitosa para: " + usuario + " con roles: " + rolesLDAP);
+        System.out.println("LDAP login OK: " + usuario
+                + " roles=" + rolesLDAP
+                + " idCustodio=" + u.getIdCustodio());
         return u;
     }
 
-    /**
-     * Autentica sin restricción de grupo (solo valida credenciales)
-     * @param usuario Usuario sin dominio
-     * @param password Contraseña
-     * @return true si las credenciales son válidas
-     */
     public boolean autenticarLDAPSinRestriccion(String usuario, String password) throws Exception {
         if (usuario == null || usuario.trim().isEmpty() || password == null || password.trim().isEmpty()) {
-            throw new Exception("Usuario y contraseña son requeridos");
+            throw new Exception("Usuario y contrasena son requeridos");
         }
-
         return ldap.validarIngresoLDAPSinRestriccion(usuario.trim(), password);
     }
 
-    /**
-     * Obtiene los roles que tiene un usuario en LDAP
-     * @param usuario Usuario sin dominio
-     * @param password Contraseña
-     * @return Lista de roles del usuario
-     */
     public List<String> obtenerRolesLDAP(String usuario, String password) throws Exception {
         if (usuario == null || usuario.trim().isEmpty() || password == null || password.trim().isEmpty()) {
-            throw new Exception("Usuario y contraseña son requeridos");
+            throw new Exception("Usuario y contrasena son requeridos");
         }
-
         return ldap.obtenerRolesLDAP(usuario.trim(), password);
     }
 
-    /**
-     * Obtiene información del usuario desde LDAP
-     * @param usuario Usuario sin dominio
-     * @param password Contraseña
-     * @return Mapa con información del usuario
-     */
     public Map<String, String> obtenerInfoUsuarioLDAP(String usuario, String password) throws Exception {
         if (usuario == null || usuario.trim().isEmpty() || password == null || password.trim().isEmpty()) {
-            throw new Exception("Usuario y contraseña son requeridos");
+            throw new Exception("Usuario y contrasena son requeridos");
         }
-
         return ldap.obtenerInfoUsuarioLDAP(usuario.trim(), password);
     }
 
-    /**
-     * Sincroniza la información del usuario con la base de datos local
-     * Crea o actualiza el registro del usuario en la tabla de usuario
-     */
-    private void sincronizarUsuarioEnBD(Usuario usuarioLDAP, Map<String, String> infoLDAP) {
+    private void enlazarUsuarioConBDLocal(Usuario usuarioLDAP, Map<String, String> infoLDAP) {
         try {
-            // TODO: Implementar lógica de sincronización con BD local
-            // Esto podría:
-            // 1. Crear usuario en BD si no existe
-            // 2. Actualizar información (nombre completo, email, etc)
-            // 3. Sincronizar roles si la tabla usuario tiene columna roles_extra
-
-            System.out.println("Sincronizando usuario " + usuarioLDAP.getUsuario() + " en BD local");
+            usuarioService.enlazarUsuarioLDAPConCustodioLocal(usuarioLDAP, infoLDAP);
         } catch (Exception e) {
-            System.out.println("Error sincronizando usuario en BD: " + e.toString());
-            // No fallar la autenticación si hay problema de sincronización
+            System.out.println("No se pudo enlazar usuario LDAP con custodio local: " + e.getMessage());
         }
     }
 
-    /**
-     * Mapea roles LDAP a roles de aplicación con permisos
-     */
     public static Map<String, Boolean> obtenerPermisosDelRol(String rol) {
         return LDAP.RolPermisos.obtenerPermisos(rol);
     }
