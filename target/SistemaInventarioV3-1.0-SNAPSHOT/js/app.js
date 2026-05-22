@@ -1,4 +1,4 @@
-﻿﻿(function () {
+(function () {
     const body = document.body;
     const page = body.dataset.page || "login";
     const role = body.dataset.role || null;
@@ -438,13 +438,27 @@
     async function fetchInventoryType(type) {
         try {
             const response = await apiFetch(`/inventario/${type}`);
+            if (response.status === 401) {
+                clearDemoSession();
+                window.location.href = `${basePrefix}/index.html`.replace("/pages/index.html", "/index.html");
+                return [];
+            }
             if (!response.ok) {
-                throw new Error(type);
+                let message = "No se pudo cargar el inventario desde el backend.";
+                try {
+                    const payload = await response.json();
+                    if (payload?.message) {
+                        message = payload.message;
+                    }
+                } catch (ignored) {
+                    // Si la respuesta no es JSON, mantenemos el mensaje genérico.
+                }
+                throw new Error(message);
             }
             const payload = await response.json();
             return Array.isArray(payload.data) ? payload.data : [];
         } catch (error) {
-            showToast("Error", "No se pudo cargar el inventario desde el backend.", "danger");
+            showToast("Error", error.message || "No se pudo cargar el inventario desde el backend.", "danger");
             return [];
         }
     }
@@ -765,6 +779,15 @@
 
     function buildTypeOptions() {
         return Object.keys(TYPE_CONFIG)
+            .map((key) => `<option value="${key}">${TYPE_CONFIG[key].label}</option>`)
+            .join("");
+    }
+
+    const ACTA_EQUIPO_TYPES = ["pc", "laptop", "impresora", "proyector", "escaner", "telefono"];
+
+    function buildActaTypeOptions() {
+        return ACTA_EQUIPO_TYPES
+            .filter((key) => TYPE_CONFIG[key])
             .map((key) => `<option value="${key}">${TYPE_CONFIG[key].label}</option>`)
             .join("");
     }
@@ -1098,6 +1121,36 @@
 
     const ACTA_PC_CERTIFICATION_TEXT = "Certifico que los elementos detallados en el presente documento me han sido entregados para mi cuidado y custodia con el propósito de cumplir con las tareas y asignaciones propias de mi cargo en la Institución, siendo estos de mi única y exclusiva responsabilidad. Me comprometo a usar correctamente los recursos, y solo para los fines establecidos, a no instalar ni permitir la instalación de software por personal ajeno al área de soporte de DTIC; ante cualquier novedad daré conocimiento a los técnicos de DTIC.";
 
+    const ACTA_IMPRESORA_ACTIVITY_ROWS = [
+        "LIMPIEZA DE EQUIPO",
+        "CALIBRACIÓN",
+        "VERIFICACIÓN DE ALIMENTACIÓN",
+        "ASPIRACIÓN Y SOPLETEO DE PARTES ELECTRÓNICAS",
+        "ESTADO DE CONSUMIBLE"
+    ];
+
+    const ACTA_ESCANER_ACTIVITY_ROWS = [
+        "LIMPIEZA DE EQUIPO",
+        "CALIBRACIÓN",
+        "VERIFICACIÓN DE ALIMENTACIÓN",
+        "ASPIRACIÓN Y SOPLETEO DE PARTES ELECTRÓNICAS"
+    ];
+
+    const ACTA_PROYECTOR_ACTIVITY_ROWS = [
+        "LIMPIEZA DE EQUIPO",
+        "COMPROBACIÓN DE LÁMPARA",
+        "ALINEACIÓN Y ENFOQUE",
+        "VERIFICACIÓN DE ALIMENTACIÓN",
+        "ASPIRACIÓN Y SOPLETEO DE PARTES ELECTRÓNICAS"
+    ];
+
+    const ACTA_TELEFONO_ACTIVITY_ROWS = [
+        "LIMPIEZA EXTERNA DE EQUIPO",
+        "ASPIRACIÓN Y SOPLETEO DE PARTES ELECTRÓNICAS",
+        "LIMPIEZA DE PANTALLA LED",
+        "LIMPIEZA DE PUERTOS RJ45"
+    ];
+
     function actaAssetPath(name) {
         return `${basePrefix}/assets/actas/${name}`;
     }
@@ -1146,6 +1199,7 @@
                     <div id="actaEquipoResultados" class="acta-search-results hidden"></div>
                 </div>
                 <form id="actaPcForm" class="acta-pc-form hidden">
+                    <input type="hidden" id="actaPcSelector">
                     <div class="acta-sheet">
                         <div class="acta-sheet__header">
                             <img src="${actaAssetPath("logo_ecuador.png")}" alt="República del Ecuador" class="acta-sheet__logo acta-sheet__logo--ecuador">
@@ -1279,12 +1333,450 @@
                         </div>
                     </div>
                 </form>
+                <form id="actaImpresoraForm" class="acta-pc-form hidden">
+                    <input type="hidden" id="actaImpresoraSelector">
+                    <div class="acta-sheet">
+                        <div class="acta-sheet__header">
+                            <img src="${actaAssetPath("logo_ecuador.png")}" alt="República del Ecuador" class="acta-sheet__logo acta-sheet__logo--ecuador">
+                            <img src="${actaAssetPath("logo_senadi.png")}" alt="Servicio Nacional de Derechos Intelectuales" class="acta-sheet__logo acta-sheet__logo--senadi">
+                        </div>
+                        <div class="acta-sheet__titles">
+                            <h3>SERVICIO NACIONAL DE DERECHOS INTELECTUALES</h3>
+                            <h4>DIRECCIÓN DE TECNOLOGÍAS DE LA INFORMACIÓN Y COMUNICACIÓN</h4>
+                            <h2>FORMULARIO DE MANTENIMIENTO PREVENTIVO DE EQUIPOS</h2>
+                        </div>
+                        <table class="acta-table">
+                            <tr><th colspan="6">DATOS DEL FUNCIONARIO SENADI</th></tr>
+                            <tr>
+                                <td class="acta-table__label">NOMBRE</td>
+                                <td colspan="2"><input id="actaImpresoraFuncionarioNombre" name="impresoraFuncionarioNombre" class="acta-input" required></td>
+                                <td class="acta-table__label">CARGO</td>
+                                <td><input id="actaImpresoraFuncionarioCargo" name="impresoraFuncionarioCargo" class="acta-input" required></td>
+                                <td class="acta-table__label-value"><input id="actaImpresoraFuncionarioExtension" name="impresoraFuncionarioExtension" class="acta-input" placeholder="Nº EXT."></td>
+                            </tr>
+                            <tr>
+                                <td class="acta-table__label">CORREO</td>
+                                <td colspan="2"><input id="actaImpresoraFuncionarioCorreo" name="impresoraFuncionarioCorreo" class="acta-input" type="email" required></td>
+                                <td class="acta-table__label">ÁREA</td>
+                                <td><input id="actaImpresoraFuncionarioArea" name="impresoraFuncionarioArea" class="acta-input" required></td>
+                                <td class="acta-table__label-value"><input id="actaImpresoraFuncionarioEdificio" name="impresoraFuncionarioEdificio" class="acta-input" placeholder="EDIFICIO" required></td>
+                            </tr>
+                        </table>
+                        <table class="acta-table acta-table--equipos">
+                            <tr><th colspan="5">EQUIPOS</th></tr>
+                            <tr>
+                                <th>TIPO</th>
+                                <th>MARCA</th>
+                                <th>MODELO</th>
+                                <th>SERIAL</th>
+                                <th>CÓDIGO</th>
+                            </tr>
+                            <tr>
+                                <td><input id="actaImpresoraEquipoTipo" class="acta-input" value="IMPRESORA"></td>
+                                <td><input id="actaImpresoraEquipoMarca" class="acta-input"></td>
+                                <td><input id="actaImpresoraEquipoModelo" class="acta-input"></td>
+                                <td><input id="actaImpresoraEquipoSerial" class="acta-input"></td>
+                                <td><input id="actaImpresoraEquipoCodigo" class="acta-input" required></td>
+                            </tr>
+                        </table>
+                        <table class="acta-table acta-table--actividades">
+                            <tr><th colspan="4" class="acta-table__title-dark">IMPRESORA</th></tr>
+                            <tr>
+                                <th rowspan="2" class="acta-table__label-large">ACTIVIDADES DE MANTENIMIENTOS A REALIZAR</th>
+                                <th colspan="3">INSTALADO</th>
+                            </tr>
+                            <tr>
+                                <th>FECHA</th>
+                                <th>ESTADO</th>
+                                <th>OBSERVACIÓN</th>
+                            </tr>
+                            ${ACTA_IMPRESORA_ACTIVITY_ROWS.map((activity, index) => `
+                                <tr>
+                                    <td class="acta-table__activity">${activity}</td>
+                                    <td><input id="actaImpresoraActividadFecha${index}" class="acta-input" type="date"></td>
+                                    <td><input id="actaImpresoraActividadEstado${index}" class="acta-input"></td>
+                                    <td><textarea id="actaImpresoraActividadObservacion${index}" class="acta-input acta-input--textarea" rows="2"></textarea></td>
+                                </tr>
+                            `).join("")}
+                        </table>
+                        <p class="acta-certification">${ACTA_PC_CERTIFICATION_TEXT}</p>
+                        <table class="acta-table acta-table--firma">
+                            <tr><th colspan="2">ENTREGA RECEPCION DE EQUIPO</th></tr>
+                            <tr>
+                                <th>ENTREGA</th>
+                                <th>RECIBE</th>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <label class="acta-signature-field">Nombre:
+                                        <input id="actaImpresoraEntregaNombre" class="acta-input" required>
+                                    </label>
+                                </td>
+                                <td>
+                                    <label class="acta-signature-field">Nombre:
+                                        <input id="actaImpresoraRecibeNombre" class="acta-input" required>
+                                    </label>
+                                </td>
+                            </tr>
+                            <tr class="acta-table__row--firma">
+                                <td>
+                                    <label class="acta-signature-field">Firma:
+                                        <input id="actaImpresoraEntregaFirma" class="acta-input">
+                                    </label>
+                                </td>
+                                <td>
+                                    <label class="acta-signature-field">Firma:
+                                        <input id="actaImpresoraRecibeFirma" class="acta-input">
+                                    </label>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <label class="acta-signature-field">Fecha:
+                                        <input id="actaImpresoraEntregaFecha" class="acta-input" type="date" required>
+                                    </label>
+                                </td>
+                                <td>
+                                    <label class="acta-signature-field">Fecha:
+                                        <input id="actaImpresoraRecibeFecha" class="acta-input" type="date" required>
+                                    </label>
+                                </td>
+                            </tr>
+                        </table>
+                        <div class="acta-sheet__footer">
+                            <div class="acta-sheet__footer-text">
+                                <span>Dirección: Av. República E7-197 y Diego de Almagro — Edificio FORUM 300</span>
+                                <span>Código postal: 170518 / Quito — Ecuador</span>
+                                <span>Teléfono: +539-2 394 0000</span>
+                                <span>www.derechosintelectuales.gob.ec</span>
+                            </div>
+                            <img src="${actaAssetPath("logo_nuevo_ecuador.png")}" alt="El Nuevo Ecuador" class="acta-sheet__footer-logo">
+                        </div>
+                    </div>
+                </form>
+                <form id="actaEscanerForm" class="acta-pc-form hidden">
+                    <input type="hidden" id="actaEscanerSelector">
+                    <div class="acta-sheet">
+                        <div class="acta-sheet__header">
+                            <img src="${actaAssetPath("logo_ecuador.png")}" alt="República del Ecuador" class="acta-sheet__logo acta-sheet__logo--ecuador">
+                            <img src="${actaAssetPath("logo_senadi.png")}" alt="Servicio Nacional de Derechos Intelectuales" class="acta-sheet__logo acta-sheet__logo--senadi">
+                        </div>
+                        <div class="acta-sheet__titles">
+                            <h3>SERVICIO NACIONAL DE DERECHOS INTELECTUALES</h3>
+                            <h4>DIRECCIÓN DE TECNOLOGÍAS DE LA INFORMACIÓN Y COMUNICACIÓN</h4>
+                            <h2>FORMULARIO DE MANTENIMIENTO PREVENTIVO DE EQUIPOS</h2>
+                        </div>
+                        <table class="acta-table">
+                            <tr><th colspan="6">DATOS DEL FUNCIONARIO SENADI</th></tr>
+                            <tr>
+                                <td class="acta-table__label">NOMBRE</td>
+                                <td colspan="2"><input id="actaEscanerFuncionarioNombre" name="escanerFuncionarioNombre" class="acta-input" required></td>
+                                <td class="acta-table__label">CARGO</td>
+                                <td><input id="actaEscanerFuncionarioCargo" name="escanerFuncionarioCargo" class="acta-input" required></td>
+                                <td class="acta-table__label-value"><input id="actaEscanerFuncionarioExtension" name="escanerFuncionarioExtension" class="acta-input" placeholder="Nº EXT."></td>
+                            </tr>
+                            <tr>
+                                <td class="acta-table__label">CORREO</td>
+                                <td colspan="2"><input id="actaEscanerFuncionarioCorreo" name="escanerFuncionarioCorreo" class="acta-input" type="email" required></td>
+                                <td class="acta-table__label">ÁREA</td>
+                                <td><input id="actaEscanerFuncionarioArea" name="escanerFuncionarioArea" class="acta-input" required></td>
+                                <td class="acta-table__label-value"><input id="actaEscanerFuncionarioEdificio" name="escanerFuncionarioEdificio" class="acta-input" placeholder="EDIFICIO" required></td>
+                            </tr>
+                        </table>
+                        <table class="acta-table acta-table--equipos">
+                            <tr><th colspan="5">EQUIPOS</th></tr>
+                            <tr>
+                                <th>TIPO</th><th>MARCA</th><th>MODELO</th><th>SERIAL</th><th>CÓDIGO</th>
+                            </tr>
+                            <tr>
+                                <td><input id="actaEscanerEquipoTipo" class="acta-input" value="ESCÁNER"></td>
+                                <td><input id="actaEscanerEquipoMarca" class="acta-input"></td>
+                                <td><input id="actaEscanerEquipoModelo" class="acta-input"></td>
+                                <td><input id="actaEscanerEquipoSerial" class="acta-input"></td>
+                                <td><input id="actaEscanerEquipoCodigo" class="acta-input" required></td>
+                            </tr>
+                        </table>
+                        <table class="acta-table acta-table--actividades">
+                            <tr><th colspan="4" class="acta-table__title-dark">ESCÁNER</th></tr>
+                            <tr>
+                                <th rowspan="2" class="acta-table__label-large">ACTIVIDADES DE MANTENIMIENTOS A REALIZAR</th>
+                                <th colspan="3">INSTALADO</th>
+                            </tr>
+                            <tr><th>FECHA</th><th>ESTADO</th><th>OBSERVACIÓN</th></tr>
+                            ${ACTA_ESCANER_ACTIVITY_ROWS.map((activity, index) => `
+                                <tr>
+                                    <td class="acta-table__activity">${activity}</td>
+                                    <td><input id="actaEscanerActividadFecha${index}" class="acta-input" type="date"></td>
+                                    <td><input id="actaEscanerActividadEstado${index}" class="acta-input"></td>
+                                    <td><textarea id="actaEscanerActividadObservacion${index}" class="acta-input acta-input--textarea" rows="2"></textarea></td>
+                                </tr>
+                            `).join("")}
+                        </table>
+                        <p class="acta-certification">${ACTA_PC_CERTIFICATION_TEXT}</p>
+                        <table class="acta-table acta-table--firma">
+                            <tr><th colspan="2">ENTREGA RECEPCION DE EQUIPO</th></tr>
+                            <tr><th>ENTREGA</th><th>RECIBE</th></tr>
+                            <tr>
+                                <td><label class="acta-signature-field">Nombre:<input id="actaEscanerEntregaNombre" class="acta-input" required></label></td>
+                                <td><label class="acta-signature-field">Nombre:<input id="actaEscanerRecibeNombre" class="acta-input" required></label></td>
+                            </tr>
+                            <tr class="acta-table__row--firma">
+                                <td><label class="acta-signature-field">Firma:<input id="actaEscanerEntregaFirma" class="acta-input"></label></td>
+                                <td><label class="acta-signature-field">Firma:<input id="actaEscanerRecibeFirma" class="acta-input"></label></td>
+                            </tr>
+                            <tr>
+                                <td><label class="acta-signature-field">Fecha:<input id="actaEscanerEntregaFecha" class="acta-input" type="date" required></label></td>
+                                <td><label class="acta-signature-field">Fecha:<input id="actaEscanerRecibeFecha" class="acta-input" type="date" required></label></td>
+                            </tr>
+                        </table>
+                        <div class="acta-sheet__footer">
+                            <div class="acta-sheet__footer-text">
+                                <span>Dirección: Av. República E7-197 y Diego de Almagro — Edificio FORUM 300</span>
+                                <span>Código postal: 170518 / Quito — Ecuador</span>
+                                <span>Teléfono: +539-2 394 0000</span>
+                                <span>www.derechosintelectuales.gob.ec</span>
+                            </div>
+                            <img src="${actaAssetPath("logo_nuevo_ecuador.png")}" alt="El Nuevo Ecuador" class="acta-sheet__footer-logo">
+                        </div>
+                    </div>
+                </form>
+                <form id="actaTelefonoForm" class="acta-pc-form hidden">
+                    <input type="hidden" id="actaTelefonoSelector">
+                    <div class="acta-sheet">
+                        <div class="acta-sheet__header">
+                            <img src="${actaAssetPath("logo_ecuador.png")}" alt="República del Ecuador" class="acta-sheet__logo acta-sheet__logo--ecuador">
+                            <img src="${actaAssetPath("logo_senadi.png")}" alt="Servicio Nacional de Derechos Intelectuales" class="acta-sheet__logo acta-sheet__logo--senadi">
+                        </div>
+                        <div class="acta-sheet__titles">
+                            <h3>SERVICIO NACIONAL DE DERECHOS INTELECTUALES</h3>
+                            <h4>DIRECCIÓN DE TECNOLOGÍAS DE LA INFORMACIÓN Y COMUNICACIÓN</h4>
+                            <h2>FORMULARIO DE MANTENIMIENTO PREVENTIVO DE EQUIPOS</h2>
+                        </div>
+                        <table class="acta-table">
+                            <tr><th colspan="6">DATOS DEL FUNCIONARIO SENADI</th></tr>
+                            <tr>
+                                <td class="acta-table__label">NOMBRE</td>
+                                <td colspan="2"><input id="actaTelefonoFuncionarioNombre" name="telefonoFuncionarioNombre" class="acta-input" required></td>
+                                <td class="acta-table__label">CARGO</td>
+                                <td><input id="actaTelefonoFuncionarioCargo" name="telefonoFuncionarioCargo" class="acta-input" required></td>
+                                <td class="acta-table__label-value"><input id="actaTelefonoFuncionarioExtension" name="telefonoFuncionarioExtension" class="acta-input" placeholder="Nº EXT."></td>
+                            </tr>
+                            <tr>
+                                <td class="acta-table__label">CORREO</td>
+                                <td colspan="2"><input id="actaTelefonoFuncionarioCorreo" name="telefonoFuncionarioCorreo" class="acta-input" type="email" required></td>
+                                <td class="acta-table__label">ÁREA</td>
+                                <td><input id="actaTelefonoFuncionarioArea" name="telefonoFuncionarioArea" class="acta-input" required></td>
+                                <td class="acta-table__label-value"><input id="actaTelefonoFuncionarioEdificio" name="telefonoFuncionarioEdificio" class="acta-input" placeholder="EDIFICIO" required></td>
+                            </tr>
+                        </table>
+                        <table class="acta-table acta-table--equipos">
+                            <tr><th colspan="5">EQUIPOS</th></tr>
+                            <tr>
+                                <th>TIPO</th><th>MARCA</th><th>MODELO</th><th>SERIAL</th><th>CÓDIGO</th>
+                            </tr>
+                            <tr>
+                                <td><input id="actaTelefonoEquipoTipo" class="acta-input" value="TELÉFONO IP"></td>
+                                <td><input id="actaTelefonoEquipoMarca" class="acta-input"></td>
+                                <td><input id="actaTelefonoEquipoModelo" class="acta-input"></td>
+                                <td><input id="actaTelefonoEquipoSerial" class="acta-input"></td>
+                                <td><input id="actaTelefonoEquipoCodigo" class="acta-input" required></td>
+                            </tr>
+                        </table>
+                        <table class="acta-table acta-table--actividades">
+                            <tr><th colspan="4" class="acta-table__title-dark">TELÉFONO IP</th></tr>
+                            <tr>
+                                <th rowspan="2" class="acta-table__label-large">ACTIVIDADES DE MANTENIMIENTOS A REALIZAR</th>
+                                <th colspan="3">INSTALADO</th>
+                            </tr>
+                            <tr><th>FECHA</th><th>ESTADO</th><th>OBSERVACIÓN</th></tr>
+                            ${ACTA_TELEFONO_ACTIVITY_ROWS.map((activity, index) => `
+                                <tr>
+                                    <td class="acta-table__activity">${activity}</td>
+                                    <td><input id="actaTelefonoActividadFecha${index}" class="acta-input" type="date"></td>
+                                    <td><input id="actaTelefonoActividadEstado${index}" class="acta-input"></td>
+                                    <td><textarea id="actaTelefonoActividadObservacion${index}" class="acta-input acta-input--textarea" rows="2"></textarea></td>
+                                </tr>
+                            `).join("")}
+                        </table>
+                        <p class="acta-certification">${ACTA_PC_CERTIFICATION_TEXT}</p>
+                        <table class="acta-table acta-table--firma">
+                            <tr><th colspan="2">ENTREGA RECEPCION DE EQUIPO</th></tr>
+                            <tr><th>ENTREGA</th><th>RECIBE</th></tr>
+                            <tr>
+                                <td><label class="acta-signature-field">Nombre:<input id="actaTelefonoEntregaNombre" class="acta-input" required></label></td>
+                                <td><label class="acta-signature-field">Nombre:<input id="actaTelefonoRecibeNombre" class="acta-input" required></label></td>
+                            </tr>
+                            <tr class="acta-table__row--firma">
+                                <td><label class="acta-signature-field">Firma:<input id="actaTelefonoEntregaFirma" class="acta-input"></label></td>
+                                <td><label class="acta-signature-field">Firma:<input id="actaTelefonoRecibeFirma" class="acta-input"></label></td>
+                            </tr>
+                            <tr>
+                                <td><label class="acta-signature-field">Fecha:<input id="actaTelefonoEntregaFecha" class="acta-input" type="date" required></label></td>
+                                <td><label class="acta-signature-field">Fecha:<input id="actaTelefonoRecibeFecha" class="acta-input" type="date" required></label></td>
+                            </tr>
+                        </table>
+                        <div class="acta-sheet__footer">
+                            <div class="acta-sheet__footer-text">
+                                <span>Dirección: Av. República E7-197 y Diego de Almagro — Edificio FORUM 300</span>
+                                <span>Código postal: 170518 / Quito — Ecuador</span>
+                                <span>Teléfono: +539-2 394 0000</span>
+                                <span>www.derechosintelectuales.gob.ec</span>
+                            </div>
+                            <img src="${actaAssetPath("logo_nuevo_ecuador.png")}" alt="El Nuevo Ecuador" class="acta-sheet__footer-logo">
+                        </div>
+                    </div>
+                </form>
+                <form id="actaProyectorForm" class="acta-pc-form hidden">
+                    <input type="hidden" id="actaProyectorSelector">
+                    <div class="acta-sheet">
+                        <div class="acta-sheet__header">
+                            <img src="${actaAssetPath("logo_ecuador.png")}" alt="República del Ecuador" class="acta-sheet__logo acta-sheet__logo--ecuador">
+                            <img src="${actaAssetPath("logo_senadi.png")}" alt="Servicio Nacional de Derechos Intelectuales" class="acta-sheet__logo acta-sheet__logo--senadi">
+                        </div>
+                        <div class="acta-sheet__titles">
+                            <h3>SERVICIO NACIONAL DE DERECHOS INTELECTUALES</h3>
+                            <h4>DIRECCIÓN DE TECNOLOGÍAS DE LA INFORMACIÓN Y COMUNICACIÓN</h4>
+                            <h2>FORMULARIO DE MANTENIMIENTO PREVENTIVO DE EQUIPOS</h2>
+                        </div>
+                        <table class="acta-table">
+                            <tr><th colspan="6">DATOS DEL FUNCIONARIO SENADI</th></tr>
+                            <tr>
+                                <td class="acta-table__label">NOMBRE</td>
+                                <td colspan="2"><input id="actaProyectorFuncionarioNombre" name="proyectorFuncionarioNombre" class="acta-input" required></td>
+                                <td class="acta-table__label">CARGO</td>
+                                <td><input id="actaProyectorFuncionarioCargo" name="proyectorFuncionarioCargo" class="acta-input" required></td>
+                                <td class="acta-table__label-value"><input id="actaProyectorFuncionarioExtension" name="proyectorFuncionarioExtension" class="acta-input" placeholder="Nº EXT."></td>
+                            </tr>
+                            <tr>
+                                <td class="acta-table__label">CORREO</td>
+                                <td colspan="2"><input id="actaProyectorFuncionarioCorreo" name="proyectorFuncionarioCorreo" class="acta-input" type="email" required></td>
+                                <td class="acta-table__label">ÁREA</td>
+                                <td><input id="actaProyectorFuncionarioArea" name="proyectorFuncionarioArea" class="acta-input" required></td>
+                                <td class="acta-table__label-value"><input id="actaProyectorFuncionarioEdificio" name="proyectorFuncionarioEdificio" class="acta-input" placeholder="EDIFICIO" required></td>
+                            </tr>
+                        </table>
+                        <table class="acta-table acta-table--equipos">
+                            <tr><th colspan="5">EQUIPOS</th></tr>
+                            <tr>
+                                <th>TIPO</th>
+                                <th>MARCA</th>
+                                <th>MODELO</th>
+                                <th>SERIAL</th>
+                                <th>CÓDIGO</th>
+                            </tr>
+                            <tr>
+                                <td><input id="actaProyectorEquipoTipo" class="acta-input" value="PROYECTOR"></td>
+                                <td><input id="actaProyectorEquipoMarca" class="acta-input"></td>
+                                <td><input id="actaProyectorEquipoModelo" class="acta-input"></td>
+                                <td><input id="actaProyectorEquipoSerial" class="acta-input"></td>
+                                <td><input id="actaProyectorEquipoCodigo" class="acta-input" required></td>
+                            </tr>
+                        </table>
+                        <table class="acta-table acta-table--actividades">
+                            <tr><th colspan="4" class="acta-table__title-dark">PROYECTOR</th></tr>
+                            <tr>
+                                <th rowspan="2" class="acta-table__label-large">ACTIVIDADES DE MANTENIMIENTOS A REALIZAR</th>
+                                <th colspan="3">INSTALADO</th>
+                            </tr>
+                            <tr>
+                                <th>FECHA</th>
+                                <th>ESTADO</th>
+                                <th>OBSERVACIÓN</th>
+                            </tr>
+                            ${ACTA_PROYECTOR_ACTIVITY_ROWS.map((activity, index) => `
+                                <tr>
+                                    <td class="acta-table__activity">${activity}</td>
+                                    <td><input id="actaProyectorActividadFecha${index}" class="acta-input" type="date"></td>
+                                    <td><input id="actaProyectorActividadEstado${index}" class="acta-input"></td>
+                                    <td><textarea id="actaProyectorActividadObservacion${index}" class="acta-input acta-input--textarea" rows="2"></textarea></td>
+                                </tr>
+                            `).join("")}
+                        </table>
+                        <p class="acta-certification">${ACTA_PC_CERTIFICATION_TEXT}</p>
+                        <table class="acta-table acta-table--firma">
+                            <tr><th colspan="2">ENTREGA RECEPCION DE EQUIPO</th></tr>
+                            <tr>
+                                <th>ENTREGA</th>
+                                <th>RECIBE</th>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <label class="acta-signature-field">Nombre:
+                                        <input id="actaProyectorEntregaNombre" class="acta-input" required>
+                                    </label>
+                                </td>
+                                <td>
+                                    <label class="acta-signature-field">Nombre:
+                                        <input id="actaProyectorRecibeNombre" class="acta-input" required>
+                                    </label>
+                                </td>
+                            </tr>
+                            <tr class="acta-table__row--firma">
+                                <td>
+                                    <label class="acta-signature-field">Firma:
+                                        <input id="actaProyectorEntregaFirma" class="acta-input">
+                                    </label>
+                                </td>
+                                <td>
+                                    <label class="acta-signature-field">Firma:
+                                        <input id="actaProyectorRecibeFirma" class="acta-input">
+                                    </label>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <label class="acta-signature-field">Fecha:
+                                        <input id="actaProyectorEntregaFecha" class="acta-input" type="date" required>
+                                    </label>
+                                </td>
+                                <td>
+                                    <label class="acta-signature-field">Fecha:
+                                        <input id="actaProyectorRecibeFecha" class="acta-input" type="date" required>
+                                    </label>
+                                </td>
+                            </tr>
+                        </table>
+                        <div class="acta-sheet__footer">
+                            <div class="acta-sheet__footer-text">
+                                <span>Dirección: Av. República E7-197 y Diego de Almagro — Edificio FORUM 300</span>
+                                <span>Código postal: 170518 / Quito — Ecuador</span>
+                                <span>Teléfono: +539-2 394 0000</span>
+                                <span>www.derechosintelectuales.gob.ec</span>
+                            </div>
+                            <img src="${actaAssetPath("logo_nuevo_ecuador.png")}" alt="El Nuevo Ecuador" class="acta-sheet__footer-logo">
+                        </div>
+                    </div>
+                </form>
                 <div id="actaFormContainer" class="acta-toolbar hidden">
-                    <div class="acta-toolbar__actions">
+                    <div class="acta-toolbar__actions" id="actaPcToolbarActions">
                         <button type="button" class="btn btn-primary" id="actaPcPreviewButton">Previsualizar</button>
                         <button type="button" class="btn btn-secondary" id="actaPcExportDocxButton">Exportar DOCX</button>
                         <button type="button" class="btn btn-secondary" id="actaPcExportPdfButton">Exportar PDF</button>
                         <button type="button" class="btn btn-secondary" id="actaPcResetButton">Limpiar</button>
+                    </div>
+                    <div class="acta-toolbar__actions hidden" id="actaImpresoraToolbarActions">
+                        <button type="button" class="btn btn-primary" id="actaImpresoraPreviewButton">Previsualizar</button>
+                        <button type="button" class="btn btn-secondary" id="actaImpresoraExportDocxButton">Exportar DOCX</button>
+                        <button type="button" class="btn btn-secondary" id="actaImpresoraExportPdfButton">Exportar PDF</button>
+                        <button type="button" class="btn btn-secondary" id="actaImpresoraResetButton">Limpiar</button>
+                    </div>
+                    <div class="acta-toolbar__actions hidden" id="actaEscanerToolbarActions">
+                        <button type="button" class="btn btn-primary" id="actaEscanerPreviewButton">Previsualizar</button>
+                        <button type="button" class="btn btn-secondary" id="actaEscanerExportDocxButton">Exportar DOCX</button>
+                        <button type="button" class="btn btn-secondary" id="actaEscanerExportPdfButton">Exportar PDF</button>
+                        <button type="button" class="btn btn-secondary" id="actaEscanerResetButton">Limpiar</button>
+                    </div>
+                    <div class="acta-toolbar__actions hidden" id="actaTelefonoToolbarActions">
+                        <button type="button" class="btn btn-primary" id="actaTelefonoPreviewButton">Previsualizar</button>
+                        <button type="button" class="btn btn-secondary" id="actaTelefonoExportDocxButton">Exportar DOCX</button>
+                        <button type="button" class="btn btn-secondary" id="actaTelefonoExportPdfButton">Exportar PDF</button>
+                        <button type="button" class="btn btn-secondary" id="actaTelefonoResetButton">Limpiar</button>
+                    </div>
+                    <div class="acta-toolbar__actions hidden" id="actaProyectorToolbarActions">
+                        <button type="button" class="btn btn-primary" id="actaProyectorPreviewButton">Previsualizar</button>
+                        <button type="button" class="btn btn-secondary" id="actaProyectorExportDocxButton">Exportar DOCX</button>
+                        <button type="button" class="btn btn-secondary" id="actaProyectorExportPdfButton">Exportar PDF</button>
+                        <button type="button" class="btn btn-secondary" id="actaProyectorResetButton">Limpiar</button>
                     </div>
                 </div>
             </section>
@@ -1316,16 +1808,16 @@
         if (!container) {
             return;
         }
-        // Mostrar/ocultar formulario según si hay resultados
         const formContainer = document.getElementById("actaFormContainer");
-        const formElement = document.getElementById("actaPcForm");
+        const selectedType = getActaSelectedType();
+        const formMap = { impresora: "actaImpresoraForm", proyector: "actaProyectorForm", escaner: "actaEscanerForm", telefono: "actaTelefonoForm" };
+        const activeFormId = formMap[selectedType] || "actaPcForm";
+        const allFormIds = ["actaPcForm", "actaImpresoraForm", "actaProyectorForm", "actaEscanerForm", "actaTelefonoForm"];
         if (items.length > 0) {
             if (container) container.classList.remove("hidden");
-            if (formElement) formElement.classList.remove("hidden");
-        } else {
-            if (formContainer) formContainer.classList.add("hidden");
-            if (formElement) formElement.classList.add("hidden");
         }
+        allFormIds.forEach((id) => document.getElementById(id)?.classList.add("hidden"));
+        if (formContainer) formContainer.classList.add("hidden");
         if (!items.length) {
             container.classList.add("hidden");
             container.innerHTML = '<div class="empty-state">Ingrese un criterio de búsqueda o cambie el tipo de equipo.</div>';
@@ -1375,10 +1867,10 @@
     }
 
     function clearSelectedActaEquipo() {
-        const selector = document.getElementById("actaPcSelector");
-        if (selector) {
-            selector.value = "";
-        }
+        ["actaPcSelector", "actaImpresoraSelector", "actaProyectorSelector", "actaEscanerSelector", "actaTelefonoSelector"].forEach((id) => {
+            const el = document.getElementById(id);
+            if (el) el.value = "";
+        });
         document.querySelectorAll(".acta-search-card").forEach((card) => card.classList.remove("is-selected"));
     }
 
@@ -1480,17 +1972,17 @@
                     <tr><th colspan="6">DATOS DEL FUNCIONARIO SENADI</th></tr>
                     <tr>
                         <td class="acta-table__label">NOMBRE</td>
-                        <td colspan="2">${escapeHtml(funcionario.nombre || "")}</td>
+                        <td>${escapeHtml(funcionario.nombre || "")}</td>
                         <td class="acta-table__label">CARGO</td>
                         <td>${escapeHtml(funcionario.cargo || "")}</td>
-                        <td>${escapeHtml(funcionario.extension || "")}</td>
+                        <td class="acta-table__label">N&#176; EXT.</td><td>${escapeHtml(funcionario.extension || "")}</td>
                     </tr>
                     <tr>
                         <td class="acta-table__label">CORREO</td>
-                        <td colspan="2">${escapeHtml(funcionario.correo || "")}</td>
+                        <td>${escapeHtml(funcionario.correo || "")}</td>
                         <td class="acta-table__label">ÁREA</td>
                         <td>${escapeHtml(funcionario.area || "")}</td>
-                        <td>${escapeHtml(funcionario.edificio || "")}</td>
+                        <td class="acta-table__label">EDIFICIO</td><td>${escapeHtml(funcionario.edificio || "")}</td>
                     </tr>
                 </table>
                 <table class="acta-table acta-table--equipos">
@@ -1502,7 +1994,7 @@
                 <table class="acta-table acta-table--actividades">
                     <tr><th colspan="4" class="acta-table__title-dark">COMPUTADORA</th></tr>
                     <tr><th rowspan="2" class="acta-table__label-large">ACTIVIDADES DE MANTENIMIENTOS</th><th colspan="3">INSTALADO</th></tr>
-                    <tr><th>FECHA</th><th>ESTADO</th><th>OBSERVACIN</th></tr>
+                    <tr><th>FECHA</th><th>ESTADO</th><th>OBSERVACIÓN</th></tr>
                     ${ACTA_PC_ACTIVITY_ROWS.map((activity, index) => {
                         const row = actividades[index] || {};
                         return `
@@ -1567,6 +2059,837 @@
             const disposition = response.headers.get("Content-Disposition") || "";
             const match = disposition.match(/filename=\"?([^\";]+)\"?/i);
             const filename = match?.[1] || `acta_mantenimiento_pc.${format}`;
+            downloadBlob(blob, filename);
+            clearActaSearch();
+            showToast("Exportación lista", `El documento ${format.toUpperCase()} fue generado correctamente.`, "success");
+        } catch (error) {
+            showToast("Error", error.message || "No se pudo exportar el acta.", "danger");
+        }
+    }
+
+    function autofillActaImpresoraForm(item) {
+        setInputValue("actaImpresoraFuncionarioNombre", item.custodio || "");
+        setInputValue("actaImpresoraFuncionarioEdificio", item.ubicacionEdificio || "");
+        setInputValue("actaImpresoraFuncionarioArea", item.ubicacionDireccion || item.ubicacion || "");
+        setInputValue("actaImpresoraEquipoTipo", "IMPRESORA");
+        setInputValue("actaImpresoraEquipoMarca", item.marca || "");
+        setInputValue("actaImpresoraEquipoModelo", item.modelo || "");
+        setInputValue("actaImpresoraEquipoSerial", item.numeroSerie || "");
+        setInputValue("actaImpresoraEquipoCodigo", item.codigoSbai || item.codigoMegan || "");
+        setInputValue("actaImpresoraRecibeNombre", item.custodio || "");
+    }
+
+    function resetActaImpresoraForm() {
+        document.getElementById("actaImpresoraForm")?.reset();
+        const selector = document.getElementById("actaImpresoraSelector");
+        if (selector) selector.value = "";
+        document.querySelectorAll(".acta-search-card").forEach((card) => card.classList.remove("is-selected"));
+        setInputValue("actaImpresoraEquipoTipo", "IMPRESORA");
+        loadActaImpresoraInitialData();
+    }
+
+    function loadActaImpresoraInitialData() {
+        const today = new Date().toISOString().slice(0, 10);
+        ["actaImpresoraEntregaFecha", "actaImpresoraRecibeFecha"].forEach((id) => {
+            const input = document.getElementById(id);
+            if (input && !input.value) input.value = today;
+        });
+        if (state.session?.displayName) {
+            const entrega = document.getElementById("actaImpresoraEntregaNombre");
+            if (entrega && !entrega.value) entrega.value = state.session.displayName;
+        }
+    }
+
+    function buildActaImpresoraPayload() {
+        return {
+            subapartado: "impresora",
+            equipoSeleccionado: document.getElementById("actaImpresoraSelector")?.value || "",
+            funcionario: {
+                nombre: document.getElementById("actaImpresoraFuncionarioNombre")?.value.trim() || "",
+                cargo: document.getElementById("actaImpresoraFuncionarioCargo")?.value.trim() || "",
+                extension: document.getElementById("actaImpresoraFuncionarioExtension")?.value.trim() || "",
+                correo: document.getElementById("actaImpresoraFuncionarioCorreo")?.value.trim() || "",
+                area: document.getElementById("actaImpresoraFuncionarioArea")?.value.trim() || "",
+                edificio: document.getElementById("actaImpresoraFuncionarioEdificio")?.value.trim() || ""
+            },
+            desktop: {
+                tipo: document.getElementById("actaImpresoraEquipoTipo")?.value.trim() || "IMPRESORA",
+                marca: document.getElementById("actaImpresoraEquipoMarca")?.value.trim() || "",
+                modelo: document.getElementById("actaImpresoraEquipoModelo")?.value.trim() || "",
+                serial: document.getElementById("actaImpresoraEquipoSerial")?.value.trim() || "",
+                codigo: document.getElementById("actaImpresoraEquipoCodigo")?.value.trim() || ""
+            },
+            actividades: ACTA_IMPRESORA_ACTIVITY_ROWS.map((actividad, index) => ({
+                actividad,
+                fecha: document.getElementById(`actaImpresoraActividadFecha${index}`)?.value || "",
+                estado: document.getElementById(`actaImpresoraActividadEstado${index}`)?.value.trim() || "",
+                observacion: document.getElementById(`actaImpresoraActividadObservacion${index}`)?.value.trim() || ""
+            })),
+            certificacion: ACTA_PC_CERTIFICATION_TEXT,
+            entrega: {
+                nombre: document.getElementById("actaImpresoraEntregaNombre")?.value.trim() || "",
+                firma: document.getElementById("actaImpresoraEntregaFirma")?.value.trim() || "",
+                fecha: document.getElementById("actaImpresoraEntregaFecha")?.value || ""
+            },
+            recibe: {
+                nombre: document.getElementById("actaImpresoraRecibeNombre")?.value.trim() || "",
+                firma: document.getElementById("actaImpresoraRecibeFirma")?.value.trim() || "",
+                fecha: document.getElementById("actaImpresoraRecibeFecha")?.value || ""
+            }
+        };
+    }
+
+    function renderActaImpresoraPreview(payload) {
+        const funcionario = payload.funcionario || {};
+        const equipo = payload.desktop || {};
+        const actividades = Array.isArray(payload.actividades) ? payload.actividades : [];
+        return `
+            <div class="acta-sheet acta-sheet--preview">
+                <div class="acta-sheet__header">
+                    <img src="${actaAssetPath("logo_ecuador.png")}" alt="República del Ecuador" class="acta-sheet__logo acta-sheet__logo--ecuador">
+                    <img src="${actaAssetPath("logo_senadi.png")}" alt="Servicio Nacional de Derechos Intelectuales" class="acta-sheet__logo acta-sheet__logo--senadi">
+                </div>
+                <div class="acta-sheet__titles">
+                    <h3>SERVICIO NACIONAL DE DERECHOS INTELECTUALES</h3>
+                    <h4>DIRECCIÓN DE TECNOLOGÍAS DE LA INFORMACIÓN Y COMUNICACIÓN</h4>
+                    <h2>FORMULARIO DE MANTENIMIENTO PREVENTIVO DE EQUIPOS</h2>
+                </div>
+                <table class="acta-table">
+                    <tr><th colspan="6">DATOS DEL FUNCIONARIO SENADI</th></tr>
+                    <tr>
+                        <td class="acta-table__label">NOMBRE</td>
+                        <td>${escapeHtml(funcionario.nombre || "")}</td>
+                        <td class="acta-table__label">CARGO</td>
+                        <td>${escapeHtml(funcionario.cargo || "")}</td>
+                        <td class="acta-table__label">N&#176; EXT.</td><td>${escapeHtml(funcionario.extension || "")}</td>
+                    </tr>
+                    <tr>
+                        <td class="acta-table__label">CORREO</td>
+                        <td>${escapeHtml(funcionario.correo || "")}</td>
+                        <td class="acta-table__label">ÁREA</td>
+                        <td>${escapeHtml(funcionario.area || "")}</td>
+                        <td class="acta-table__label">EDIFICIO</td><td>${escapeHtml(funcionario.edificio || "")}</td>
+                    </tr>
+                </table>
+                <table class="acta-table acta-table--equipos">
+                    <tr><th colspan="5">EQUIPOS</th></tr>
+                    <tr><th>TIPO</th><th>MARCA</th><th>MODELO</th><th>SERIAL</th><th>CÓDIGO</th></tr>
+                    <tr>
+                        <td>${escapeHtml(equipo.tipo || "IMPRESORA")}</td>
+                        <td>${escapeHtml(equipo.marca || "")}</td>
+                        <td>${escapeHtml(equipo.modelo || "")}</td>
+                        <td>${escapeHtml(equipo.serial || "")}</td>
+                        <td>${escapeHtml(equipo.codigo || "")}</td>
+                    </tr>
+                </table>
+                <table class="acta-table acta-table--actividades">
+                    <tr><th colspan="4" class="acta-table__title-dark">IMPRESORA</th></tr>
+                    <tr><th rowspan="2" class="acta-table__label-large">ACTIVIDADES DE MANTENIMIENTOS A REALIZAR</th><th colspan="3">INSTALADO</th></tr>
+                    <tr><th>FECHA</th><th>ESTADO</th><th>OBSERVACIÓN</th></tr>
+                    ${ACTA_IMPRESORA_ACTIVITY_ROWS.map((activity, index) => {
+                        const row = actividades[index] || {};
+                        return `
+                            <tr>
+                                <td class="acta-table__activity">${activity}</td>
+                                <td>${escapeHtml(row.fecha || "")}</td>
+                                <td>${escapeHtml(row.estado || "")}</td>
+                                <td class="acta-preview__observation">${escapeHtml(row.observacion || "")}</td>
+                            </tr>
+                        `;
+                    }).join("")}
+                </table>
+                <p class="acta-certification">${escapeHtml(payload.certificacion || ACTA_PC_CERTIFICATION_TEXT)}</p>
+                <table class="acta-table acta-table--firma">
+                    <tr><th colspan="2">ENTREGA RECEPCION DE EQUIPO</th></tr>
+                    <tr><th>ENTREGA</th><th>RECIBE</th></tr>
+                    <tr><td><strong>Nombre:</strong> ${escapeHtml(payload.entrega?.nombre || "")}</td><td><strong>Nombre:</strong> ${escapeHtml(payload.recibe?.nombre || "")}</td></tr>
+                    <tr class="acta-table__row--firma"><td><strong>Firma:</strong> ${escapeHtml(payload.entrega?.firma || "")}</td><td><strong>Firma:</strong> ${escapeHtml(payload.recibe?.firma || "")}</td></tr>
+                    <tr><td><strong>Fecha:</strong> ${escapeHtml(payload.entrega?.fecha || "")}</td><td><strong>Fecha:</strong> ${escapeHtml(payload.recibe?.fecha || "")}</td></tr>
+                </table>
+                <div class="acta-sheet__footer">
+                    <div class="acta-sheet__footer-text">
+                        <span>Dirección: Av. República E7-197 y Diego de Almagro — Edificio FORUM 300</span>
+                        <span>Código postal: 170518 / Quito — Ecuador</span>
+                        <span>Teléfono: +539-2 394 0000</span>
+                        <span>www.derechosintelectuales.gob.ec</span>
+                    </div>
+                    <img src="${actaAssetPath("logo_nuevo_ecuador.png")}" alt="El Nuevo Ecuador" class="acta-sheet__footer-logo">
+                </div>
+            </div>
+        `;
+    }
+
+    function openActaImpresoraPreview() {
+        const form = document.getElementById("actaImpresoraForm");
+        const selector = document.getElementById("actaImpresoraSelector");
+        if (!form || !selector?.value) {
+            showToast("Equipo requerido", "Seleccione un equipo desde el buscador inicial para autocompletar el acta.", "warning");
+            return;
+        }
+        if (!form.reportValidity()) return;
+        const payload = buildActaImpresoraPayload();
+        openModal(
+            "Previsualización del Acta de Impresora",
+            `<div class="acta-preview">${renderActaImpresoraPreview(payload)}</div>`,
+            [
+                { label: "Exportar DOCX", className: "btn btn-primary", onClick: () => exportActaImpresora("docx") },
+                { label: "Exportar PDF", className: "btn btn-secondary", onClick: () => exportActaImpresora("pdf") },
+                { label: "Cerrar", className: "btn btn-secondary", onClick: closeModal }
+            ],
+            "modal--wide"
+        );
+    }
+
+    async function exportActaImpresora(format) {
+        try {
+            const form = document.getElementById("actaImpresoraForm");
+            const selector = document.getElementById("actaImpresoraSelector");
+            if (!form || !selector?.value) {
+                showToast("Equipo requerido", "Seleccione un equipo desde el buscador inicial para autocompletar el acta.", "warning");
+                return;
+            }
+            if (!form.reportValidity()) return;
+            const payload = buildActaImpresoraPayload();
+            const response = await apiFetch(`/actas/equipos/impresora/export/${format}`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(payload)
+            });
+            if (!response.ok) {
+                let message = "No se pudo exportar el acta.";
+                try {
+                    const errorPayload = await response.json();
+                    message = errorPayload.message || errorPayload.error || message;
+                } catch (error) {
+                    // ignore parsing fallback
+                }
+                throw new Error(message);
+            }
+            const blob = await response.blob();
+            const disposition = response.headers.get("Content-Disposition") || "";
+            const match = disposition.match(/filename=\"?([^\";]+)\"?/i);
+            const filename = match?.[1] || `acta_mantenimiento_impresora.${format}`;
+            downloadBlob(blob, filename);
+            clearActaSearch();
+            showToast("Exportación lista", `El documento ${format.toUpperCase()} fue generado correctamente.`, "success");
+        } catch (error) {
+            showToast("Error", error.message || "No se pudo exportar el acta.", "danger");
+        }
+    }
+
+    function autofillActaEscanerForm(item) {
+        setInputValue("actaEscanerFuncionarioNombre", item.custodio || "");
+        setInputValue("actaEscanerFuncionarioEdificio", item.ubicacionEdificio || "");
+        setInputValue("actaEscanerFuncionarioArea", item.ubicacionDireccion || item.ubicacion || "");
+        setInputValue("actaEscanerEquipoTipo", "ESCÁNER");
+        setInputValue("actaEscanerEquipoMarca", item.marca || "");
+        setInputValue("actaEscanerEquipoModelo", item.modelo || "");
+        setInputValue("actaEscanerEquipoSerial", item.numeroSerie || "");
+        setInputValue("actaEscanerEquipoCodigo", item.codigoSbai || item.codigoMegan || "");
+        setInputValue("actaEscanerRecibeNombre", item.custodio || "");
+    }
+
+    function resetActaEscanerForm() {
+        document.getElementById("actaEscanerForm")?.reset();
+        const selector = document.getElementById("actaEscanerSelector");
+        if (selector) selector.value = "";
+        document.querySelectorAll(".acta-search-card").forEach((card) => card.classList.remove("is-selected"));
+        setInputValue("actaEscanerEquipoTipo", "ESCÁNER");
+        loadActaEscanerInitialData();
+    }
+
+    function loadActaEscanerInitialData() {
+        const today = new Date().toISOString().slice(0, 10);
+        ["actaEscanerEntregaFecha", "actaEscanerRecibeFecha"].forEach((id) => {
+            const input = document.getElementById(id);
+            if (input && !input.value) input.value = today;
+        });
+        if (state.session?.displayName) {
+            const entrega = document.getElementById("actaEscanerEntregaNombre");
+            if (entrega && !entrega.value) entrega.value = state.session.displayName;
+        }
+    }
+
+    function buildActaEscanerPayload() {
+        return {
+            subapartado: "escaner",
+            equipoSeleccionado: document.getElementById("actaEscanerSelector")?.value || "",
+            funcionario: {
+                nombre: document.getElementById("actaEscanerFuncionarioNombre")?.value.trim() || "",
+                cargo: document.getElementById("actaEscanerFuncionarioCargo")?.value.trim() || "",
+                extension: document.getElementById("actaEscanerFuncionarioExtension")?.value.trim() || "",
+                correo: document.getElementById("actaEscanerFuncionarioCorreo")?.value.trim() || "",
+                area: document.getElementById("actaEscanerFuncionarioArea")?.value.trim() || "",
+                edificio: document.getElementById("actaEscanerFuncionarioEdificio")?.value.trim() || ""
+            },
+            desktop: {
+                tipo: document.getElementById("actaEscanerEquipoTipo")?.value.trim() || "ESCÁNER",
+                marca: document.getElementById("actaEscanerEquipoMarca")?.value.trim() || "",
+                modelo: document.getElementById("actaEscanerEquipoModelo")?.value.trim() || "",
+                serial: document.getElementById("actaEscanerEquipoSerial")?.value.trim() || "",
+                codigo: document.getElementById("actaEscanerEquipoCodigo")?.value.trim() || ""
+            },
+            actividades: ACTA_ESCANER_ACTIVITY_ROWS.map((actividad, index) => ({
+                actividad,
+                fecha: document.getElementById(`actaEscanerActividadFecha${index}`)?.value || "",
+                estado: document.getElementById(`actaEscanerActividadEstado${index}`)?.value.trim() || "",
+                observacion: document.getElementById(`actaEscanerActividadObservacion${index}`)?.value.trim() || ""
+            })),
+            certificacion: ACTA_PC_CERTIFICATION_TEXT,
+            entrega: {
+                nombre: document.getElementById("actaEscanerEntregaNombre")?.value.trim() || "",
+                firma: document.getElementById("actaEscanerEntregaFirma")?.value.trim() || "",
+                fecha: document.getElementById("actaEscanerEntregaFecha")?.value || ""
+            },
+            recibe: {
+                nombre: document.getElementById("actaEscanerRecibeNombre")?.value.trim() || "",
+                firma: document.getElementById("actaEscanerRecibeFirma")?.value.trim() || "",
+                fecha: document.getElementById("actaEscanerRecibeFecha")?.value || ""
+            }
+        };
+    }
+
+    function renderActaEscanerPreview(payload) {
+        const funcionario = payload.funcionario || {};
+        const equipo = payload.desktop || {};
+        const actividades = Array.isArray(payload.actividades) ? payload.actividades : [];
+        return `
+            <div class="acta-sheet acta-sheet--preview">
+                <div class="acta-sheet__header">
+                    <img src="${actaAssetPath("logo_ecuador.png")}" alt="República del Ecuador" class="acta-sheet__logo acta-sheet__logo--ecuador">
+                    <img src="${actaAssetPath("logo_senadi.png")}" alt="Servicio Nacional de Derechos Intelectuales" class="acta-sheet__logo acta-sheet__logo--senadi">
+                </div>
+                <div class="acta-sheet__titles">
+                    <h3>SERVICIO NACIONAL DE DERECHOS INTELECTUALES</h3>
+                    <h4>DIRECCIÓN DE TECNOLOGÍAS DE LA INFORMACIÓN Y COMUNICACIÓN</h4>
+                    <h2>FORMULARIO DE MANTENIMIENTO PREVENTIVO DE EQUIPOS</h2>
+                </div>
+                <table class="acta-table">
+                    <tr><th colspan="6">DATOS DEL FUNCIONARIO SENADI</th></tr>
+                    <tr>
+                        <td class="acta-table__label">NOMBRE</td><td>${escapeHtml(funcionario.nombre || "")}</td>
+                        <td class="acta-table__label">CARGO</td><td>${escapeHtml(funcionario.cargo || "")}</td>
+                        <td class="acta-table__label">N&#176; EXT.</td><td>${escapeHtml(funcionario.extension || "")}</td>
+                    </tr>
+                    <tr>
+                        <td class="acta-table__label">CORREO</td><td>${escapeHtml(funcionario.correo || "")}</td>
+                        <td class="acta-table__label">ÁREA</td><td>${escapeHtml(funcionario.area || "")}</td>
+                        <td class="acta-table__label">EDIFICIO</td><td>${escapeHtml(funcionario.edificio || "")}</td>
+                    </tr>
+                </table>
+                <table class="acta-table acta-table--equipos">
+                    <tr><th colspan="5">EQUIPOS</th></tr>
+                    <tr><th>TIPO</th><th>MARCA</th><th>MODELO</th><th>SERIAL</th><th>CÓDIGO</th></tr>
+                    <tr>
+                        <td>${escapeHtml(equipo.tipo || "ESCÁNER")}</td><td>${escapeHtml(equipo.marca || "")}</td>
+                        <td>${escapeHtml(equipo.modelo || "")}</td><td>${escapeHtml(equipo.serial || "")}</td>
+                        <td>${escapeHtml(equipo.codigo || "")}</td>
+                    </tr>
+                </table>
+                <table class="acta-table acta-table--actividades">
+                    <tr><th colspan="4" class="acta-table__title-dark">ESCÁNER</th></tr>
+                    <tr><th rowspan="2" class="acta-table__label-large">ACTIVIDADES DE MANTENIMIENTOS A REALIZAR</th><th colspan="3">INSTALADO</th></tr>
+                    <tr><th>FECHA</th><th>ESTADO</th><th>OBSERVACIÓN</th></tr>
+                    ${ACTA_ESCANER_ACTIVITY_ROWS.map((activity, index) => {
+                        const row = actividades[index] || {};
+                        return `<tr>
+                            <td class="acta-table__activity">${activity}</td>
+                            <td>${escapeHtml(row.fecha || "")}</td>
+                            <td>${escapeHtml(row.estado || "")}</td>
+                            <td class="acta-preview__observation">${escapeHtml(row.observacion || "")}</td>
+                        </tr>`;
+                    }).join("")}
+                </table>
+                <p class="acta-certification">${escapeHtml(payload.certificacion || ACTA_PC_CERTIFICATION_TEXT)}</p>
+                <table class="acta-table acta-table--firma">
+                    <tr><th colspan="2">ENTREGA RECEPCION DE EQUIPO</th></tr>
+                    <tr><th>ENTREGA</th><th>RECIBE</th></tr>
+                    <tr><td><strong>Nombre:</strong> ${escapeHtml(payload.entrega?.nombre || "")}</td><td><strong>Nombre:</strong> ${escapeHtml(payload.recibe?.nombre || "")}</td></tr>
+                    <tr class="acta-table__row--firma"><td><strong>Firma:</strong> ${escapeHtml(payload.entrega?.firma || "")}</td><td><strong>Firma:</strong> ${escapeHtml(payload.recibe?.firma || "")}</td></tr>
+                    <tr><td><strong>Fecha:</strong> ${escapeHtml(payload.entrega?.fecha || "")}</td><td><strong>Fecha:</strong> ${escapeHtml(payload.recibe?.fecha || "")}</td></tr>
+                </table>
+                <div class="acta-sheet__footer">
+                    <div class="acta-sheet__footer-text">
+                        <span>Dirección: Av. República E7-197 y Diego de Almagro — Edificio FORUM 300</span>
+                        <span>Código postal: 170518 / Quito — Ecuador</span>
+                        <span>Teléfono: +539-2 394 0000</span>
+                        <span>www.derechosintelectuales.gob.ec</span>
+                    </div>
+                    <img src="${actaAssetPath("logo_nuevo_ecuador.png")}" alt="El Nuevo Ecuador" class="acta-sheet__footer-logo">
+                </div>
+            </div>
+        `;
+    }
+
+    function openActaEscanerPreview() {
+        const form = document.getElementById("actaEscanerForm");
+        const selector = document.getElementById("actaEscanerSelector");
+        if (!form || !selector?.value) {
+            showToast("Equipo requerido", "Seleccione un equipo desde el buscador inicial para autocompletar el acta.", "warning");
+            return;
+        }
+        if (!form.reportValidity()) return;
+        const payload = buildActaEscanerPayload();
+        openModal(
+            "Previsualización del Acta de Escáner",
+            `<div class="acta-preview">${renderActaEscanerPreview(payload)}</div>`,
+            [
+                { label: "Exportar DOCX", className: "btn btn-primary", onClick: () => exportActaEscaner("docx") },
+                { label: "Exportar PDF", className: "btn btn-secondary", onClick: () => exportActaEscaner("pdf") },
+                { label: "Cerrar", className: "btn btn-secondary", onClick: closeModal }
+            ],
+            "modal--wide"
+        );
+    }
+
+    async function exportActaEscaner(format) {
+        try {
+            const form = document.getElementById("actaEscanerForm");
+            const selector = document.getElementById("actaEscanerSelector");
+            if (!form || !selector?.value) {
+                showToast("Equipo requerido", "Seleccione un equipo desde el buscador inicial para autocompletar el acta.", "warning");
+                return;
+            }
+            if (!form.reportValidity()) return;
+            const payload = buildActaEscanerPayload();
+            const response = await apiFetch(`/actas/equipos/escaner/export/${format}`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(payload)
+            });
+            if (!response.ok) {
+                let message = "No se pudo exportar el acta.";
+                try {
+                    const errorPayload = await response.json();
+                    message = errorPayload.message || errorPayload.error || message;
+                } catch (error) {
+                    // ignore parsing fallback
+                }
+                throw new Error(message);
+            }
+            const blob = await response.blob();
+            const disposition = response.headers.get("Content-Disposition") || "";
+            const match = disposition.match(/filename=\"?([^\";]+)\"?/i);
+            const filename = match?.[1] || `acta_mantenimiento_escaner.${format}`;
+            downloadBlob(blob, filename);
+            clearActaSearch();
+            showToast("Exportación lista", `El documento ${format.toUpperCase()} fue generado correctamente.`, "success");
+        } catch (error) {
+            showToast("Error", error.message || "No se pudo exportar el acta.", "danger");
+        }
+    }
+
+    function autofillActaTelefonoForm(item) {
+        setInputValue("actaTelefonoFuncionarioNombre", item.custodio || "");
+        setInputValue("actaTelefonoFuncionarioEdificio", item.ubicacionEdificio || "");
+        setInputValue("actaTelefonoFuncionarioArea", item.ubicacionDireccion || item.ubicacion || "");
+        setInputValue("actaTelefonoEquipoTipo", "TELÉFONO IP");
+        setInputValue("actaTelefonoEquipoMarca", item.marca || "");
+        setInputValue("actaTelefonoEquipoModelo", item.modelo || "");
+        setInputValue("actaTelefonoEquipoSerial", item.numeroSerie || "");
+        setInputValue("actaTelefonoEquipoCodigo", item.codigoSbai || item.codigoMegan || "");
+        setInputValue("actaTelefonoRecibeNombre", item.custodio || "");
+    }
+
+    function resetActaTelefonoForm() {
+        document.getElementById("actaTelefonoForm")?.reset();
+        const selector = document.getElementById("actaTelefonoSelector");
+        if (selector) selector.value = "";
+        document.querySelectorAll(".acta-search-card").forEach((card) => card.classList.remove("is-selected"));
+        setInputValue("actaTelefonoEquipoTipo", "TELÉFONO IP");
+        loadActaTelefonoInitialData();
+    }
+
+    function loadActaTelefonoInitialData() {
+        const today = new Date().toISOString().slice(0, 10);
+        ["actaTelefonoEntregaFecha", "actaTelefonoRecibeFecha"].forEach((id) => {
+            const input = document.getElementById(id);
+            if (input && !input.value) input.value = today;
+        });
+        if (state.session?.displayName) {
+            const entrega = document.getElementById("actaTelefonoEntregaNombre");
+            if (entrega && !entrega.value) entrega.value = state.session.displayName;
+        }
+    }
+
+    function buildActaTelefonoPayload() {
+        return {
+            subapartado: "telefono_ip",
+            equipoSeleccionado: document.getElementById("actaTelefonoSelector")?.value || "",
+            funcionario: {
+                nombre: document.getElementById("actaTelefonoFuncionarioNombre")?.value.trim() || "",
+                cargo: document.getElementById("actaTelefonoFuncionarioCargo")?.value.trim() || "",
+                extension: document.getElementById("actaTelefonoFuncionarioExtension")?.value.trim() || "",
+                correo: document.getElementById("actaTelefonoFuncionarioCorreo")?.value.trim() || "",
+                area: document.getElementById("actaTelefonoFuncionarioArea")?.value.trim() || "",
+                edificio: document.getElementById("actaTelefonoFuncionarioEdificio")?.value.trim() || ""
+            },
+            desktop: {
+                tipo: document.getElementById("actaTelefonoEquipoTipo")?.value.trim() || "TELÉFONO IP",
+                marca: document.getElementById("actaTelefonoEquipoMarca")?.value.trim() || "",
+                modelo: document.getElementById("actaTelefonoEquipoModelo")?.value.trim() || "",
+                serial: document.getElementById("actaTelefonoEquipoSerial")?.value.trim() || "",
+                codigo: document.getElementById("actaTelefonoEquipoCodigo")?.value.trim() || ""
+            },
+            actividades: ACTA_TELEFONO_ACTIVITY_ROWS.map((actividad, index) => ({
+                actividad,
+                fecha: document.getElementById(`actaTelefonoActividadFecha${index}`)?.value || "",
+                estado: document.getElementById(`actaTelefonoActividadEstado${index}`)?.value.trim() || "",
+                observacion: document.getElementById(`actaTelefonoActividadObservacion${index}`)?.value.trim() || ""
+            })),
+            certificacion: ACTA_PC_CERTIFICATION_TEXT,
+            entrega: {
+                nombre: document.getElementById("actaTelefonoEntregaNombre")?.value.trim() || "",
+                firma: document.getElementById("actaTelefonoEntregaFirma")?.value.trim() || "",
+                fecha: document.getElementById("actaTelefonoEntregaFecha")?.value || ""
+            },
+            recibe: {
+                nombre: document.getElementById("actaTelefonoRecibeNombre")?.value.trim() || "",
+                firma: document.getElementById("actaTelefonoRecibeFirma")?.value.trim() || "",
+                fecha: document.getElementById("actaTelefonoRecibeFecha")?.value || ""
+            }
+        };
+    }
+
+    function renderActaTelefonoPreview(payload) {
+        const { funcionario = {}, desktop = {}, actividades = [], certificacion = "", entrega = {}, recibe = {} } = payload;
+        const entregaNombre = entrega.nombre || "", entregaFirma = entrega.firma || "", entregaFecha = entrega.fecha || "";
+        const recibeNombre = recibe.nombre || "", recibeFirma = recibe.firma || "", recibeFecha = recibe.fecha || "";
+        return `
+        <div class="acta-sheet">
+            <div class="acta-sheet__header">
+                <img src="${actaAssetPath("logo_ecuador.png")}" alt="República del Ecuador" class="acta-sheet__logo acta-sheet__logo--ecuador">
+                <img src="${actaAssetPath("logo_senadi.png")}" alt="SENADI" class="acta-sheet__logo acta-sheet__logo--senadi">
+            </div>
+            <div class="acta-sheet__titles">
+                <h3>SERVICIO NACIONAL DE DERECHOS INTELECTUALES</h3>
+                <h4>DIRECCIÓN DE TECNOLOGÍAS DE LA INFORMACIÓN Y COMUNICACIÓN</h4>
+                <h2>FORMULARIO DE MANTENIMIENTO PREVENTIVO DE EQUIPOS</h2>
+            </div>
+            <table class="acta-table">
+                <tr><th colspan="6">DATOS DEL FUNCIONARIO SENADI</th></tr>
+                <tr>
+                    <td class="acta-table__label">NOMBRE</td><td>${escapeHtml(funcionario.nombre || "")}</td>
+                    <td class="acta-table__label">CARGO</td><td>${escapeHtml(funcionario.cargo || "")}</td>
+                    <td class="acta-table__label">N° EXT.</td><td>${escapeHtml(funcionario.extension || "")}</td>
+                </tr>
+                <tr>
+                    <td class="acta-table__label">CORREO</td><td>${escapeHtml(funcionario.correo || "")}</td>
+                    <td class="acta-table__label">ÁREA</td><td>${escapeHtml(funcionario.area || "")}</td>
+                    <td class="acta-table__label">EDIFICIO</td><td>${escapeHtml(funcionario.edificio || "")}</td>
+                </tr>
+            </table>
+            <table class="acta-table acta-table--equipos">
+                <tr><th colspan="5">EQUIPOS</th></tr>
+                <tr><th>TIPO</th><th>MARCA</th><th>MODELO</th><th>SERIAL</th><th>CÓDIGO</th></tr>
+                <tr>
+                    <td>${escapeHtml(desktop.tipo || "TELÉFONO IP")}</td><td>${escapeHtml(desktop.marca || "")}</td>
+                    <td>${escapeHtml(desktop.modelo || "")}</td><td>${escapeHtml(desktop.serial || "")}</td><td>${escapeHtml(desktop.codigo || "")}</td>
+                </tr>
+            </table>
+            <table class="acta-table acta-table--actividades">
+                <tr><th colspan="4" class="acta-table__title-dark">TELÉFONO IP</th></tr>
+                <tr><th rowspan="2" class="acta-table__label-large">ACTIVIDADES DE MANTENIMIENTOS A REALIZAR</th><th colspan="3">INSTALADO</th></tr>
+                <tr><th>FECHA</th><th>ESTADO</th><th>OBSERVACIÓN</th></tr>
+                ${ACTA_TELEFONO_ACTIVITY_ROWS.map((activity, index) => {
+                    const row = actividades[index] || {};
+                    return `<tr>
+                        <td class="acta-table__activity">${escapeHtml(activity)}</td>
+                        <td>${escapeHtml(row.fecha || "")}</td>
+                        <td>${escapeHtml(row.estado || "")}</td>
+                        <td>${escapeHtml(row.observacion || "")}</td>
+                    </tr>`;
+                }).join("")}
+            </table>
+            <p class="acta-certification">${escapeHtml(payload.certificacion || ACTA_PC_CERTIFICATION_TEXT)}</p>
+            <table class="acta-table acta-table--firma">
+                <tr><th colspan="2">ENTREGA RECEPCIÓN DE EQUIPO</th></tr>
+                <tr><th>ENTREGA</th><th>RECIBE</th></tr>
+                <tr>
+                    <td><strong>Nombre:</strong> ${escapeHtml(entregaNombre)}</td>
+                    <td><strong>Nombre:</strong> ${escapeHtml(recibeNombre)}</td>
+                </tr>
+                <tr class="acta-table__row--firma">
+                    <td><strong>Firma:</strong> ${escapeHtml(entregaFirma)}</td>
+                    <td><strong>Firma:</strong> ${escapeHtml(recibeFirma)}</td>
+                </tr>
+                <tr>
+                    <td><strong>Fecha:</strong> ${escapeHtml(entregaFecha)}</td>
+                    <td><strong>Fecha:</strong> ${escapeHtml(recibeFecha)}</td>
+                </tr>
+            </table>
+            <div class="acta-sheet__footer">
+                <div class="acta-sheet__footer-text">
+                    <span>Dirección: Av. República E7-197 y Diego de Almagro — Edificio FORUM 300</span>
+                    <span>Código postal: 170518 / Quito — Ecuador</span>
+                    <span>Teléfono: +539-2 394 0000</span>
+                    <span>www.derechosintelectuales.gob.ec</span>
+                </div>
+                <img src="${actaAssetPath("logo_nuevo_ecuador.png")}" alt="El Nuevo Ecuador" class="acta-sheet__footer-logo">
+            </div>
+        </div>`;
+    }
+
+    function openActaTelefonoPreview() {
+        const form = document.getElementById("actaTelefonoForm");
+        const selector = document.getElementById("actaTelefonoSelector");
+        if (!form || !selector?.value) {
+            showToast("Equipo requerido", "Seleccione un equipo desde el buscador inicial para autocompletar el acta.", "warning");
+            return;
+        }
+        if (!form.reportValidity()) return;
+        const payload = buildActaTelefonoPayload();
+        openModal(
+            "Vista Previa — Acta Teléfono IP",
+            `<div class="acta-preview">${renderActaTelefonoPreview(payload)}</div>`,
+            [
+                { label: "Exportar DOCX", className: "btn btn-primary", onClick: () => exportActaTelefono("docx") },
+                { label: "Exportar PDF", className: "btn btn-secondary", onClick: () => exportActaTelefono("pdf") },
+                { label: "Cerrar", className: "btn btn-secondary", onClick: closeModal }
+            ],
+            "modal--wide"
+        );
+    }
+
+    async function exportActaTelefono(format) {
+        try {
+            const form = document.getElementById("actaTelefonoForm");
+            const selector = document.getElementById("actaTelefonoSelector");
+            if (!form || !selector?.value) {
+                showToast("Equipo requerido", "Seleccione un equipo desde el buscador inicial para autocompletar el acta.", "warning");
+                return;
+            }
+            if (!form.reportValidity()) return;
+            const payload = buildActaTelefonoPayload();
+            const response = await apiFetch(`/actas/equipos/telefono/export/${format}`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(payload)
+            });
+            if (!response.ok) {
+                let message = "No se pudo exportar el acta.";
+                try {
+                    const errorPayload = await response.json();
+                    message = errorPayload.message || errorPayload.error || message;
+                } catch (error) {
+                    // ignore parsing fallback
+                }
+                throw new Error(message);
+            }
+            const blob = await response.blob();
+            const disposition = response.headers.get("Content-Disposition") || "";
+            const match = disposition.match(/filename=\"?([^\";]+)\"?/i);
+            const filename = match?.[1] || `acta_mantenimiento_telefono.${format}`;
+            downloadBlob(blob, filename);
+            clearActaSearch();
+            showToast("Exportación lista", `El documento ${format.toUpperCase()} fue generado correctamente.`, "success");
+        } catch (error) {
+            showToast("Error", error.message || "No se pudo exportar el acta.", "danger");
+        }
+    }
+
+    function autofillActaProyectorForm(item) {
+        setInputValue("actaProyectorFuncionarioNombre", item.custodio || "");
+        setInputValue("actaProyectorFuncionarioEdificio", item.ubicacionEdificio || "");
+        setInputValue("actaProyectorFuncionarioArea", item.ubicacionDireccion || item.ubicacion || "");
+        setInputValue("actaProyectorEquipoTipo", "PROYECTOR");
+        setInputValue("actaProyectorEquipoMarca", item.marca || "");
+        setInputValue("actaProyectorEquipoModelo", item.modelo || "");
+        setInputValue("actaProyectorEquipoSerial", item.numeroSerie || "");
+        setInputValue("actaProyectorEquipoCodigo", item.codigoSbai || item.codigoMegan || "");
+        setInputValue("actaProyectorRecibeNombre", item.custodio || "");
+    }
+
+    function resetActaProyectorForm() {
+        document.getElementById("actaProyectorForm")?.reset();
+        const selector = document.getElementById("actaProyectorSelector");
+        if (selector) selector.value = "";
+        document.querySelectorAll(".acta-search-card").forEach((card) => card.classList.remove("is-selected"));
+        setInputValue("actaProyectorEquipoTipo", "PROYECTOR");
+        loadActaProyectorInitialData();
+    }
+
+    function loadActaProyectorInitialData() {
+        const today = new Date().toISOString().slice(0, 10);
+        ["actaProyectorEntregaFecha", "actaProyectorRecibeFecha"].forEach((id) => {
+            const input = document.getElementById(id);
+            if (input && !input.value) input.value = today;
+        });
+        if (state.session?.displayName) {
+            const entrega = document.getElementById("actaProyectorEntregaNombre");
+            if (entrega && !entrega.value) entrega.value = state.session.displayName;
+        }
+    }
+
+    function buildActaProyectorPayload() {
+        return {
+            subapartado: "proyector",
+            equipoSeleccionado: document.getElementById("actaProyectorSelector")?.value || "",
+            funcionario: {
+                nombre: document.getElementById("actaProyectorFuncionarioNombre")?.value.trim() || "",
+                cargo: document.getElementById("actaProyectorFuncionarioCargo")?.value.trim() || "",
+                extension: document.getElementById("actaProyectorFuncionarioExtension")?.value.trim() || "",
+                correo: document.getElementById("actaProyectorFuncionarioCorreo")?.value.trim() || "",
+                area: document.getElementById("actaProyectorFuncionarioArea")?.value.trim() || "",
+                edificio: document.getElementById("actaProyectorFuncionarioEdificio")?.value.trim() || ""
+            },
+            desktop: {
+                tipo: document.getElementById("actaProyectorEquipoTipo")?.value.trim() || "PROYECTOR",
+                marca: document.getElementById("actaProyectorEquipoMarca")?.value.trim() || "",
+                modelo: document.getElementById("actaProyectorEquipoModelo")?.value.trim() || "",
+                serial: document.getElementById("actaProyectorEquipoSerial")?.value.trim() || "",
+                codigo: document.getElementById("actaProyectorEquipoCodigo")?.value.trim() || ""
+            },
+            actividades: ACTA_PROYECTOR_ACTIVITY_ROWS.map((actividad, index) => ({
+                actividad,
+                fecha: document.getElementById(`actaProyectorActividadFecha${index}`)?.value || "",
+                estado: document.getElementById(`actaProyectorActividadEstado${index}`)?.value.trim() || "",
+                observacion: document.getElementById(`actaProyectorActividadObservacion${index}`)?.value.trim() || ""
+            })),
+            certificacion: ACTA_PC_CERTIFICATION_TEXT,
+            entrega: {
+                nombre: document.getElementById("actaProyectorEntregaNombre")?.value.trim() || "",
+                firma: document.getElementById("actaProyectorEntregaFirma")?.value.trim() || "",
+                fecha: document.getElementById("actaProyectorEntregaFecha")?.value || ""
+            },
+            recibe: {
+                nombre: document.getElementById("actaProyectorRecibeNombre")?.value.trim() || "",
+                firma: document.getElementById("actaProyectorRecibeFirma")?.value.trim() || "",
+                fecha: document.getElementById("actaProyectorRecibeFecha")?.value || ""
+            }
+        };
+    }
+
+    function renderActaProyectorPreview(payload) {
+        const funcionario = payload.funcionario || {};
+        const equipo = payload.desktop || {};
+        const actividades = Array.isArray(payload.actividades) ? payload.actividades : [];
+        return `
+            <div class="acta-sheet acta-sheet--preview">
+                <div class="acta-sheet__header">
+                    <img src="${actaAssetPath("logo_ecuador.png")}" alt="República del Ecuador" class="acta-sheet__logo acta-sheet__logo--ecuador">
+                    <img src="${actaAssetPath("logo_senadi.png")}" alt="Servicio Nacional de Derechos Intelectuales" class="acta-sheet__logo acta-sheet__logo--senadi">
+                </div>
+                <div class="acta-sheet__titles">
+                    <h3>SERVICIO NACIONAL DE DERECHOS INTELECTUALES</h3>
+                    <h4>DIRECCIÓN DE TECNOLOGÍAS DE LA INFORMACIÓN Y COMUNICACIÓN</h4>
+                    <h2>FORMULARIO DE MANTENIMIENTO PREVENTIVO DE EQUIPOS</h2>
+                </div>
+                <table class="acta-table">
+                    <tr><th colspan="6">DATOS DEL FUNCIONARIO SENADI</th></tr>
+                    <tr>
+                        <td class="acta-table__label">NOMBRE</td>
+                        <td>${escapeHtml(funcionario.nombre || "")}</td>
+                        <td class="acta-table__label">CARGO</td>
+                        <td>${escapeHtml(funcionario.cargo || "")}</td>
+                        <td class="acta-table__label">N&#176; EXT.</td><td>${escapeHtml(funcionario.extension || "")}</td>
+                    </tr>
+                    <tr>
+                        <td class="acta-table__label">CORREO</td>
+                        <td>${escapeHtml(funcionario.correo || "")}</td>
+                        <td class="acta-table__label">ÁREA</td>
+                        <td>${escapeHtml(funcionario.area || "")}</td>
+                        <td class="acta-table__label">EDIFICIO</td><td>${escapeHtml(funcionario.edificio || "")}</td>
+                    </tr>
+                </table>
+                <table class="acta-table acta-table--equipos">
+                    <tr><th colspan="5">EQUIPOS</th></tr>
+                    <tr><th>TIPO</th><th>MARCA</th><th>MODELO</th><th>SERIAL</th><th>CÓDIGO</th></tr>
+                    <tr>
+                        <td>${escapeHtml(equipo.tipo || "PROYECTOR")}</td>
+                        <td>${escapeHtml(equipo.marca || "")}</td>
+                        <td>${escapeHtml(equipo.modelo || "")}</td>
+                        <td>${escapeHtml(equipo.serial || "")}</td>
+                        <td>${escapeHtml(equipo.codigo || "")}</td>
+                    </tr>
+                </table>
+                <table class="acta-table acta-table--actividades">
+                    <tr><th colspan="4" class="acta-table__title-dark">PROYECTOR</th></tr>
+                    <tr><th rowspan="2" class="acta-table__label-large">ACTIVIDADES DE MANTENIMIENTOS A REALIZAR</th><th colspan="3">INSTALADO</th></tr>
+                    <tr><th>FECHA</th><th>ESTADO</th><th>OBSERVACIÓN</th></tr>
+                    ${ACTA_PROYECTOR_ACTIVITY_ROWS.map((activity, index) => {
+                        const row = actividades[index] || {};
+                        return `
+                            <tr>
+                                <td class="acta-table__activity">${activity}</td>
+                                <td>${escapeHtml(row.fecha || "")}</td>
+                                <td>${escapeHtml(row.estado || "")}</td>
+                                <td class="acta-preview__observation">${escapeHtml(row.observacion || "")}</td>
+                            </tr>
+                        `;
+                    }).join("")}
+                </table>
+                <p class="acta-certification">${escapeHtml(payload.certificacion || ACTA_PC_CERTIFICATION_TEXT)}</p>
+                <table class="acta-table acta-table--firma">
+                    <tr><th colspan="2">ENTREGA RECEPCION DE EQUIPO</th></tr>
+                    <tr><th>ENTREGA</th><th>RECIBE</th></tr>
+                    <tr><td><strong>Nombre:</strong> ${escapeHtml(payload.entrega?.nombre || "")}</td><td><strong>Nombre:</strong> ${escapeHtml(payload.recibe?.nombre || "")}</td></tr>
+                    <tr class="acta-table__row--firma"><td><strong>Firma:</strong> ${escapeHtml(payload.entrega?.firma || "")}</td><td><strong>Firma:</strong> ${escapeHtml(payload.recibe?.firma || "")}</td></tr>
+                    <tr><td><strong>Fecha:</strong> ${escapeHtml(payload.entrega?.fecha || "")}</td><td><strong>Fecha:</strong> ${escapeHtml(payload.recibe?.fecha || "")}</td></tr>
+                </table>
+                <div class="acta-sheet__footer">
+                    <div class="acta-sheet__footer-text">
+                        <span>Dirección: Av. República E7-197 y Diego de Almagro — Edificio FORUM 300</span>
+                        <span>Código postal: 170518 / Quito — Ecuador</span>
+                        <span>Teléfono: +539-2 394 0000</span>
+                        <span>www.derechosintelectuales.gob.ec</span>
+                    </div>
+                    <img src="${actaAssetPath("logo_nuevo_ecuador.png")}" alt="El Nuevo Ecuador" class="acta-sheet__footer-logo">
+                </div>
+            </div>
+        `;
+    }
+
+    function openActaProyectorPreview() {
+        const form = document.getElementById("actaProyectorForm");
+        const selector = document.getElementById("actaProyectorSelector");
+        if (!form || !selector?.value) {
+            showToast("Equipo requerido", "Seleccione un equipo desde el buscador inicial para autocompletar el acta.", "warning");
+            return;
+        }
+        if (!form.reportValidity()) return;
+        const payload = buildActaProyectorPayload();
+        openModal(
+            "Previsualización del Acta de Proyector",
+            `<div class="acta-preview">${renderActaProyectorPreview(payload)}</div>`,
+            [
+                { label: "Exportar DOCX", className: "btn btn-primary", onClick: () => exportActaProyector("docx") },
+                { label: "Exportar PDF", className: "btn btn-secondary", onClick: () => exportActaProyector("pdf") },
+                { label: "Cerrar", className: "btn btn-secondary", onClick: closeModal }
+            ],
+            "modal--wide"
+        );
+    }
+
+    async function exportActaProyector(format) {
+        try {
+            const form = document.getElementById("actaProyectorForm");
+            const selector = document.getElementById("actaProyectorSelector");
+            if (!form || !selector?.value) {
+                showToast("Equipo requerido", "Seleccione un equipo desde el buscador inicial para autocompletar el acta.", "warning");
+                return;
+            }
+            if (!form.reportValidity()) return;
+            const payload = buildActaProyectorPayload();
+            const response = await apiFetch(`/actas/equipos/proyector/export/${format}`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(payload)
+            });
+            if (!response.ok) {
+                let message = "No se pudo exportar el acta.";
+                try {
+                    const errorPayload = await response.json();
+                    message = errorPayload.message || errorPayload.error || message;
+                } catch (error) {
+                    // ignore parsing fallback
+                }
+                throw new Error(message);
+            }
+            const blob = await response.blob();
+            const disposition = response.headers.get("Content-Disposition") || "";
+            const match = disposition.match(/filename=\"?([^\";]+)\"?/i);
+            const filename = match?.[1] || `acta_mantenimiento_proyector.${format}`;
             downloadBlob(blob, filename);
             clearActaSearch();
             showToast("Exportación lista", `El documento ${format.toUpperCase()} fue generado correctamente.`, "success");
@@ -2916,9 +4239,11 @@
                 return session;
             }
         } catch (error) {
-            return getDemoSession();
+            clearDemoSession();
+            return null;
         }
-        return getDemoSession();
+        clearDemoSession();
+        return null;
     }
 
     function redirectForRole(session) {
@@ -2981,7 +4306,7 @@
     function renderActaInventorySearchPanel() {
         if (window.SIActasView?.renderEquipmentSearch) {
             return window.SIActasView.renderEquipmentSearch({
-                buildTypeOptions,
+                buildTypeOptions: buildActaTypeOptions,
                 renderAutocompleteField,
                 validStates: VALID_STATES
             });
@@ -3029,7 +4354,14 @@
     }
 
     function getActaEquipoItems(type = getActaSelectedType()) {
-        return state.inventory.filter((item) => !type || String(item.tipo || "").toLowerCase() === String(type).toLowerCase());
+        const normalizedType = String(type || "").toLowerCase();
+        return state.inventory.filter((item) => {
+            const itemTipo = String(item.tipo || "").toLowerCase();
+            if (normalizedType) {
+                return itemTipo === normalizedType;
+            }
+            return ACTA_EQUIPO_TYPES.includes(itemTipo);
+        });
     }
 
     function loadActaPcInitialData() {
@@ -3079,11 +4411,30 @@
         document.getElementById("actaFilterTipo")?.addEventListener("change", () => {
             clearSelectedActaEquipo();
             loadActaPcInitialData();
+            ["actaPcForm", "actaImpresoraForm", "actaProyectorForm", "actaEscanerForm", "actaTelefonoForm", "actaFormContainer"].forEach((id) => {
+                document.getElementById(id)?.classList.add("hidden");
+            });
         });
         document.getElementById("actaPcPreviewButton")?.addEventListener("click", openActaPcPreview);
         document.getElementById("actaPcExportDocxButton")?.addEventListener("click", () => exportActaPc("docx"));
         document.getElementById("actaPcExportPdfButton")?.addEventListener("click", () => exportActaPc("pdf"));
         document.getElementById("actaPcResetButton")?.addEventListener("click", resetActaPcForm);
+        document.getElementById("actaImpresoraPreviewButton")?.addEventListener("click", openActaImpresoraPreview);
+        document.getElementById("actaImpresoraExportDocxButton")?.addEventListener("click", () => exportActaImpresora("docx"));
+        document.getElementById("actaImpresoraExportPdfButton")?.addEventListener("click", () => exportActaImpresora("pdf"));
+        document.getElementById("actaImpresoraResetButton")?.addEventListener("click", resetActaImpresoraForm);
+        document.getElementById("actaEscanerPreviewButton")?.addEventListener("click", openActaEscanerPreview);
+        document.getElementById("actaEscanerExportDocxButton")?.addEventListener("click", () => exportActaEscaner("docx"));
+        document.getElementById("actaEscanerExportPdfButton")?.addEventListener("click", () => exportActaEscaner("pdf"));
+        document.getElementById("actaEscanerResetButton")?.addEventListener("click", resetActaEscanerForm);
+        document.getElementById("actaProyectorPreviewButton")?.addEventListener("click", openActaProyectorPreview);
+        document.getElementById("actaProyectorExportDocxButton")?.addEventListener("click", () => exportActaProyector("docx"));
+        document.getElementById("actaProyectorExportPdfButton")?.addEventListener("click", () => exportActaProyector("pdf"));
+        document.getElementById("actaProyectorResetButton")?.addEventListener("click", resetActaProyectorForm);
+        document.getElementById("actaTelefonoPreviewButton")?.addEventListener("click", openActaTelefonoPreview);
+        document.getElementById("actaTelefonoExportDocxButton")?.addEventListener("click", () => exportActaTelefono("docx"));
+        document.getElementById("actaTelefonoExportPdfButton")?.addEventListener("click", () => exportActaTelefono("pdf"));
+        document.getElementById("actaTelefonoResetButton")?.addEventListener("click", resetActaTelefonoForm);
     }
 // Función para recolectar los criterios de búsqueda del acta desde los campos del formulario
     function collectActaSearchCriteria() {
@@ -3115,8 +4466,24 @@
 // Función para ejecutar la búsqueda de equipos en el acta
     function runActaEquipoSearch() {
         const criteria = collectActaSearchCriteria();
-        const items = getActaEquipoItems(criteria.tipo).filter((item) => matchesActaCriteria(item, criteria));
-        renderActaEquipoResults(items.slice(0, 25));
+        const filtered = getActaEquipoItems(criteria.tipo).filter((item) => matchesActaCriteria(item, criteria));
+        let items;
+        if (!criteria.tipo) {
+            // TODOS: tomar hasta 5 de cada tipo para mostrar variedad
+            const perType = {};
+            items = [];
+            for (const item of filtered) {
+                const t = String(item.tipo || "").toLowerCase();
+                perType[t] = (perType[t] || 0);
+                if (perType[t] < 5) {
+                    items.push(item);
+                    perType[t]++;
+                }
+            }
+        } else {
+            items = filtered.slice(0, 25);
+        }
+        renderActaEquipoResults(items);
         if (!items.length) {
             showToast("Sin resultados", "No se encontraron equipos con ese criterio.", "info");
         }
@@ -3131,11 +4498,30 @@
         if (filterType) {
             filterType.value = item.tipo || "";
         }
-        const selector = document.getElementById("actaPcSelector");
-        if (selector) {
-            selector.value = item.id;
+        const tipo = String(item.tipo || "").toLowerCase();
+        const typeConfig = {
+            impresora: { selectorId: "actaImpresoraSelector", formId: "actaImpresoraForm", toolbarId: "actaImpresoraToolbarActions", autofill: autofillActaImpresoraForm, init: loadActaImpresoraInitialData },
+            proyector: { selectorId: "actaProyectorSelector", formId: "actaProyectorForm", toolbarId: "actaProyectorToolbarActions", autofill: autofillActaProyectorForm, init: loadActaProyectorInitialData },
+            escaner: { selectorId: "actaEscanerSelector", formId: "actaEscanerForm", toolbarId: "actaEscanerToolbarActions", autofill: autofillActaEscanerForm, init: loadActaEscanerInitialData },
+            telefono: { selectorId: "actaTelefonoSelector", formId: "actaTelefonoForm", toolbarId: "actaTelefonoToolbarActions", autofill: autofillActaTelefonoForm, init: loadActaTelefonoInitialData }
+        };
+        const cfg = typeConfig[tipo];
+        ["actaPcForm", "actaImpresoraForm", "actaProyectorForm", "actaEscanerForm", "actaTelefonoForm"].forEach((id) => document.getElementById(id)?.classList.add("hidden"));
+        ["actaPcToolbarActions", "actaImpresoraToolbarActions", "actaProyectorToolbarActions", "actaEscanerToolbarActions", "actaTelefonoToolbarActions"].forEach((id) => document.getElementById(id)?.classList.add("hidden"));
+        if (cfg) {
+            const selector = document.getElementById(cfg.selectorId);
+            if (selector) selector.value = item.id;
+            cfg.autofill(item);
+            cfg.init();
+            document.getElementById(cfg.formId)?.classList.remove("hidden");
+            document.getElementById(cfg.toolbarId)?.classList.remove("hidden");
+        } else {
+            const selector = document.getElementById("actaPcSelector");
+            if (selector) selector.value = item.id;
+            autofillActaPcForm(item);
+            document.getElementById("actaPcForm")?.classList.remove("hidden");
+            document.getElementById("actaPcToolbarActions")?.classList.remove("hidden");
         }
-        autofillActaPcForm(item);
         document.querySelectorAll(".acta-search-card").forEach((card) => {
             card.classList.toggle("is-selected", String(card.dataset.actaSelect) === String(item.id));
         });

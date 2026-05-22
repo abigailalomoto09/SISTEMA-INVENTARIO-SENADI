@@ -18,7 +18,7 @@ public class ConnectionTest {
             Connection con = DriverManager.getConnection(
                     "jdbc:mysql://localhost:3306/inventario_dtic_2026",
                     "root",
-                    "1234"
+                    "123456"
             );
 
             System.out.println("CONEXION EXITOSA A LA BASE DE DATOS");

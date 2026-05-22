@@ -1,4 +1,5 @@
 com\mycompany\sistemainventariov3\dto\ActaMantenimientoPcRequest$Funcionario.class
+com\mycompany\sistemainventariov3\service\ActaMantenimientoEscanerDocumentService.class
 com\mycompany\sistemainventariov3\resources\JavaEE8Resource.class
 com\mycompany\sistemainventariov3\service\InventarioJdbcService$DbConstants.class
 com\mycompany\sistemainventariov3\resources\HistoricoResource.class
@@ -8,6 +9,7 @@ com\mycompany\sistemainventariov3\service\InventarioJdbcService.class
 com\mycompany\sistemainventariov3\util\SessionRequestFilter.class
 com\mycompany\sistemainventariov3\dao\LicenciaDAO.class
 com\mycompany\sistemainventariov3\util\JPAUtil.class
+com\mycompany\sistemainventariov3\service\ActaMantenimientoImpresoraDocumentService.class
 com\mycompany\sistemainventariov3\service\UsuarioService.class
 com\mycompany\sistemainventariov3\dao\CustodioDAO.class
 com\mycompany\sistemainventariov3\util\LDAP.class
@@ -21,6 +23,7 @@ com\mycompany\sistemainventariov3\dao\UsuarioDAO.class
 com\mycompany\sistemainventariov3\service\UsuarioService$UsuarioAuthRecord.class
 com\mycompany\sistemainventariov3\resources\InventarioResource$1.class
 com\mycompany\sistemainventariov3\model\BienId.class
+com\mycompany\sistemainventariov3\service\ActaMantenimientoTelefonoDocumentService.class
 com\mycompany\sistemainventariov3\model\HistoricoCambio.class
 com\mycompany\sistemainventariov3\model\Periferico.class
 com\mycompany\sistemainventariov3\model\Custodio.class
@@ -51,6 +54,7 @@ com\mycompany\sistemainventariov3\bean\LoginBean.class
 com\mycompany\sistemainventariov3\dao\PeriferícoDAO.class
 com\mycompany\sistemainventariov3\dao\BienControlAdministrativoDAO.class
 com\mycompany\sistemainventariov3\JAXRSConfiguration.class
+com\mycompany\sistemainventariov3\service\ActaMantenimientoProyectorDocumentService.class
 com\mycompany\sistemainventariov3\resources\LoginResource.class
 com\mycompany\sistemainventariov3\dao\PCDAO.class
 com\mycompany\sistemainventariov3\dto\ActaMantenimientoPcRequest.class

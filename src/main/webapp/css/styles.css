@@ -1093,136 +1093,225 @@ textarea {
     flex-wrap: wrap;
 }
 
+/* ── Acta document sheet ──────────────────────────────────────────── */
 .acta-sheet {
-    width: min(100%, 980px);
+    width: min(100%, 900px);
     margin: 0 auto;
-    padding: 18px 20px 22px;
+    padding: 32px 36px 36px;
     background: #fff;
-    border: 1px solid #d5dbe5;
-    box-shadow: 0 12px 34px rgba(15, 31, 56, 0.08);
+    border: 1px solid #c8cfd8;
+    border-radius: 2px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06), 0 16px 40px rgba(15,31,56,0.10);
+    font-family: "Calibri", "Arial", sans-serif;
+    font-size: 11.5px;
+    color: #111;
     overflow-x: auto;
+    position: relative;
 }
 
 .acta-sheet--preview {
-    width: min(100%, 880px);
+    width: min(100%, 900px);
 }
 
+/* ── Header: logos ─────────────────────────────────────────────────── */
 .acta-sheet__header {
     display: flex;
     justify-content: space-between;
-    align-items: flex-start;
-    gap: 20px;
+    align-items: center;
+    gap: 12px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid #111;
+    margin-bottom: 6px;
 }
 
 .acta-sheet__logo--ecuador {
-    width: 220px;
+    width: 180px;
     height: auto;
+    object-fit: contain;
 }
 
 .acta-sheet__logo--senadi {
-    width: 220px;
+    width: 180px;
     height: auto;
+    object-fit: contain;
 }
 
+/* ── Titles block ──────────────────────────────────────────────────── */
 .acta-sheet__titles {
-    margin: 6px 0 18px;
+    margin: 10px 0 14px;
     text-align: center;
     color: #111;
+    letter-spacing: 0.01em;
 }
 
 .acta-sheet__titles h2,
 .acta-sheet__titles h3,
 .acta-sheet__titles h4 {
-    margin: 0;
+    margin: 2px 0;
+    line-height: 1.25;
 }
 
-.acta-sheet__titles h3,
+.acta-sheet__titles h3 {
+    font-size: 13px;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+
 .acta-sheet__titles h4 {
-    font-size: 18px;
-    font-weight: 800;
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
 }
 
 .acta-sheet__titles h2 {
-    margin-top: 28px;
-    font-size: 19px;
-    font-weight: 800;
+    margin-top: 10px;
+    font-size: 13px;
+    font-weight: 700;
+    text-transform: uppercase;
     text-decoration: underline;
+    letter-spacing: 0.04em;
 }
 
+/* ── Data tables ───────────────────────────────────────────────────── */
 .acta-table {
     width: 100%;
     min-width: 0;
-    margin-top: 18px;
+    margin-top: 10px;
     border-collapse: collapse;
     table-layout: fixed;
     color: #111;
-    font-size: 12px;
+    font-size: 10.5px;
+    line-height: 1.35;
 }
 
 .acta-table th,
 .acta-table td {
-    border: 1px solid #222;
-    padding: 4px 6px;
+    border: 1px solid #444;
+    padding: 5px 7px;
     vertical-align: middle;
     overflow-wrap: anywhere;
     word-break: break-word;
 }
 
-.acta-table th {
+/* Section header row (full-width gray header per section) */
+.acta-table > tbody > tr:first-child th,
+.acta-table > thead > tr:first-child th {
     background: #d9d9d9;
     font-size: 11px;
-    font-weight: 800;
+    font-weight: 700;
     text-align: center;
+    letter-spacing: 0.03em;
+    padding: 6px 7px;
+    border-color: #333;
 }
 
-.acta-table__label,
-.acta-table__activity,
-.acta-table__label-large {
+.acta-table th {
+    background: #d9d9d9;
+    font-weight: 700;
+    text-align: center;
+    border-color: #444;
+}
+
+/* Sub-header row (TIPO / MARCA / MODELO …) */
+.acta-table--equipos tr:nth-child(2) th {
+    background: #e6e6e6;
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+    padding: 4px 6px;
+}
+
+/* Label cells */
+.acta-table__label {
     background: #f2f2f2;
+    font-weight: 700;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    white-space: nowrap;
+    width: 10%;
+}
+
+/* Large label cell (ACTIVIDADES DE MANTENIMIENTOS) */
+.acta-table__label-large {
+    background: #d9d9d9;
+    font-weight: 700;
+    font-size: 10.5px;
+    text-align: center;
+    width: 30%;
+    vertical-align: middle;
+}
+
+/* Individual activity name cell */
+.acta-table__activity {
+    background: #f2f2f2;
+    font-size: 10px;
+    font-weight: 600;
+    padding: 5px 7px;
+}
+
+/* Dark header for actividades section (COMPUTADORA / IMPRESORA …) */
+.acta-table__title-dark {
+    background: #7f7f7f !important;
+    color: #fff !important;
+    font-size: 13px !important;
+    font-weight: 700 !important;
+    text-align: center !important;
+    letter-spacing: 0.06em;
+    padding: 8px 7px !important;
+    border-color: #555 !important;
+}
+
+/* ENTREGA / RECIBE subheader */
+.acta-table--firma tr:nth-child(2) th {
+    background: #ededed;
+    font-size: 11px;
     font-weight: 700;
 }
 
-.acta-table__label-large {
-    width: 28%;
+.acta-table--equipos th,
+.acta-table--equipos td {
+    text-align: left;
+}
+
+.acta-table--equipos tr:nth-child(1) th {
     text-align: center;
 }
 
-.acta-table__activity {
-    font-size: 11px;
-}
-
-.acta-table__label-value {
-    background: #fff;
-}
-
-.acta-table__title-dark {
-    background: #7f7f7f !important;
-    color: #fff;
-    font-size: 14px !important;
-    height: 46px;
-}
-
-.acta-table--equipos th,
-.acta-table--equipos td,
 .acta-table--firma th,
 .acta-table--firma td {
     text-align: left;
 }
 
-.acta-table--equipos th,
-.acta-table--firma th {
+.acta-table--firma tr:nth-child(1) th,
+.acta-table--firma tr:nth-child(2) th {
     text-align: center;
 }
 
+/* Tall row for "OTRAS ACCIONES REALIZADAS" */
 .acta-table__row--tall td {
-    min-height: 96px;
+    min-height: 64px;
+    height: 64px;
 }
 
+/* Signature row */
 .acta-table__row--firma td {
-    height: 92px;
+    height: 80px;
     vertical-align: top;
+    padding-top: 8px;
 }
 
+.acta-table__row--firma td strong {
+    display: block;
+    margin-bottom: 2px;
+    font-size: 10px;
+    color: #555;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+}
+
+/* ── Editable form inputs inside table cells ──────────────────────── */
 .acta-input {
     width: 100%;
     min-height: 26px;
@@ -1237,27 +1326,31 @@ textarea {
 
 .acta-input:focus {
     outline: none;
-    box-shadow: inset 0 -1px 0 #1565c0;
+    box-shadow: inset 0 -1.5px 0 #1565c0;
 }
 
 .acta-input--textarea {
     resize: vertical;
     padding-top: 2px;
     font-family: inherit;
+    line-height: 1.4;
 }
 
+/* ── Certification paragraph ─────────────────────────────────────── */
 .acta-certification {
-    margin: 12px 0 14px;
+    margin: 10px 0 10px;
+    padding: 0 2px;
     color: #111;
-    font-size: 11px;
-    line-height: 1.4;
+    font-size: 10px;
+    line-height: 1.55;
     text-align: justify;
 }
 
+/* ── Signature labels inside preview ─────────────────────────────── */
 .acta-signature-field {
     display: block;
     font-weight: 700;
-    font-size: 12px;
+    font-size: 11px;
 }
 
 .acta-signature-field .acta-input {
@@ -1265,52 +1358,70 @@ textarea {
     font-weight: 400;
 }
 
+/* ── Footer ───────────────────────────────────────────────────────── */
 .acta-sheet__footer {
-    margin-top: 24px;
+    margin-top: 18px;
+    padding-top: 10px;
+    border-top: 2px solid #111;
     display: flex;
     justify-content: space-between;
-    align-items: end;
+    align-items: flex-end;
     gap: 18px;
 }
 
 .acta-sheet__footer-text {
-    display: grid;
-    gap: 4px;
-    color: #666;
-    font-size: 11px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    color: #555;
+    font-size: 9.5px;
+    line-height: 1.5;
 }
 
 .acta-sheet__footer-logo {
-    width: 170px;
+    width: 160px;
     height: auto;
+    object-fit: contain;
+    flex-shrink: 0;
 }
 
+/* ── Observation cell ─────────────────────────────────────────────── */
 .acta-preview__observation {
     white-space: pre-wrap;
+    font-size: 10px;
 }
 
+/* ── Preview wrapper inside modal ─────────────────────────────────── */
+.acta-preview {
+    background: #f0f2f5;
+    padding: 24px 20px;
+    border-radius: 6px;
+}
+
+/* ── Responsive ───────────────────────────────────────────────────── */
 @media (max-width: 900px) {
     .acta-search-panel__grid {
         grid-template-columns: 1fr;
     }
 
     .acta-sheet {
-        padding: 16px 12px 18px;
+        padding: 20px 16px 22px;
         overflow-x: auto;
     }
 
     .acta-sheet__header {
-        gap: 12px;
+        gap: 10px;
     }
 
     .acta-sheet__logo--ecuador,
     .acta-sheet__logo--senadi {
-        width: 160px;
+        width: 130px;
     }
 
     .acta-sheet__footer {
         flex-direction: column;
         align-items: flex-start;
+        gap: 12px;
     }
 }
 
