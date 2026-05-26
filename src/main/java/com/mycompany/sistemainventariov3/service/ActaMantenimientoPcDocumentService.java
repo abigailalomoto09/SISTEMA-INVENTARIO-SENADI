@@ -433,32 +433,48 @@ public class ActaMantenimientoPcDocumentService {
                                String label, String lv, String rv, float h) throws IOException {
         drawBorder(cs, x,        y-h, ws[0], h);
         drawBorder(cs, x+ws[0], y-h, ws[1], h);
-        drawParagraphInBox(cs, label, x+4f,          y-5f,  ws[0]-8f, 9f,   8.5f, true);
-        drawParagraphInBox(cs, lv,    x+4f,          y-16f, ws[0]-8f, h-18f, 8f, false);
-        drawParagraphInBox(cs, label, x+ws[0]+4f,    y-5f,  ws[1]-8f, 9f,   8.5f, true);
-        drawParagraphInBox(cs, rv,    x+ws[0]+4f,    y-16f, ws[1]-8f, h-18f, 8f, false);
+        if (h < 30f) {
+            // Compact row: single line vertically centered (Nombre/Fecha rows)
+            float fs = 8f;
+            float ascent  = fs * 0.718f;
+            float descent = fs * 0.207f;
+            float baseline = y - h / 2f - (ascent - descent) / 2f;
+            String lt = label + " " + normalize(lv);
+            String rt = label + " " + normalize(rv);
+            drawText(cs, lt, x + 4f,         baseline, PDType1Font.HELVETICA, fs, Color.BLACK, false);
+            drawText(cs, rt, x + ws[0] + 4f, baseline, PDType1Font.HELVETICA, fs, Color.BLACK, false);
+        } else {
+            // Tall row: label header + value below (Firma row, H_SIGN=65+)
+            drawParagraphInBox(cs, label, x+4f,          y-5f,  ws[0]-8f, 9f,    8.5f, true);
+            drawParagraphInBox(cs, lv,    x+4f,          y-16f, ws[0]-8f, h-18f, 8f,   false);
+            drawParagraphInBox(cs, label, x+ws[0]+4f,    y-5f,  ws[1]-8f, 9f,    8.5f, true);
+            drawParagraphInBox(cs, rv,    x+ws[0]+4f,    y-16f, ws[1]-8f, h-18f, 8f,   false);
+        }
         return y - h;
     }
 
     private float drawParagraph(PDPageContentStream cs, String text, float x, float y,
                                  float w, float fs, float lh, int maxLines) throws IOException {
         List<String> lines = wrap(text, w, fs, PDType1Font.HELVETICA);
-        float cy = y;
+        float ascent = fs * 0.718f;
+        float cy = y - ascent;
         int n = 0;
         for (String line : lines) {
             if (n++ >= maxLines) break;
             drawText(cs, line, x, cy, PDType1Font.HELVETICA, fs, Color.BLACK, false);
             cy -= lh;
         }
-        return cy;
+        return cy + ascent;
     }
 
     private void drawParagraphInBox(PDPageContentStream cs, String text, float x, float y,
                                     float w, float h, float fs, boolean bold) throws IOException {
         PDType1Font f = bold ? PDType1Font.HELVETICA_BOLD : PDType1Font.HELVETICA;
         List<String> lines = wrap(normalize(text), w, fs, f);
-        float lh = fs + 1.5f;
-        float cy = y;
+        // y = visual top of text area; PDFBox needs baseline = visual top - ascent
+        float ascent = fs * 0.718f;
+        float lh     = fs * 1.3f;
+        float cy     = y - ascent;
         int max = Math.max(1, (int) Math.floor(h / lh));
         for (int i = 0; i < lines.size() && i < max; i++) {
             drawText(cs, lines.get(i), x, cy, f, fs, Color.BLACK, false);

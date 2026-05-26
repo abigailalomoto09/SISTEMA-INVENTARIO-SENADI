@@ -2,6 +2,7 @@ package com.mycompany.sistemainventariov3.resources;
 
 import com.google.gson.Gson;
 import com.mycompany.sistemainventariov3.dto.ActaMantenimientoPcRequest;
+import com.mycompany.sistemainventariov3.dto.ActaSoftwareRequest;
 import com.mycompany.sistemainventariov3.dto.ApiResponse;
 import com.mycompany.sistemainventariov3.model.Usuario;
 import com.mycompany.sistemainventariov3.service.ActaMantenimientoPcDocumentService;
@@ -9,6 +10,7 @@ import com.mycompany.sistemainventariov3.service.ActaMantenimientoImpresoraDocum
 import com.mycompany.sistemainventariov3.service.ActaMantenimientoProyectorDocumentService;
 import com.mycompany.sistemainventariov3.service.ActaMantenimientoEscanerDocumentService;
 import com.mycompany.sistemainventariov3.service.ActaMantenimientoTelefonoDocumentService;
+import com.mycompany.sistemainventariov3.service.ActaSoftwareDocumentService;
 import com.mycompany.sistemainventariov3.util.SesionUsuario;
 
 import javax.ws.rs.Consumes;
@@ -31,6 +33,51 @@ public class ActasResource {
     private final ActaMantenimientoProyectorDocumentService proyectorDocumentService = new ActaMantenimientoProyectorDocumentService();
     private final ActaMantenimientoEscanerDocumentService escanerDocumentService = new ActaMantenimientoEscanerDocumentService();
     private final ActaMantenimientoTelefonoDocumentService telefonoDocumentService = new ActaMantenimientoTelefonoDocumentService();
+    private final ActaSoftwareDocumentService softwareDocumentService = new ActaSoftwareDocumentService();
+
+    @POST
+    @Path("software/export/{format}")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_OCTET_STREAM)
+    public Response exportarActaSoftware(@PathParam("format") String format, String json) {
+        try {
+            validarAutenticacion();
+            ActaSoftwareRequest request = gson.fromJson(json, ActaSoftwareRequest.class);
+            if (request == null || request.getFuncionario() == null || isBlank(request.getFuncionario().getNombre())) {
+                ApiResponse<?> response = ApiResponse.error("VALIDATION_ERROR", "El nombre del funcionario es obligatorio.");
+                return Response.status(Response.Status.BAD_REQUEST).entity(gson.toJson(response)).build();
+            }
+            String normalizedFormat = String.valueOf(format).trim().toLowerCase();
+            byte[] content;
+            String mediaType;
+            String extension;
+            if ("docx".equals(normalizedFormat)) {
+                content = softwareDocumentService.generarDocx(request);
+                mediaType = "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+                extension = "docx";
+            } else if ("pdf".equals(normalizedFormat)) {
+                content = softwareDocumentService.generarPdf(request);
+                mediaType = "application/pdf";
+                extension = "pdf";
+            } else {
+                ApiResponse<?> response = ApiResponse.error("VALIDATION_ERROR", "Formato no soportado.");
+                return Response.status(Response.Status.BAD_REQUEST).entity(gson.toJson(response)).build();
+            }
+            String codigo = sanitizeSegment(request.getEquipo() != null ? request.getEquipo().getCodigo() : "equipo");
+            String fecha = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd_HHmm"));
+            String fileName = "acta_software_" + codigo + "_" + fecha + "." + extension;
+            return Response.ok(content, mediaType)
+                    .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + fileName + "\"")
+                    .build();
+        } catch (IllegalArgumentException e) {
+            ApiResponse<?> response = ApiResponse.error("VALIDATION_ERROR", e.getMessage());
+            return Response.status(Response.Status.BAD_REQUEST).entity(gson.toJson(response)).build();
+        } catch (Exception e) {
+            e.printStackTrace();
+            ApiResponse<?> response = ApiResponse.error("ERROR", e.getMessage());
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(gson.toJson(response)).build();
+        }
+    }
 
     @POST
     @Path("equipos/pc/export/{format}")

@@ -1025,25 +1025,7 @@
                     ${commonFooter}
                 `
             },
-            "acta-software": {
-                eyebrow: "Programas y aplicaciones",
-                title: "Formulario de software",
-                description: "Registro de programas y aplicaciones instaladas en un equipo institucional.",
-                hint: "Utiliza este formato para dejar constancia del software validado o instalado durante la intervencion.",
-                fields: `
-                    <div class="field-group"><label for="actaFechaSoftware">Fecha</label><input id="actaFechaSoftware" name="fecha" type="date" required></div>
-                    <div class="field-group"><label for="actaTecnicoSoftware">Técnico responsable</label><input id="actaTecnicoSoftware" name="tecnico" type="text" required></div>
-                    <div class="field-group"><label for="actaUsuarioSoftware">Usuario o custodio</label><input id="actaUsuarioSoftware" name="usuarioCustodio" type="text"></div>
-                    <div class="field-group"><label for="actaEquipoSoftware">Equipo</label><input id="actaEquipoSoftware" name="equipo" type="text"></div>
-                    <div class="field-group"><label for="actaCodigoSoftware">Código del equipo</label><input id="actaCodigoSoftware" name="codigoEquipo" type="text"></div>
-                    <div class="field-group"><label for="actaSistemaSoftware">Sistema operativo</label><input id="actaSistemaSoftware" name="sistemaOperativo" type="text"></div>
-                    <div class="field-group field-group--wide"><label for="actaSoftwareInstalado">Programas instalados</label><textarea id="actaSoftwareInstalado" name="programasInstalados" rows="5"></textarea></div>
-                    <div class="field-group"><label for="actaLicenciaSoftware">Licenciamiento</label><select id="actaLicenciaSoftware" name="licenciamiento"><option value="">Seleccione</option><option>Verificado</option><option>Pendiente</option><option>No aplica</option></select></div>
-                    <div class="field-group"><label for="actaRevisionSoftware">Revision final</label><select id="actaRevisionSoftware" name="revisionFinal"><option value="">Seleccione</option><option>Conforme</option><option>Con observaciones</option></select></div>
-                    <div class="field-group field-group--wide"><label for="actaObservacionSoftware">Observaciones</label><textarea id="actaObservacionSoftware" name="observaciones" rows="4"></textarea></div>
-                    ${commonFooter}
-                `
-            },
+            "acta-software": null,
             "acta-rc": {
                 eyebrow: "Mantenimiento preventivo RC",
                 title: "Formulario RC",
@@ -1071,6 +1053,9 @@
     function renderActaFormPage(pageName) {
         if (pageName === "acta-equipos") {
             return renderActaEquiposPage();
+        }
+        if (pageName === "acta-software") {
+            return renderActaSoftwarePage();
         }
 
         const config = actaConfig(pageName);
@@ -1151,8 +1136,516 @@
         "LIMPIEZA DE PUERTOS RJ45"
     ];
 
+    const ACTA_SOFTWARE_PAGE1 = [
+        { categoria: "SISTEMA OPERATIVO",              programa: "MICROSOFT WINDOWS 10 HOME" },
+        { categoria: "SISTEMA OPERATIVO",              programa: "MICROSOFT WINDOWS 10 PRO" },
+        { categoria: "PAQUETE OFIMÁTICO",              programa: "MICROSOFT OFFICE 365 PRO PLUS" },
+        { categoria: "SOFTWARE ANTIVIRUS",             programa: "KASPERSKY ENDPOINT SECURITY 11.9" },
+        { categoria: "NAVEGADORES",                    programa: "GOOGLE CHROME" },
+        { categoria: "NAVEGADORES",                    programa: "MOZILLA FIREFOX" },
+        { categoria: "NAVEGADORES",                    programa: "MICROSOFT EDGE" },
+        { categoria: "NAVEGADORES",                    programa: "INTERNET EXPLORER" },
+        { categoria: "SOFTWARE SOPORTE REMOTO",        programa: "ANYDESK" },
+        { categoria: "SOFTWARE SOPORTE REMOTO",        programa: "ZOHO ASSIST" },
+        { categoria: "SOFTWARE DE FIRMA ELECTRÓNICA",  programa: "TOKEN SECURITY BAUAC 2018 (64 BITS)" },
+        { categoria: "SOFTWARE DE FIRMA ELECTRÓNICA",  programa: "SIGNER DIGITAL 1.0.0.VERSIÓN" },
+        { categoria: "SOFTWARE PARA VISUALIZACIÓN PDF", programa: "ADOBE ACROBAT READER" },
+        { categoria: "SOFTWARE PARA VISUALIZACIÓN PDF", programa: "PDF 24 CREATOR" },
+        { categoria: "SOFTWARE PARA VISUALIZACIÓN PDF", programa: "FOXIT READER" },
+        { categoria: "COMPRESIÓN",                     programa: "WINRAR" },
+        { categoria: "CORREOS",                        programa: "MICROSOFT OUTLOOK" },
+        { categoria: "VIDEO CONFERENCIA",              programa: "ZOOM MEETINGS" }
+    ];
+
+    const ACTA_SOFTWARE_DRIVERS = [
+        "HP LASER JET COLOR",
+        "HP LASER JET B/N",
+        "LEXMARK LASER B/N",
+        "ESCÁNER EPSON",
+        "ESCÁNER HP",
+        "ESCÁNER KODAK"
+    ];
+
     function actaAssetPath(name) {
         return `${basePrefix}/assets/actas/${name}`;
+    }
+
+    function renderActaSoftwarePage() {
+        const swRows = ACTA_SOFTWARE_PAGE1.map((item, index) => `
+            <tr>
+                <td class="acta-table__activity">${item.categoria}</td>
+                <td class="acta-table__activity">${item.programa}</td>
+                <td class="acta-sw-radio">
+                    <label><input type="radio" name="sw${index}" value="SI"> SI</label>
+                    <label><input type="radio" name="sw${index}" value="NO"> NO</label>
+                </td>
+            </tr>
+        `).join("");
+
+        const drRows = ACTA_SOFTWARE_DRIVERS.map((drv, i) => `
+            <tr>
+                <td class="acta-table__activity">CONTROLADORES / DRIVERS</td>
+                <td class="acta-table__activity">${drv}</td>
+                <td class="acta-sw-radio">
+                    <label><input type="radio" name="drv${i}" value="SI"> SI</label>
+                    <label><input type="radio" name="drv${i}" value="NO"> NO</label>
+                </td>
+            </tr>
+        `).join("");
+
+        const adicRows = [0, 1, 2].map((i) => `
+            <tr>
+                <td><input id="actaSwAdicional${i}" class="acta-input" placeholder="Descripción del software adicional"></td>
+                <td class="acta-sw-radio">
+                    <label><input type="radio" name="adic${i}" value="SI"> SI</label>
+                    <label><input type="radio" name="adic${i}" value="NO"> NO</label>
+                </td>
+            </tr>
+        `).join("");
+
+        return `
+            <section class="panel panel--narrow acta-form-panel">
+                <div class="inventory-header inventory-header--form">
+                    <div>
+                        <div class="eyebrow">Programas y aplicaciones</div>
+                        <h2>Formulario de software</h2>
+                        <p>Registra los programas y aplicaciones instaladas en un equipo institucional.</p>
+                    </div>
+                    <div class="inventory-header__badge">
+                        <span>${iconMarkup("clipboard")}</span>
+                        <strong>ACTAS</strong>
+                    </div>
+                </div>
+
+                <div class="acta-search-panel">
+                    <div>
+                        <div class="eyebrow">Búsqueda inicial</div>
+                        <h3>Seleccione el equipo para generar el acta</h3>
+                        <p>Busque por custodio, Código SBYE, Código Megan, marca, modelo, serie, edificio o estado.</p>
+                    </div>
+                    <div class="acta-search-panel__grid">
+                        <div class="field-group acta-search-panel__query">
+                            <label for="actaSwEquipoBusqueda">Campo de búsqueda</label>
+                            <input id="actaSwEquipoBusqueda" type="search" placeholder="Ej. custodio, SBYE, marca, serie...">
+                        </div>
+                        <button type="button" class="btn btn-primary" id="actaSwEquipoBuscarButton">Buscar</button>
+                    </div>
+                    <div id="actaSwEquipoResultados" class="acta-search-results hidden"></div>
+                </div>
+
+                <form id="actaSoftwareForm" class="acta-pc-form hidden">
+                    <input type="hidden" id="actaSwSelector">
+                    <div class="acta-sheet">
+                        <div class="acta-sheet__header">
+                            <img src="${actaAssetPath("logo_ecuador.png")}" alt="República del Ecuador" class="acta-sheet__logo acta-sheet__logo--ecuador">
+                            <img src="${actaAssetPath("logo_senadi.png")}" alt="Servicio Nacional de Derechos Intelectuales" class="acta-sheet__logo acta-sheet__logo--senadi">
+                        </div>
+                        <div class="acta-sheet__titles">
+                            <h3>SERVICIO NACIONAL DE DERECHOS INTELECTUALES</h3>
+                            <h4>DIRECCIÓN DE TECNOLOGÍAS DE LA INFORMACIÓN Y COMUNICACIÓN</h4>
+                            <h2>FORMULARIO DE PROGRAMAS Y APLICACIONES INSTALADAS</h2>
+                        </div>
+
+                        <table class="acta-table">
+                            <tr><th colspan="6">DATOS DEL FUNCIONARIO SENADI</th></tr>
+                            <tr>
+                                <td class="acta-table__label">NOMBRE</td>
+                                <td colspan="2"><input id="actaSwFuncionarioNombre" class="acta-input" required></td>
+                                <td class="acta-table__label">CARGO</td>
+                                <td><input id="actaSwFuncionarioCargo" class="acta-input" required></td>
+                                <td class="acta-table__label-value"><input id="actaSwFuncionarioExtension" class="acta-input" placeholder="Nº EXT."></td>
+                            </tr>
+                            <tr>
+                                <td class="acta-table__label">CORREO</td>
+                                <td colspan="2"><input id="actaSwFuncionarioCorreo" class="acta-input" type="email" required></td>
+                                <td class="acta-table__label">ÁREA</td>
+                                <td><input id="actaSwFuncionarioArea" class="acta-input" required></td>
+                                <td class="acta-table__label-value"><input id="actaSwFuncionarioEdificio" class="acta-input" placeholder="EDIFICIO" required></td>
+                            </tr>
+                        </table>
+
+                        <table class="acta-table acta-table--equipos">
+                            <tr><th colspan="5">EQUIPOS</th></tr>
+                            <tr>
+                                <th>TIPO</th>
+                                <th>MARCA</th>
+                                <th>MODELO</th>
+                                <th>SERIAL</th>
+                                <th>CÓDIGO</th>
+                            </tr>
+                            <tr>
+                                <td><input id="actaSwEquipoTipo" class="acta-input" value="PC"></td>
+                                <td><input id="actaSwEquipoMarca" class="acta-input"></td>
+                                <td><input id="actaSwEquipoModelo" class="acta-input"></td>
+                                <td><input id="actaSwEquipoSerial" class="acta-input"></td>
+                                <td><input id="actaSwEquipoCodigo" class="acta-input" required></td>
+                            </tr>
+                        </table>
+
+                        <table class="acta-table acta-table--actividades">
+                            <tr><th colspan="3" class="acta-table__title-dark">PROGRAMAS Y APLICACIONES INSTALADAS</th></tr>
+                            <tr>
+                                <th class="acta-table__label-large">CATEGORÍA</th>
+                                <th class="acta-table__label-large">PROGRAMA / APLICACIÓN</th>
+                                <th>INSTALADO</th>
+                            </tr>
+                            ${swRows}
+                        </table>
+
+                        <table class="acta-table acta-table--actividades">
+                            <tr><th colspan="3" class="acta-table__title-dark">CONTROLADORES / DRIVERS</th></tr>
+                            <tr>
+                                <th class="acta-table__label-large">CATEGORÍA</th>
+                                <th class="acta-table__label-large">PROGRAMA / APLICACIÓN</th>
+                                <th>INSTALADO</th>
+                            </tr>
+                            ${drRows}
+                        </table>
+
+                        <table class="acta-table acta-table--actividades">
+                            <tr><th colspan="2" class="acta-table__title-dark">SOFTWARE Y DRIVERS ADICIONAL</th></tr>
+                            <tr>
+                                <th class="acta-table__label-large">DESCRIPCIÓN</th>
+                                <th>INSTALADO</th>
+                            </tr>
+                            ${adicRows}
+                        </table>
+
+                        <table class="acta-table acta-table--firma">
+                            <tr><th colspan="2">ENTREGA RECEPCIÓN DEL EQUIPO</th></tr>
+                            <tr>
+                                <th>ENTREGA</th>
+                                <th>RECIBE</th>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <label class="acta-signature-field">Nombre:
+                                        <select id="actaSwEntregaNombre" class="acta-input" required>
+                                            <option value="">-- Seleccionar --</option>
+                                            <option value="EMERSON R. CERACAPA SOLIS">EMERSON R. CERACAPA SOLIS</option>
+                                            <option value="PAUL FERNANDO OROZCO VINUEZA">PAUL FERNANDO OROZCO VINUEZA</option>
+                                        </select>
+                                    </label>
+                                </td>
+                                <td>
+                                    <label class="acta-signature-field">Nombre:
+                                        <input id="actaSwRecibeNombre" class="acta-input" required>
+                                    </label>
+                                </td>
+                            </tr>
+                            <tr class="acta-table__row--firma">
+                                <td>
+                                    <label class="acta-signature-field">Firma:
+                                        <input id="actaSwEntregaFirma" class="acta-input acta-input--readonly" readonly tabindex="-1" placeholder="Firma electrónica">
+                                    </label>
+                                </td>
+                                <td>
+                                    <label class="acta-signature-field">Firma:
+                                        <input id="actaSwRecibeFirma" class="acta-input acta-input--readonly" readonly tabindex="-1" placeholder="Firma electrónica">
+                                    </label>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <label class="acta-signature-field">Fecha:
+                                        <input id="actaSwEntregaFecha" class="acta-input" type="date" required>
+                                    </label>
+                                </td>
+                                <td>
+                                    <label class="acta-signature-field">Fecha:
+                                        <input id="actaSwRecibeFecha" class="acta-input" type="date" required>
+                                    </label>
+                                </td>
+                            </tr>
+                        </table>
+
+                        <div class="acta-sheet__footer">
+                            <div class="acta-sheet__footer-text">
+                                <span>Dirección: Av. República E7-197 y Diego de Almagro — Edificio FORUM 300</span>
+                                <span>Código postal: 170518 / Quito — Ecuador</span>
+                                <span>Teléfono: +539-2 394 0000</span>
+                                <span>www.derechosintelectuales.gob.ec</span>
+                            </div>
+                            <img src="${actaAssetPath("logo_nuevo_ecuador.png")}" alt="El Nuevo Ecuador" class="acta-sheet__footer-logo">
+                        </div>
+                    </div>
+
+                    <div class="acta-form-actions">
+                        <button type="button" class="btn btn-secondary" id="actaSwPreviewButton">Previsualizar</button>
+                        <button type="button" class="btn btn-primary" id="actaSwExportDocxButton">Exportar DOCX</button>
+                        <button type="button" class="btn btn-secondary" id="actaSwExportPdfButton">Exportar PDF</button>
+                        <button type="button" class="btn btn-secondary" id="actaSwResetButton">Restablecer</button>
+                    </div>
+                </form>
+            </section>
+        `;
+    }
+
+    function autofillActaSwForm(item) {
+        setInputValue("actaSwFuncionarioNombre", item.custodio || "");
+        setInputValue("actaSwFuncionarioEdificio", item.ubicacionEdificio || "");
+        setInputValue("actaSwFuncionarioArea", item.ubicacionDireccion || item.ubicacion || "");
+        setInputValue("actaSwEquipoTipo", String(item.tipo || "PC").toUpperCase());
+        setInputValue("actaSwEquipoMarca", item.marca || "");
+        setInputValue("actaSwEquipoModelo", item.modelo || "");
+        setInputValue("actaSwEquipoSerial", item.numeroSerie || "");
+        setInputValue("actaSwEquipoCodigo", item.codigoSbai || item.codigoMegan || "");
+        setInputValue("actaSwRecibeNombre", item.custodio || "");
+    }
+
+    function loadActaSwInitialData() {
+        const today = new Date().toISOString().slice(0, 10);
+        ["actaSwEntregaFecha", "actaSwRecibeFecha"].forEach((id) => {
+            const el = document.getElementById(id);
+            if (el && !el.value) el.value = today;
+        });
+    }
+
+    function resetActaSwForm() {
+        document.getElementById("actaSoftwareForm")?.reset();
+        const sel = document.getElementById("actaSwSelector");
+        if (sel) sel.value = "";
+        document.querySelectorAll(".acta-search-card").forEach((c) => c.classList.remove("is-selected"));
+        document.getElementById("actaSoftwareForm")?.classList.add("hidden");
+        loadActaSwInitialData();
+    }
+
+    function buildActaSwPayload() {
+        const swItems = ACTA_SOFTWARE_PAGE1.map((item, i) => {
+            const checked = document.querySelector(`input[name="sw${i}"]:checked`);
+            return { categoria: item.categoria, programa: item.programa, instalado: checked ? checked.value : "" };
+        });
+        const drvItems = ACTA_SOFTWARE_DRIVERS.map((drv, i) => {
+            const checked = document.querySelector(`input[name="drv${i}"]:checked`);
+            return { categoria: "CONTROLADORES / DRIVERS", programa: drv, instalado: checked ? checked.value : "" };
+        });
+        const adicionales = [0, 1, 2].map((i) => {
+            return document.getElementById(`actaSwAdicional${i}`)?.value.trim() || "";
+        });
+
+        return {
+            funcionario: {
+                nombre:    document.getElementById("actaSwFuncionarioNombre")?.value.trim() || "",
+                cargo:     document.getElementById("actaSwFuncionarioCargo")?.value.trim() || "",
+                extension: document.getElementById("actaSwFuncionarioExtension")?.value.trim() || "",
+                correo:    document.getElementById("actaSwFuncionarioCorreo")?.value.trim() || "",
+                area:      document.getElementById("actaSwFuncionarioArea")?.value.trim() || "",
+                edificio:  document.getElementById("actaSwFuncionarioEdificio")?.value.trim() || ""
+            },
+            equipo: {
+                tipo:   document.getElementById("actaSwEquipoTipo")?.value.trim() || "",
+                marca:  document.getElementById("actaSwEquipoMarca")?.value.trim() || "",
+                modelo: document.getElementById("actaSwEquipoModelo")?.value.trim() || "",
+                serial: document.getElementById("actaSwEquipoSerial")?.value.trim() || "",
+                codigo: document.getElementById("actaSwEquipoCodigo")?.value.trim() || ""
+            },
+            softwareItems: [...swItems, ...drvItems],
+            driversAdicionales: adicionales,
+            entrega: {
+                nombre: document.getElementById("actaSwEntregaNombre")?.value.trim() || "",
+                firma:  document.getElementById("actaSwEntregaFirma")?.value.trim() || "",
+                fecha:  document.getElementById("actaSwEntregaFecha")?.value || ""
+            },
+            recibe: {
+                nombre: document.getElementById("actaSwRecibeNombre")?.value.trim() || "",
+                firma:  document.getElementById("actaSwRecibeFirma")?.value.trim() || "",
+                fecha:  document.getElementById("actaSwRecibeFecha")?.value || ""
+            }
+        };
+    }
+
+    function renderActaSwPreview(payload) {
+        const f = payload.funcionario || {};
+        const eq = payload.equipo || {};
+        const swItems = Array.isArray(payload.softwareItems) ? payload.softwareItems : [];
+        const page1 = swItems.slice(0, ACTA_SOFTWARE_PAGE1.length);
+        const drivers = swItems.slice(ACTA_SOFTWARE_PAGE1.length, ACTA_SOFTWARE_PAGE1.length + ACTA_SOFTWARE_DRIVERS.length);
+        const adicionales = Array.isArray(payload.driversAdicionales) ? payload.driversAdicionales : [];
+
+        const swRowsHtml = ACTA_SOFTWARE_PAGE1.map((item, i) => {
+            const ins = page1[i] ? escapeHtml(page1[i].instalado || "") : "";
+            return `<tr><td>${escapeHtml(item.categoria)}</td><td>${escapeHtml(item.programa)}</td><td style="text-align:center;font-weight:bold">${ins}</td></tr>`;
+        }).join("");
+
+        const drvRowsHtml = ACTA_SOFTWARE_DRIVERS.map((drv, i) => {
+            const ins = drivers[i] ? escapeHtml(drivers[i].instalado || "") : "";
+            return `<tr><td>CONTROLADORES / DRIVERS</td><td>${escapeHtml(drv)}</td><td style="text-align:center;font-weight:bold">${ins}</td></tr>`;
+        }).join("");
+
+        const adicHtml = [0, 1, 2].map((i) => {
+            const val = escapeHtml(adicionales[i] || "");
+            return `<tr><td colspan="2">${val}</td><td></td></tr>`;
+        }).join("");
+
+        return `
+            <div class="acta-sheet acta-sheet--preview">
+                <div class="acta-sheet__header">
+                    <img src="${actaAssetPath("logo_ecuador.png")}" alt="República del Ecuador" class="acta-sheet__logo acta-sheet__logo--ecuador">
+                    <img src="${actaAssetPath("logo_senadi.png")}" alt="Servicio Nacional de Derechos Intelectuales" class="acta-sheet__logo acta-sheet__logo--senadi">
+                </div>
+                <div class="acta-sheet__titles">
+                    <h3>SERVICIO NACIONAL DE DERECHOS INTELECTUALES</h3>
+                    <h4>DIRECCIÓN DE TECNOLOGÍAS DE LA INFORMACIÓN Y COMUNICACIÓN</h4>
+                    <h2>FORMULARIO DE PROGRAMAS Y APLICACIONES INSTALADAS</h2>
+                </div>
+                <table class="acta-table">
+                    <tr><th colspan="6">DATOS DEL FUNCIONARIO SENADI</th></tr>
+                    <tr>
+                        <td class="acta-table__label">NOMBRE</td><td>${escapeHtml(f.nombre || "")}</td>
+                        <td class="acta-table__label">CARGO</td><td>${escapeHtml(f.cargo || "")}</td>
+                        <td class="acta-table__label">N&#176; EXT.</td><td>${escapeHtml(f.extension || "")}</td>
+                    </tr>
+                    <tr>
+                        <td class="acta-table__label">CORREO</td><td>${escapeHtml(f.correo || "")}</td>
+                        <td class="acta-table__label">ÁREA</td><td>${escapeHtml(f.area || "")}</td>
+                        <td class="acta-table__label">EDIFICIO</td><td>${escapeHtml(f.edificio || "")}</td>
+                    </tr>
+                </table>
+                <table class="acta-table acta-table--equipos">
+                    <tr><th colspan="5">EQUIPOS</th></tr>
+                    <tr><th>TIPO</th><th>MARCA</th><th>MODELO</th><th>SERIAL</th><th>CÓDIGO</th></tr>
+                    <tr>
+                        <td>${escapeHtml(eq.tipo || "")}</td><td>${escapeHtml(eq.marca || "")}</td>
+                        <td>${escapeHtml(eq.modelo || "")}</td><td>${escapeHtml(eq.serial || "")}</td>
+                        <td>${escapeHtml(eq.codigo || "")}</td>
+                    </tr>
+                </table>
+                <table class="acta-table acta-table--actividades">
+                    <tr><th colspan="3" class="acta-table__title-dark">PROGRAMAS Y APLICACIONES INSTALADAS</th></tr>
+                    <tr><th>CATEGORÍA</th><th>PROGRAMA / APLICACIÓN</th><th>INSTALADO</th></tr>
+                    ${swRowsHtml}
+                </table>
+                <table class="acta-table acta-table--actividades">
+                    <tr><th colspan="3" class="acta-table__title-dark">CONTROLADORES / DRIVERS</th></tr>
+                    <tr><th>CATEGORÍA</th><th>PROGRAMA / APLICACIÓN</th><th>INSTALADO</th></tr>
+                    ${drvRowsHtml}
+                </table>
+                <table class="acta-table acta-table--actividades">
+                    <tr><th colspan="2" class="acta-table__title-dark">SOFTWARE Y DRIVERS ADICIONAL</th></tr>
+                    <tr><th>DESCRIPCIÓN</th><th>INSTALADO</th></tr>
+                    ${adicHtml}
+                </table>
+                <table class="acta-table acta-table--firma">
+                    <tr><th colspan="2">ENTREGA RECEPCIÓN DEL EQUIPO</th></tr>
+                    <tr><th>ENTREGA</th><th>RECIBE</th></tr>
+                    <tr><td><strong>Nombre:</strong> ${escapeHtml(payload.entrega?.nombre || "")}</td><td><strong>Nombre:</strong> ${escapeHtml(payload.recibe?.nombre || "")}</td></tr>
+                    <tr class="acta-table__row--firma"><td><strong>Firma:</strong> ${escapeHtml(payload.entrega?.firma || "")}</td><td><strong>Firma:</strong> ${escapeHtml(payload.recibe?.firma || "")}</td></tr>
+                    <tr><td><strong>Fecha:</strong> ${escapeHtml(payload.entrega?.fecha || "")}</td><td><strong>Fecha:</strong> ${escapeHtml(payload.recibe?.fecha || "")}</td></tr>
+                </table>
+                <div class="acta-sheet__footer">
+                    <div class="acta-sheet__footer-text">
+                        <span>Dirección: Av. República E7-197 y Diego de Almagro — Edificio FORUM 300</span>
+                        <span>Código postal: 170518 / Quito — Ecuador</span>
+                        <span>Teléfono: +539-2 394 0000</span>
+                        <span>www.derechosintelectuales.gob.ec</span>
+                    </div>
+                    <img src="${actaAssetPath("logo_nuevo_ecuador.png")}" alt="El Nuevo Ecuador" class="acta-sheet__footer-logo">
+                </div>
+            </div>
+        `;
+    }
+
+    function openActaSwPreview() {
+        const form = document.getElementById("actaSoftwareForm");
+        const selector = document.getElementById("actaSwSelector");
+        if (!form || !selector?.value) {
+            showToast("Equipo requerido", "Seleccione un equipo desde el buscador inicial para autocompletar el acta.", "warning");
+            return;
+        }
+        if (!form.reportValidity()) return;
+        const payload = buildActaSwPayload();
+        openModal(
+            "Previsualización del Acta de Software",
+            `<div class="acta-preview">${renderActaSwPreview(payload)}</div>`,
+            [
+                { label: "Exportar DOCX", className: "btn btn-primary", onClick: () => exportActaSoftware("docx") },
+                { label: "Exportar PDF", className: "btn btn-secondary", onClick: () => exportActaSoftware("pdf") },
+                { label: "Cerrar", className: "btn btn-secondary", onClick: closeModal }
+            ],
+            "modal--wide"
+        );
+    }
+
+    async function exportActaSoftware(format) {
+        try {
+            const form = document.getElementById("actaSoftwareForm");
+            const selector = document.getElementById("actaSwSelector");
+            if (!form || !selector?.value) {
+                showToast("Equipo requerido", "Seleccione un equipo desde el buscador inicial para autocompletar el acta.", "warning");
+                return;
+            }
+            if (!form.reportValidity()) return;
+            const payload = buildActaSwPayload();
+            const response = await apiFetch(`/actas/software/export/${format}`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(payload)
+            });
+            if (!response.ok) {
+                let message = "No se pudo exportar el acta.";
+                try {
+                    const errorPayload = await response.json();
+                    message = errorPayload.message || errorPayload.error || message;
+                } catch (e) { /* ignore */ }
+                throw new Error(message);
+            }
+            const blob = await response.blob();
+            const disposition = response.headers.get("Content-Disposition") || "";
+            const match = disposition.match(/filename="?([^";]+)"?/i);
+            const filename = match?.[1] || `acta_software.${format}`;
+            downloadBlob(blob, filename);
+            showToast("Exportación lista", `El documento ${format.toUpperCase()} fue generado correctamente.`, "success");
+        } catch (error) {
+            showToast("Error", error.message || "No se pudo exportar el acta.", "danger");
+        }
+    }
+
+    function runActaSwEquipoSearch() {
+        const query = document.getElementById("actaSwEquipoBusqueda")?.value.trim() || "";
+        const results = document.getElementById("actaSwEquipoResultados");
+        if (!results) return;
+        const items = (state.inventory || []).filter((item) => {
+            const tipo = String(item.tipo || "").toLowerCase();
+            if (!["pc", "laptop"].includes(tipo)) return false;
+            if (!query) return true;
+            const q = query.toLowerCase();
+            return [item.custodio, item.codigoSbai, item.codigoMegan, item.marca, item.modelo, item.numeroSerie, item.ubicacionEdificio]
+                .some((v) => v && String(v).toLowerCase().includes(q));
+        }).slice(0, 20);
+
+        if (!items.length) {
+            results.classList.remove("hidden");
+            results.innerHTML = '<div class="empty-state">Sin resultados para ese criterio.</div>';
+            return;
+        }
+        results.classList.remove("hidden");
+        results.innerHTML = `
+            <div class="acta-search-results__meta">${items.length} coincidencia(s). Seleccione una para autocompletar.</div>
+            <div class="acta-search-results__list">
+                ${items.map((item) => `
+                    <button type="button" class="acta-search-card" data-acta-sw-select="${item.id}">
+                        <strong>${escapeHtml(item.codigoSbai || item.codigoMegan || `ID ${item.id}`)} · ${escapeHtml(displayInventoryType(item))}</strong>
+                        <span>${escapeHtml([item.marca, item.modelo, item.numeroSerie].filter(Boolean).join(" / ") || "Sin marca/modelo")}</span>
+                        <span>Custodio: ${escapeHtml(item.custodio || "-")} · Edificio: ${escapeHtml(item.ubicacionEdificio || "-")}</span>
+                    </button>
+                `).join("")}
+            </div>
+        `;
+        results.querySelectorAll("[data-acta-sw-select]").forEach((btn) => {
+            btn.addEventListener("click", () => selectActaSwEquipo(btn.dataset.actaSwSelect));
+        });
+    }
+
+    function selectActaSwEquipo(id) {
+        const item = (state.inventory || []).find((i) => String(i.id) === String(id));
+        if (!item) return;
+        document.querySelectorAll("[data-acta-sw-select]").forEach((c) => c.classList.remove("is-selected"));
+        document.querySelector(`[data-acta-sw-select="${id}"]`)?.classList.add("is-selected");
+        const selector = document.getElementById("actaSwSelector");
+        if (selector) selector.value = id;
+        autofillActaSwForm(item);
+        loadActaSwInitialData();
+        document.getElementById("actaSoftwareForm")?.classList.remove("hidden");
     }
 
     function renderActaEquiposPage() {
@@ -1287,7 +1780,11 @@
                             <tr>
                                 <td>
                                     <label class="acta-signature-field">Nombre:
-                                        <input id="actaEntregaNombre" class="acta-input" required>
+                                        <select id="actaEntregaNombre" class="acta-input" required>
+                                            <option value="">-- Seleccionar --</option>
+                                            <option value="EMERSON R. CERACAPA SOLIS">EMERSON R. CERACAPA SOLIS</option>
+                                            <option value="PAUL FERNANDO OROZCO VINUEZA">PAUL FERNANDO OROZCO VINUEZA</option>
+                                        </select>
                                     </label>
                                 </td>
                                 <td>
@@ -1299,12 +1796,12 @@
                             <tr class="acta-table__row--firma">
                                 <td>
                                     <label class="acta-signature-field">Firma:
-                                        <input id="actaEntregaFirma" class="acta-input">
+                                        <input id="actaEntregaFirma" class="acta-input acta-input--readonly" readonly tabindex="-1" placeholder="Firma electrónica">
                                     </label>
                                 </td>
                                 <td>
                                     <label class="acta-signature-field">Firma:
-                                        <input id="actaRecibeFirma" class="acta-input">
+                                        <input id="actaRecibeFirma" class="acta-input acta-input--readonly" readonly tabindex="-1" placeholder="Firma electrónica">
                                     </label>
                                 </td>
                             </tr>
@@ -1409,7 +1906,11 @@
                             <tr>
                                 <td>
                                     <label class="acta-signature-field">Nombre:
-                                        <input id="actaImpresoraEntregaNombre" class="acta-input" required>
+                                        <select id="actaImpresoraEntregaNombre" class="acta-input" required>
+                                            <option value="">-- Seleccionar --</option>
+                                            <option value="EMERSON R. CERACAPA SOLIS">EMERSON R. CERACAPA SOLIS</option>
+                                            <option value="PAUL FERNANDO OROZCO VINUEZA">PAUL FERNANDO OROZCO VINUEZA</option>
+                                        </select>
                                     </label>
                                 </td>
                                 <td>
@@ -1421,12 +1922,12 @@
                             <tr class="acta-table__row--firma">
                                 <td>
                                     <label class="acta-signature-field">Firma:
-                                        <input id="actaImpresoraEntregaFirma" class="acta-input">
+                                        <input id="actaImpresoraEntregaFirma" class="acta-input acta-input--readonly" readonly tabindex="-1" placeholder="Firma electrónica">
                                     </label>
                                 </td>
                                 <td>
                                     <label class="acta-signature-field">Firma:
-                                        <input id="actaImpresoraRecibeFirma" class="acta-input">
+                                        <input id="actaImpresoraRecibeFirma" class="acta-input acta-input--readonly" readonly tabindex="-1" placeholder="Firma electrónica">
                                     </label>
                                 </td>
                             </tr>
@@ -1517,12 +2018,12 @@
                             <tr><th colspan="2">ENTREGA RECEPCION DE EQUIPO</th></tr>
                             <tr><th>ENTREGA</th><th>RECIBE</th></tr>
                             <tr>
-                                <td><label class="acta-signature-field">Nombre:<input id="actaEscanerEntregaNombre" class="acta-input" required></label></td>
+                                <td><label class="acta-signature-field">Nombre:<select id="actaEscanerEntregaNombre" class="acta-input" required><option value="">-- Seleccionar --</option><option value="EMERSON R. CERACAPA SOLIS">EMERSON R. CERACAPA SOLIS</option><option value="PAUL FERNANDO OROZCO VINUEZA">PAUL FERNANDO OROZCO VINUEZA</option></select></label></td>
                                 <td><label class="acta-signature-field">Nombre:<input id="actaEscanerRecibeNombre" class="acta-input" required></label></td>
                             </tr>
                             <tr class="acta-table__row--firma">
-                                <td><label class="acta-signature-field">Firma:<input id="actaEscanerEntregaFirma" class="acta-input"></label></td>
-                                <td><label class="acta-signature-field">Firma:<input id="actaEscanerRecibeFirma" class="acta-input"></label></td>
+                                <td><label class="acta-signature-field">Firma:<input id="actaEscanerEntregaFirma" class="acta-input acta-input--readonly" readonly tabindex="-1" placeholder="Firma electrónica"></label></td>
+                                <td><label class="acta-signature-field">Firma:<input id="actaEscanerRecibeFirma" class="acta-input acta-input--readonly" readonly tabindex="-1" placeholder="Firma electrónica"></label></td>
                             </tr>
                             <tr>
                                 <td><label class="acta-signature-field">Fecha:<input id="actaEscanerEntregaFecha" class="acta-input" type="date" required></label></td>
@@ -1603,12 +2104,12 @@
                             <tr><th colspan="2">ENTREGA RECEPCION DE EQUIPO</th></tr>
                             <tr><th>ENTREGA</th><th>RECIBE</th></tr>
                             <tr>
-                                <td><label class="acta-signature-field">Nombre:<input id="actaTelefonoEntregaNombre" class="acta-input" required></label></td>
+                                <td><label class="acta-signature-field">Nombre:<select id="actaTelefonoEntregaNombre" class="acta-input" required><option value="">-- Seleccionar --</option><option value="EMERSON R. CERACAPA SOLIS">EMERSON R. CERACAPA SOLIS</option><option value="PAUL FERNANDO OROZCO VINUEZA">PAUL FERNANDO OROZCO VINUEZA</option></select></label></td>
                                 <td><label class="acta-signature-field">Nombre:<input id="actaTelefonoRecibeNombre" class="acta-input" required></label></td>
                             </tr>
                             <tr class="acta-table__row--firma">
-                                <td><label class="acta-signature-field">Firma:<input id="actaTelefonoEntregaFirma" class="acta-input"></label></td>
-                                <td><label class="acta-signature-field">Firma:<input id="actaTelefonoRecibeFirma" class="acta-input"></label></td>
+                                <td><label class="acta-signature-field">Firma:<input id="actaTelefonoEntregaFirma" class="acta-input acta-input--readonly" readonly tabindex="-1" placeholder="Firma electrónica"></label></td>
+                                <td><label class="acta-signature-field">Firma:<input id="actaTelefonoRecibeFirma" class="acta-input acta-input--readonly" readonly tabindex="-1" placeholder="Firma electrónica"></label></td>
                             </tr>
                             <tr>
                                 <td><label class="acta-signature-field">Fecha:<input id="actaTelefonoEntregaFecha" class="acta-input" type="date" required></label></td>
@@ -1702,7 +2203,11 @@
                             <tr>
                                 <td>
                                     <label class="acta-signature-field">Nombre:
-                                        <input id="actaProyectorEntregaNombre" class="acta-input" required>
+                                        <select id="actaProyectorEntregaNombre" class="acta-input" required>
+                                            <option value="">-- Seleccionar --</option>
+                                            <option value="EMERSON R. CERACAPA SOLIS">EMERSON R. CERACAPA SOLIS</option>
+                                            <option value="PAUL FERNANDO OROZCO VINUEZA">PAUL FERNANDO OROZCO VINUEZA</option>
+                                        </select>
                                     </label>
                                 </td>
                                 <td>
@@ -1714,12 +2219,12 @@
                             <tr class="acta-table__row--firma">
                                 <td>
                                     <label class="acta-signature-field">Firma:
-                                        <input id="actaProyectorEntregaFirma" class="acta-input">
+                                        <input id="actaProyectorEntregaFirma" class="acta-input acta-input--readonly" readonly tabindex="-1" placeholder="Firma electrónica">
                                     </label>
                                 </td>
                                 <td>
                                     <label class="acta-signature-field">Firma:
-                                        <input id="actaProyectorRecibeFirma" class="acta-input">
+                                        <input id="actaProyectorRecibeFirma" class="acta-input acta-input--readonly" readonly tabindex="-1" placeholder="Firma electrónica">
                                     </label>
                                 </td>
                             </tr>
@@ -4435,6 +4940,17 @@
         document.getElementById("actaTelefonoExportDocxButton")?.addEventListener("click", () => exportActaTelefono("docx"));
         document.getElementById("actaTelefonoExportPdfButton")?.addEventListener("click", () => exportActaTelefono("pdf"));
         document.getElementById("actaTelefonoResetButton")?.addEventListener("click", resetActaTelefonoForm);
+        document.getElementById("actaSwEquipoBuscarButton")?.addEventListener("click", runActaSwEquipoSearch);
+        document.querySelector(".acta-search-panel")?.addEventListener("keydown", (event) => {
+            if (event.key === "Enter" && document.getElementById("actaSwEquipoBusqueda")) {
+                event.preventDefault();
+                runActaSwEquipoSearch();
+            }
+        });
+        document.getElementById("actaSwPreviewButton")?.addEventListener("click", openActaSwPreview);
+        document.getElementById("actaSwExportDocxButton")?.addEventListener("click", () => exportActaSoftware("docx"));
+        document.getElementById("actaSwExportPdfButton")?.addEventListener("click", () => exportActaSoftware("pdf"));
+        document.getElementById("actaSwResetButton")?.addEventListener("click", resetActaSwForm);
     }
 // Función para recolectar los criterios de búsqueda del acta desde los campos del formulario
     function collectActaSearchCriteria() {
