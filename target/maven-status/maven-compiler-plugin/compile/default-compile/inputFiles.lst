@@ -6,6 +6,7 @@ C:\Users\Joseph Zambrano\Desktop\senadi_v01\SISTEMA-INVENTARIO-SENADI\src\main\j
 C:\Users\Joseph Zambrano\Desktop\senadi_v01\SISTEMA-INVENTARIO-SENADI\src\main\java\com\mycompany\sistemainventariov3\dao\HistoricoCambioDAO.java
 C:\Users\Joseph Zambrano\Desktop\senadi_v01\SISTEMA-INVENTARIO-SENADI\src\main\java\com\mycompany\sistemainventariov3\model\BienId.java
 C:\Users\Joseph Zambrano\Desktop\senadi_v01\SISTEMA-INVENTARIO-SENADI\src\main\java\com\mycompany\sistemainventariov3\model\HistoricoCambio.java
+C:\Users\Joseph Zambrano\Desktop\senadi_v01\SISTEMA-INVENTARIO-SENADI\src\main\java\com\mycompany\sistemainventariov3\service\ActaSoftwareDocumentService.java
 C:\Users\Joseph Zambrano\Desktop\senadi_v01\SISTEMA-INVENTARIO-SENADI\src\main\java\com\mycompany\sistemainventariov3\service\DatabaseService.java
 C:\Users\Joseph Zambrano\Desktop\senadi_v01\SISTEMA-INVENTARIO-SENADI\src\main\java\com\mycompany\sistemainventariov3\util\LDAPConfig.java
 C:\Users\Joseph Zambrano\Desktop\senadi_v01\SISTEMA-INVENTARIO-SENADI\src\main\java\com\mycompany\sistemainventariov3\JAXRSConfiguration.java
@@ -16,6 +17,7 @@ C:\Users\Joseph Zambrano\Desktop\senadi_v01\SISTEMA-INVENTARIO-SENADI\src\main\j
 C:\Users\Joseph Zambrano\Desktop\senadi_v01\SISTEMA-INVENTARIO-SENADI\src\main\java\com\mycompany\sistemainventariov3\model\Impresora.java
 C:\Users\Joseph Zambrano\Desktop\senadi_v01\SISTEMA-INVENTARIO-SENADI\src\main\java\com\mycompany\sistemainventariov3\model\Licencia.java
 C:\Users\Joseph Zambrano\Desktop\senadi_v01\SISTEMA-INVENTARIO-SENADI\src\main\java\com\mycompany\sistemainventariov3\service\ActaMantenimientoImpresoraDocumentService.java
+C:\Users\Joseph Zambrano\Desktop\senadi_v01\SISTEMA-INVENTARIO-SENADI\src\main\java\com\mycompany\sistemainventariov3\dto\ActaSoftwareRequest.java
 C:\Users\Joseph Zambrano\Desktop\senadi_v01\SISTEMA-INVENTARIO-SENADI\src\main\java\com\mycompany\sistemainventariov3\LDAPConnectionTest.java
 C:\Users\Joseph Zambrano\Desktop\senadi_v01\SISTEMA-INVENTARIO-SENADI\src\main\java\senadi\gob\ec\busfonetico\util\LDAP.java
 C:\Users\Joseph Zambrano\Desktop\senadi_v01\SISTEMA-INVENTARIO-SENADI\src\main\java\com\mycompany\sistemainventariov3\resources\HistoricoResource.java

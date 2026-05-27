@@ -1042,6 +1042,21 @@ textarea {
     min-width: 0;
 }
 
+.acta-search-panel__filters {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 10px;
+    align-items: end;
+}
+
+.acta-search-panel__actions {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    margin-top: 4px;
+    flex-wrap: wrap;
+}
+
 .acta-search-results {
     display: grid;
     gap: 10px;
@@ -1452,6 +1467,10 @@ select.acta-input {
 @media (max-width: 900px) {
     .acta-search-panel__grid {
         grid-template-columns: 1fr;
+    }
+
+    .acta-search-panel__filters {
+        grid-template-columns: 1fr 1fr;
     }
 
     .acta-sheet {

@@ -3,11 +3,13 @@ com\mycompany\sistemainventariov3\service\ActaMantenimientoEscanerDocumentServic
 com\mycompany\sistemainventariov3\resources\JavaEE8Resource.class
 com\mycompany\sistemainventariov3\service\InventarioJdbcService$DbConstants.class
 com\mycompany\sistemainventariov3\resources\HistoricoResource.class
+com\mycompany\sistemainventariov3\dto\ActaSoftwareRequest$EquipoInfo.class
 com\mycompany\sistemainventariov3\dto\InventoryItemDTO.class
 com\mycompany\sistemainventariov3\model\Impresora.class
 com\mycompany\sistemainventariov3\service\InventarioJdbcService.class
 com\mycompany\sistemainventariov3\util\SessionRequestFilter.class
 com\mycompany\sistemainventariov3\dao\LicenciaDAO.class
+com\mycompany\sistemainventariov3\dto\ActaSoftwareRequest$SoftwareItem.class
 com\mycompany\sistemainventariov3\util\JPAUtil.class
 com\mycompany\sistemainventariov3\service\ActaMantenimientoImpresoraDocumentService.class
 com\mycompany\sistemainventariov3\service\UsuarioService.class
@@ -28,8 +30,10 @@ com\mycompany\sistemainventariov3\model\HistoricoCambio.class
 com\mycompany\sistemainventariov3\model\Periferico.class
 com\mycompany\sistemainventariov3\model\Custodio.class
 com\mycompany\sistemainventariov3\service\DatabaseService.class
+com\mycompany\sistemainventariov3\dto\ActaSoftwareRequest$Funcionario.class
 com\mycompany\sistemainventariov3\model\Laptop.class
 com\mycompany\sistemainventariov3\service\ActaMantenimientoPcDocumentService.class
+com\mycompany\sistemainventariov3\service\ActaSoftwareDocumentService.class
 com\mycompany\sistemainventariov3\LDAPConnectionTest.class
 com\mycompany\sistemainventariov3\resources\BusquedaResource.class
 com\mycompany\sistemainventariov3\service\LDAPAuthService.class
@@ -58,8 +62,10 @@ com\mycompany\sistemainventariov3\service\ActaMantenimientoProyectorDocumentServ
 com\mycompany\sistemainventariov3\resources\LoginResource.class
 com\mycompany\sistemainventariov3\dao\PCDAO.class
 com\mycompany\sistemainventariov3\dto\ActaMantenimientoPcRequest.class
+com\mycompany\sistemainventariov3\dto\ActaSoftwareRequest.class
 com\mycompany\sistemainventariov3\resources\DatabaseResource.class
 com\mycompany\sistemainventariov3\util\LDAP$RolPermisos.class
+com\mycompany\sistemainventariov3\dto\ActaSoftwareRequest$FirmaRecepcion.class
 com\mycompany\sistemainventariov3\util\DataLoader.class
 com\mycompany\sistemainventariov3\dto\ApiResponse.class
 com\mycompany\sistemainventariov3\service\HistoricoService.class

@@ -480,6 +480,7 @@
             ubicacionPiso: item.ubicacionPiso || "",
             ubicacionDireccion: item.ubicacionDireccion || "",
             estado: normalizeState(item.estado || ""),
+            sistemaOperativo: item.sistemaOperativo || "",
             procesador: item.procesador || "",
             caracteristicas: item.caracteristicas || "",
             observacion: item.observacion || "",
@@ -1220,15 +1221,67 @@
                 <div class="acta-search-panel">
                     <div>
                         <div class="eyebrow">Búsqueda inicial</div>
-                        <h3>Seleccione el equipo para generar el acta</h3>
-                        <p>Busque por custodio, Código SBYE, Código Megan, marca, modelo, serie, edificio o estado.</p>
+                        <h3>Seleccione el equipo para generar el acta de software</h3>
+                        <p>Busque el PC o Laptop del funcionario por custodio, código, marca, modelo, serie o edificio.</p>
                     </div>
-                    <div class="acta-search-panel__grid">
-                        <div class="field-group acta-search-panel__query">
-                            <label for="actaSwEquipoBusqueda">Campo de búsqueda</label>
-                            <input id="actaSwEquipoBusqueda" type="search" placeholder="Ej. custodio, SBYE, marca, serie...">
+                    <div class="acta-search-panel__filters">
+                        <div class="field-group">
+                            <label for="actaSwFilterTipo">Tipo de equipo</label>
+                            <select id="actaSwFilterTipo">
+                                <option value="">Todos (PC / Laptop)</option>
+                                <option value="pc">PC</option>
+                                <option value="laptop">Laptop</option>
+                            </select>
                         </div>
+                        <div class="field-group">
+                            <label for="actaSwFilterSO">Sistema Operativo</label>
+                            <select id="actaSwFilterSO">
+                                <option value="">Todos</option>
+                                <option value="WIN 10">Windows 10</option>
+                                <option value="WIN 11">Windows 11</option>
+                                <option value="WIN 7">Windows 7</option>
+                                <option value="UBUNTU">Ubuntu</option>
+                            </select>
+                        </div>
+                        <div class="field-group">
+                            <label for="actaSwFilterMarca">Marca del equipo</label>
+                            <select id="actaSwFilterMarca">
+                                <option value="">Todas</option>
+                                <option value="HP">HP</option>
+                                <option value="DELL">Dell</option>
+                                <option value="ACER">Acer</option>
+                                <option value="LENOVO">Lenovo</option>
+                            </select>
+                        </div>
+                        <div class="field-group">
+                            <label for="actaSwFilterEstado">Estado del equipo</label>
+                            <select id="actaSwFilterEstado">
+                                <option value="">Todos</option>
+                                <option value="OPERATIVO">Operativo</option>
+                                <option value="NO OPERATIVO">No operativo</option>
+                                <option value="REPORTADO PARA DAR DE BAJA">Reportado para baja</option>
+                            </select>
+                        </div>
+                        <div class="field-group">
+                            <label for="actaSwFilterCustodio">Custodio / Usuario</label>
+                            <input id="actaSwFilterCustodio" type="search" placeholder="Nombre del funcionario...">
+                        </div>
+                        <div class="field-group">
+                            <label for="actaSwFilterArea">Área / Dirección</label>
+                            <input id="actaSwFilterArea" type="search" placeholder="Dirección o área...">
+                        </div>
+                        <div class="field-group">
+                            <label for="actaSwFilterEdificio">Edificio</label>
+                            <input id="actaSwFilterEdificio" type="search" placeholder="Edificio...">
+                        </div>
+                        <div class="field-group">
+                            <label for="actaSwFilterCodigoSbai">Código SBYE</label>
+                            <input id="actaSwFilterCodigoSbai" type="search" placeholder="SBYE-...">
+                        </div>
+                    </div>
+                    <div class="acta-search-panel__actions">
                         <button type="button" class="btn btn-primary" id="actaSwEquipoBuscarButton">Buscar</button>
+                        <button type="button" class="btn btn-secondary" id="actaSwEquipoLimpiarButton">Limpiar filtros</button>
                     </div>
                     <div id="actaSwEquipoResultados" class="acta-search-results hidden"></div>
                 </div>
@@ -1567,15 +1620,21 @@
     }
 
     async function exportActaSoftware(format) {
+        const form = document.getElementById("actaSoftwareForm");
+        const selector = document.getElementById("actaSwSelector");
+        if (!form || !selector?.value) {
+            showToast("Equipo requerido", "Seleccione un equipo desde el buscador inicial para autocompletar el acta.", "warning");
+            return;
+        }
+        if (!form.reportValidity()) return;
+        const payload = buildActaSwPayload();
+
+        if (format === "pdf") {
+            printActaSwAsPdf(payload);
+            return;
+        }
+
         try {
-            const form = document.getElementById("actaSoftwareForm");
-            const selector = document.getElementById("actaSwSelector");
-            if (!form || !selector?.value) {
-                showToast("Equipo requerido", "Seleccione un equipo desde el buscador inicial para autocompletar el acta.", "warning");
-                return;
-            }
-            if (!form.reportValidity()) return;
-            const payload = buildActaSwPayload();
             const response = await apiFetch(`/actas/software/export/${format}`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
@@ -1600,33 +1659,137 @@
         }
     }
 
-    function runActaSwEquipoSearch() {
-        const query = document.getElementById("actaSwEquipoBusqueda")?.value.trim() || "";
-        const results = document.getElementById("actaSwEquipoResultados");
-        if (!results) return;
-        const items = (state.inventory || []).filter((item) => {
-            const tipo = String(item.tipo || "").toLowerCase();
-            if (!["pc", "laptop"].includes(tipo)) return false;
-            if (!query) return true;
-            const q = query.toLowerCase();
-            return [item.custodio, item.codigoSbai, item.codigoMegan, item.marca, item.modelo, item.numeroSerie, item.ubicacionEdificio]
-                .some((v) => v && String(v).toLowerCase().includes(q));
-        }).slice(0, 20);
-
-        if (!items.length) {
-            results.classList.remove("hidden");
-            results.innerHTML = '<div class="empty-state">Sin resultados para ese criterio.</div>';
+    function printActaSwAsPdf(payload) {
+        const previewHtml = renderActaSwPreview(payload);
+        const base = window.location.origin + window.location.pathname.replace(/\/[^/]*$/, "/");
+        const printCss = `
+            *, *::before, *::after { box-sizing: border-box; }
+            body { margin: 0; padding: 0; background: #fff; font-family: "Calibri", "Arial", sans-serif; }
+            @media print {
+                @page { margin: 1cm; size: A4 portrait; }
+                body { margin: 0; }
+                .acta-sheet { box-shadow: none !important; border: none !important; }
+            }
+            .acta-preview { background: #fff; padding: 0; }
+            .acta-sheet {
+                width: 100%; max-width: 100%; margin: 0 auto; padding: 20px 24px 24px;
+                background: #fff; font-family: "Calibri","Arial",sans-serif;
+                font-size: 11.5px; color: #111;
+            }
+            .acta-sheet__header { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding-bottom: 10px; border-bottom: 2px solid #111; margin-bottom: 6px; }
+            .acta-sheet__logo--ecuador, .acta-sheet__logo--senadi { width: 160px; height: auto; object-fit: contain; }
+            .acta-sheet__titles { margin: 10px 0 14px; text-align: center; color: #111; letter-spacing: 0.01em; }
+            .acta-sheet__titles h2, .acta-sheet__titles h3, .acta-sheet__titles h4 { margin: 2px 0; line-height: 1.25; }
+            .acta-sheet__titles h3 { font-size: 13px; font-weight: 700; text-transform: uppercase; }
+            .acta-sheet__titles h4 { font-size: 12px; font-weight: 700; text-transform: uppercase; }
+            .acta-sheet__titles h2 { margin-top: 10px; font-size: 13px; font-weight: 700; text-transform: uppercase; text-decoration: underline; letter-spacing: 0.04em; }
+            .acta-table { width: 100%; min-width: 0; margin-top: 10px; border-collapse: collapse; table-layout: fixed; color: #111; font-size: 10.5px; line-height: 1.35; }
+            .acta-table th, .acta-table td { border: 1px solid #444; padding: 5px 7px; vertical-align: middle; overflow-wrap: anywhere; word-break: break-word; }
+            .acta-table th { background: #d9d9d9; font-weight: 700; text-align: center; border-color: #444; }
+            .acta-table > tbody > tr:first-child th { background: #d9d9d9; font-size: 11px; font-weight: 700; text-align: center; letter-spacing: 0.03em; padding: 6px 7px; border-color: #333; }
+            .acta-table--equipos tr:nth-child(2) th { background: #e6e6e6; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.02em; padding: 4px 6px; }
+            .acta-table__label { background: #f2f2f2; font-weight: 700; font-size: 10px; text-transform: uppercase; letter-spacing: 0.03em; white-space: nowrap; width: 10%; }
+            .acta-table__title-dark { background: #7f7f7f !important; color: #fff !important; font-size: 13px !important; font-weight: 700 !important; text-align: center !important; letter-spacing: 0.06em; padding: 8px 7px !important; border-color: #555 !important; }
+            .acta-table--firma tr:nth-child(2) th { background: #ededed; font-size: 11px; font-weight: 700; }
+            .acta-table--equipos th, .acta-table--equipos td { text-align: left; }
+            .acta-table--equipos tr:nth-child(1) th { text-align: center; }
+            .acta-table--firma th, .acta-table--firma td { text-align: left; }
+            .acta-table--firma tr:nth-child(1) th, .acta-table--firma tr:nth-child(2) th { text-align: center; }
+            .acta-table__row--firma td { height: 80px; vertical-align: top; padding-top: 8px; }
+            .acta-table__row--firma td strong { display: block; margin-bottom: 2px; font-size: 10px; color: #555; text-transform: uppercase; letter-spacing: 0.03em; }
+            .acta-sheet__footer { margin-top: 18px; padding-top: 10px; border-top: 2px solid #111; display: flex; justify-content: space-between; align-items: flex-end; gap: 18px; }
+            .acta-sheet__footer-text { display: flex; flex-direction: column; gap: 2px; color: #555; font-size: 9.5px; line-height: 1.5; }
+            .acta-sheet__footer-logo { width: 140px; height: auto; object-fit: contain; flex-shrink: 0; }
+        `;
+        const html = `<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8">
+            <title>Acta Programas y Aplicaciones</title>
+            <base href="${base}">
+            <style>${printCss}<\/style>
+            <\/head><body>
+            <div class="acta-preview">${previewHtml}<\/div>
+            <script>window.onload=function(){window.focus();window.print();}<\/script>
+            <\/body><\/html>`;
+        const win = window.open("", "_blank", "width=900,height=700,scrollbars=yes");
+        if (!win) {
+            showToast("Bloqueado", "Permite ventanas emergentes para imprimir el PDF.", "warning");
             return;
         }
+        win.document.open();
+        win.document.write(html);
+        win.document.close();
+    }
+
+    function collectActaSwSearchCriteria() {
+        return {
+            tipo:               document.getElementById("actaSwFilterTipo")?.value.trim() || "",
+            sistemaOperativo:   document.getElementById("actaSwFilterSO")?.value.trim() || "",
+            marca:              document.getElementById("actaSwFilterMarca")?.value.trim() || "",
+            estado:             document.getElementById("actaSwFilterEstado")?.value.trim() || "",
+            custodio:           document.getElementById("actaSwFilterCustodio")?.value.trim() || "",
+            ubicacionDireccion: document.getElementById("actaSwFilterArea")?.value.trim() || "",
+            ubicacionEdificio:  document.getElementById("actaSwFilterEdificio")?.value.trim() || "",
+            codigoSbai:         document.getElementById("actaSwFilterCodigoSbai")?.value.trim() || ""
+        };
+    }
+
+    function clearActaSwFilters() {
+        ["actaSwFilterTipo", "actaSwFilterSO", "actaSwFilterMarca", "actaSwFilterEstado"].forEach((id) => {
+            const el = document.getElementById(id);
+            if (el) el.value = "";
+        });
+        ["actaSwFilterCustodio", "actaSwFilterArea", "actaSwFilterEdificio", "actaSwFilterCodigoSbai"].forEach((id) => {
+            const el = document.getElementById(id);
+            if (el) el.value = "";
+        });
+        const results = document.getElementById("actaSwEquipoResultados");
+        if (results) {
+            results.classList.add("hidden");
+            results.innerHTML = "";
+        }
+    }
+
+    function runActaSwEquipoSearch() {
+        const criteria = collectActaSwSearchCriteria();
+        const results = document.getElementById("actaSwEquipoResultados");
+        if (!results) return;
+
+        const allPcLaptop = (state.inventory || []).filter((item) => ["pc", "laptop"].includes(String(item.tipo || "").toLowerCase()));
+
+        const filtered = allPcLaptop.filter((item) => {
+            const tipo = String(item.tipo || "").toLowerCase();
+
+            if (criteria.tipo && tipo !== criteria.tipo.toLowerCase()) return false;
+            if (criteria.sistemaOperativo && !String(item.sistemaOperativo || "").toUpperCase().includes(criteria.sistemaOperativo.toUpperCase())) return false;
+            if (criteria.marca && !String(item.marca || "").toUpperCase().includes(criteria.marca.toUpperCase())) return false;
+            if (criteria.estado && !String(item.estado || "").toUpperCase().includes(criteria.estado.toUpperCase())) return false;
+            if (criteria.custodio && !String(item.custodio || "").toLowerCase().includes(criteria.custodio.toLowerCase())) return false;
+            if (criteria.ubicacionDireccion && !String(item.ubicacionDireccion || "").toLowerCase().includes(criteria.ubicacionDireccion.toLowerCase())) return false;
+            if (criteria.ubicacionEdificio && !String(item.ubicacionEdificio || "").toLowerCase().includes(criteria.ubicacionEdificio.toLowerCase())) return false;
+            if (criteria.codigoSbai && !String(item.codigoSbai || "").toLowerCase().includes(criteria.codigoSbai.toLowerCase())) return false;
+            return true;
+        });
+
+        const hasFilters = Object.values(criteria).some(Boolean);
+        const items = hasFilters ? filtered.slice(0, 30) : filtered.slice(0, 15);
+
         results.classList.remove("hidden");
+
+        if (!items.length) {
+            results.innerHTML = '<div class="empty-state">Sin resultados. Ajuste los filtros e intente de nuevo.</div>';
+            if (hasFilters) showToast("Sin resultados", "No se encontraron equipos con esos criterios.", "info");
+            return;
+        }
+
         results.innerHTML = `
-            <div class="acta-search-results__meta">${items.length} coincidencia(s). Seleccione una para autocompletar.</div>
+            <div class="acta-search-results__meta">
+                ${items.length} coincidencia(s) encontrada(s)${filtered.length > items.length ? ` de ${filtered.length} total — refine los filtros para ver más` : ""}. Seleccione un equipo para autocompletar el acta.
+            </div>
             <div class="acta-search-results__list">
                 ${items.map((item) => `
                     <button type="button" class="acta-search-card" data-acta-sw-select="${item.id}">
                         <strong>${escapeHtml(item.codigoSbai || item.codigoMegan || `ID ${item.id}`)} · ${escapeHtml(displayInventoryType(item))}</strong>
-                        <span>${escapeHtml([item.marca, item.modelo, item.numeroSerie].filter(Boolean).join(" / ") || "Sin marca/modelo")}</span>
-                        <span>Custodio: ${escapeHtml(item.custodio || "-")} · Edificio: ${escapeHtml(item.ubicacionEdificio || "-")}</span>
+                        <span>${escapeHtml([item.marca, item.modelo].filter(Boolean).join(" / ") || "Sin marca/modelo")} · SO: ${escapeHtml(item.sistemaOperativo || "-")}</span>
+                        <span>Custodio: ${escapeHtml(item.custodio || "-")} · Área: ${escapeHtml(item.ubicacionDireccion || "-")} · Estado: ${escapeHtml(item.estado || "-")}</span>
                     </button>
                 `).join("")}
             </div>
@@ -1646,6 +1809,12 @@
         autofillActaSwForm(item);
         loadActaSwInitialData();
         document.getElementById("actaSoftwareForm")?.classList.remove("hidden");
+        const results = document.getElementById("actaSwEquipoResultados");
+        if (results) {
+            results.classList.add("hidden");
+            results.innerHTML = "";
+        }
+        showToast("Equipo seleccionado", "El acta se autocompletó con los datos del inventario.", "success");
     }
 
     function renderActaEquiposPage() {
@@ -3472,7 +3641,7 @@
     }
 
     async function loadInitialData() {
-        if (page === "dashboard" || page === "inventario" || page === "busqueda" || page === "acta-equipos") {
+        if (page === "dashboard" || page === "inventario" || page === "busqueda" || page === "acta-equipos" || page === "acta-software") {
             await loadInventory();
             updateDashboardStats();
         }
@@ -3499,6 +3668,9 @@
         }
         if (page === "acta-equipos") {
             loadActaPcInitialData();
+        }
+        if (page === "acta-software") {
+            loadActaSwInitialData();
         }
     }
 
@@ -3580,6 +3752,10 @@
     function bindActasEvents() {
         if (page === "acta-equipos") {
             bindActaPcEvents();
+            return;
+        }
+        if (page === "acta-software") {
+            bindActaSwEvents();
             return;
         }
         document.querySelectorAll("[data-acta-form]").forEach((form) => {
@@ -4940,17 +5116,21 @@
         document.getElementById("actaTelefonoExportDocxButton")?.addEventListener("click", () => exportActaTelefono("docx"));
         document.getElementById("actaTelefonoExportPdfButton")?.addEventListener("click", () => exportActaTelefono("pdf"));
         document.getElementById("actaTelefonoResetButton")?.addEventListener("click", resetActaTelefonoForm);
+    }
+
+    function bindActaSwEvents() {
         document.getElementById("actaSwEquipoBuscarButton")?.addEventListener("click", runActaSwEquipoSearch);
-        document.querySelector(".acta-search-panel")?.addEventListener("keydown", (event) => {
-            if (event.key === "Enter" && document.getElementById("actaSwEquipoBusqueda")) {
-                event.preventDefault();
-                runActaSwEquipoSearch();
-            }
+        document.getElementById("actaSwEquipoLimpiarButton")?.addEventListener("click", clearActaSwFilters);
+        ["actaSwFilterCustodio", "actaSwFilterArea", "actaSwFilterEdificio", "actaSwFilterCodigoSbai"].forEach((id) => {
+            document.getElementById(id)?.addEventListener("keydown", (event) => {
+                if (event.key === "Enter") { event.preventDefault(); runActaSwEquipoSearch(); }
+            });
         });
         document.getElementById("actaSwPreviewButton")?.addEventListener("click", openActaSwPreview);
         document.getElementById("actaSwExportDocxButton")?.addEventListener("click", () => exportActaSoftware("docx"));
         document.getElementById("actaSwExportPdfButton")?.addEventListener("click", () => exportActaSoftware("pdf"));
         document.getElementById("actaSwResetButton")?.addEventListener("click", resetActaSwForm);
+        loadActaSwInitialData();
     }
 // Función para recolectar los criterios de búsqueda del acta desde los campos del formulario
     function collectActaSearchCriteria() {
