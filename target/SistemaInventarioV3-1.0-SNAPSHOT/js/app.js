@@ -222,17 +222,17 @@
         if (accessRole === "CUSTODIO") {
             return "Custodio";
         }
-        return "Tecnico";
+        return "Técnico";
     }
 
     function roleHelpText(accessRole) {
         if (accessRole === "ADMINISTRADOR") {
-            return "Gestion completa del inventario y usuarios.";
+            return "Gestión completa del inventario y usuarios.";
         }
         if (accessRole === "CUSTODIO") {
             return "Consulta de equipos asignados a su custodia.";
         }
-        return "Gestion operativa y soporte tecnico.";
+        return "Gestión operativa y soporte técnico.";
     }
 
     function showProfileSelection(data, roles) {
