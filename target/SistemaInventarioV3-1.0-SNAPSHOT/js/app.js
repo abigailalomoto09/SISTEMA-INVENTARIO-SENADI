@@ -1620,21 +1620,15 @@
     }
 
     async function exportActaSoftware(format) {
-        const form = document.getElementById("actaSoftwareForm");
-        const selector = document.getElementById("actaSwSelector");
-        if (!form || !selector?.value) {
-            showToast("Equipo requerido", "Seleccione un equipo desde el buscador inicial para autocompletar el acta.", "warning");
-            return;
-        }
-        if (!form.reportValidity()) return;
-        const payload = buildActaSwPayload();
-
-        if (format === "pdf") {
-            printActaSwAsPdf(payload);
-            return;
-        }
-
         try {
+            const form = document.getElementById("actaSoftwareForm");
+            const selector = document.getElementById("actaSwSelector");
+            if (!form || !selector?.value) {
+                showToast("Equipo requerido", "Seleccione un equipo desde el buscador inicial para autocompletar el acta.", "warning");
+                return;
+            }
+            if (!form.reportValidity()) return;
+            const payload = buildActaSwPayload();
             const response = await apiFetch(`/actas/software/export/${format}`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
@@ -1657,66 +1651,6 @@
         } catch (error) {
             showToast("Error", error.message || "No se pudo exportar el acta.", "danger");
         }
-    }
-
-    function printActaSwAsPdf(payload) {
-        const previewHtml = renderActaSwPreview(payload);
-        const base = window.location.origin + window.location.pathname.replace(/\/[^/]*$/, "/");
-        const printCss = `
-            *, *::before, *::after { box-sizing: border-box; }
-            body { margin: 0; padding: 0; background: #fff; font-family: "Calibri", "Arial", sans-serif; }
-            @media print {
-                @page { margin: 1cm; size: A4 portrait; }
-                body { margin: 0; }
-                .acta-sheet { box-shadow: none !important; border: none !important; }
-            }
-            .acta-preview { background: #fff; padding: 0; }
-            .acta-sheet {
-                width: 100%; max-width: 100%; margin: 0 auto; padding: 20px 24px 24px;
-                background: #fff; font-family: "Calibri","Arial",sans-serif;
-                font-size: 11.5px; color: #111;
-            }
-            .acta-sheet__header { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding-bottom: 10px; border-bottom: 2px solid #111; margin-bottom: 6px; }
-            .acta-sheet__logo--ecuador, .acta-sheet__logo--senadi { width: 160px; height: auto; object-fit: contain; }
-            .acta-sheet__titles { margin: 10px 0 14px; text-align: center; color: #111; letter-spacing: 0.01em; }
-            .acta-sheet__titles h2, .acta-sheet__titles h3, .acta-sheet__titles h4 { margin: 2px 0; line-height: 1.25; }
-            .acta-sheet__titles h3 { font-size: 13px; font-weight: 700; text-transform: uppercase; }
-            .acta-sheet__titles h4 { font-size: 12px; font-weight: 700; text-transform: uppercase; }
-            .acta-sheet__titles h2 { margin-top: 10px; font-size: 13px; font-weight: 700; text-transform: uppercase; text-decoration: underline; letter-spacing: 0.04em; }
-            .acta-table { width: 100%; min-width: 0; margin-top: 10px; border-collapse: collapse; table-layout: fixed; color: #111; font-size: 10.5px; line-height: 1.35; }
-            .acta-table th, .acta-table td { border: 1px solid #444; padding: 5px 7px; vertical-align: middle; overflow-wrap: anywhere; word-break: break-word; }
-            .acta-table th { background: #d9d9d9; font-weight: 700; text-align: center; border-color: #444; }
-            .acta-table > tbody > tr:first-child th { background: #d9d9d9; font-size: 11px; font-weight: 700; text-align: center; letter-spacing: 0.03em; padding: 6px 7px; border-color: #333; }
-            .acta-table--equipos tr:nth-child(2) th { background: #e6e6e6; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.02em; padding: 4px 6px; }
-            .acta-table__label { background: #f2f2f2; font-weight: 700; font-size: 10px; text-transform: uppercase; letter-spacing: 0.03em; white-space: nowrap; width: 10%; }
-            .acta-table__title-dark { background: #7f7f7f !important; color: #fff !important; font-size: 13px !important; font-weight: 700 !important; text-align: center !important; letter-spacing: 0.06em; padding: 8px 7px !important; border-color: #555 !important; }
-            .acta-table--firma tr:nth-child(2) th { background: #ededed; font-size: 11px; font-weight: 700; }
-            .acta-table--equipos th, .acta-table--equipos td { text-align: left; }
-            .acta-table--equipos tr:nth-child(1) th { text-align: center; }
-            .acta-table--firma th, .acta-table--firma td { text-align: left; }
-            .acta-table--firma tr:nth-child(1) th, .acta-table--firma tr:nth-child(2) th { text-align: center; }
-            .acta-table__row--firma td { height: 80px; vertical-align: top; padding-top: 8px; }
-            .acta-table__row--firma td strong { display: block; margin-bottom: 2px; font-size: 10px; color: #555; text-transform: uppercase; letter-spacing: 0.03em; }
-            .acta-sheet__footer { margin-top: 18px; padding-top: 10px; border-top: 2px solid #111; display: flex; justify-content: space-between; align-items: flex-end; gap: 18px; }
-            .acta-sheet__footer-text { display: flex; flex-direction: column; gap: 2px; color: #555; font-size: 9.5px; line-height: 1.5; }
-            .acta-sheet__footer-logo { width: 140px; height: auto; object-fit: contain; flex-shrink: 0; }
-        `;
-        const html = `<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8">
-            <title>Acta Programas y Aplicaciones</title>
-            <base href="${base}">
-            <style>${printCss}<\/style>
-            <\/head><body>
-            <div class="acta-preview">${previewHtml}<\/div>
-            <script>window.onload=function(){window.focus();window.print();}<\/script>
-            <\/body><\/html>`;
-        const win = window.open("", "_blank", "width=900,height=700,scrollbars=yes");
-        if (!win) {
-            showToast("Bloqueado", "Permite ventanas emergentes para imprimir el PDF.", "warning");
-            return;
-        }
-        win.document.open();
-        win.document.write(html);
-        win.document.close();
     }
 
     function collectActaSwSearchCriteria() {

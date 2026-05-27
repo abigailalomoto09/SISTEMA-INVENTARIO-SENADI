@@ -42,7 +42,7 @@ public class LDAP {
     private static final String MEMBER_OF = LDAPConfig.getAttrMemberOf();
 
     // Se agregan los nombres originales como alias para no perder acceso con el AD actual
-    private static final List<String> ADMIN_GROUP_ALIASES = Arrays.asList(grupoadm, "SC_Admin");
+    private static final List<String> ADMIN_GROUP_ALIASES = Arrays.asList(grupoadm);
     private static final List<String> TECNICO_GROUP_ALIASES = Arrays.asList(grupotec, "SC_Tecnico");
     private static final List<String> CUSTODIO_GROUP_ALIASES = Arrays.asList(grupopcus, "SC_Custodio", "SC_Inventario");
 
