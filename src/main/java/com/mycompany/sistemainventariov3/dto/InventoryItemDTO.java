@@ -28,6 +28,7 @@ public class InventoryItemDTO {
     private String caracteristicas;
     private String ip;
     private String fechaIngreso;
+    private String ultimaActualizacion;
     private String ultimoMantenimiento;
 
     public Integer getId() {
@@ -188,6 +189,9 @@ public class InventoryItemDTO {
 
     public String getFechaIngreso() { return fechaIngreso; }
     public void setFechaIngreso(String fechaIngreso) { this.fechaIngreso = fechaIngreso; }
+
+    public String getUltimaActualizacion() { return ultimaActualizacion; }
+    public void setUltimaActualizacion(String ultimaActualizacion) { this.ultimaActualizacion = ultimaActualizacion; }
 
     public String getUltimoMantenimiento() { return ultimoMantenimiento; }
     public void setUltimoMantenimiento(String ultimoMantenimiento) { this.ultimoMantenimiento = ultimoMantenimiento; }

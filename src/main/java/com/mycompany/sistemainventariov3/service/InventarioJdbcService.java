@@ -850,6 +850,7 @@ public class InventarioJdbcService {
         item.setIp(coalesce(valor(rs, "pc_ip"), valor(rs, "laptop_ip"), valor(rs, "impresora_ip")));
         item.setCaracteristicas(construirCaracteristicas(rs, tipo));
         item.setFechaIngreso(valor(rs, "fecha_ingreso"));
+        item.setUltimaActualizacion(valor(rs, "ultima_actualizacion"));
         item.setUltimoMantenimiento(valor(rs, "ultimo_mantenimiento"));
         return item;
     }

@@ -486,6 +486,7 @@
             observacion: item.observacion || "",
             ip: item.ip || "",
             fechaIngreso: item.fechaIngreso || "",
+            ultimaActualizacion: item.ultimaActualizacion || "",
             ultimoMantenimiento: item.ultimoMantenimiento || "",
             raw: item
         }));
@@ -741,7 +742,7 @@
             <div class="modal${extraClass ? " " + extraClass : ""}">
                 <div class="modal__header">
                     <h3>${title}</h3>
-                    <button class="modal-close" id="modalClose"></button>
+                    <button class="modal-close" id="modalClose" aria-label="Cerrar">&#x2715;</button>
                 </div>
                 <div class="modal__body">${bodyHtml}</div>
                 <div class="modal__footer form-actions" id="modalFooter"></div>
@@ -4822,7 +4823,9 @@
             fecha_ingreso: "Fecha de ingreso",
             costo: "Costo",
             ultima_actualizacion: "Última actualización",
+            ultimaActualizacion: "Última actualización",
             ultimo_mantenimiento: "Último mantenimiento",
+            ultimoMantenimiento: "Último mantenimiento",
             id_custodio_actual: "Custodio actual (ID)",
             id_ubicacion: "ubicación (ID)",
             tipo_periferico: "Tipo de periférico",
@@ -4870,7 +4873,7 @@
         }
         return {
             puedeEditarTodos: false,
-            puedeActualizarEstado: true,
+            puedeActualizarEstado: false,
             puedeVer: true,
             puedeCrearEquipo: true,
             puedeEditarCustodio: true,
@@ -5428,6 +5431,7 @@
     function renderInventoryPage() {
         return window.SIInventoryView.renderPage({
             canExportInventory,
+            canEditAll,
             buildTypeOptions,
             renderAutocompleteField,
             validStates: VALID_STATES,
@@ -5450,6 +5454,7 @@
             escapeHtml,
             displayInventoryType,
             stateBadge,
+            canEditAll,
             buildInventoryActionButtons
         });
     }

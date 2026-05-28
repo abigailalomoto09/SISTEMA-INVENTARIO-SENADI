@@ -31,7 +31,6 @@
                     <div class="field-group">
                         <label for="filterEstado">Estado</label>
                         <select id="filterEstado">
-                            <option value="">Todos</option>
                             ${ctx.validStates.map((item) => `<option value="${item}">${item}</option>`).join("")}
                         </select>
                     </div>
@@ -48,7 +47,7 @@
                         <table>
                             <thead>
                                 <tr>
-                                    ${inventoryColumns().map((key) => `<th><button class="table-sort" data-sort="${key}">${ctx.labelForColumn(key)}</button></th>`).join("")}
+                                    ${inventoryColumns(ctx).map((key) => `<th><button class="table-sort" data-sort="${key}">${ctx.labelForColumn(key)}</button></th>`).join("")}
                                     <th>Acciones</th>
                                 </tr>
                             </thead>
@@ -68,8 +67,8 @@
         `;
     }
 
-    function inventoryColumns() {
-        return [
+    function inventoryColumns(ctx) {
+        const cols = [
             "codigoSbai",
             "codigoMegan",
             "descripcion",
@@ -84,6 +83,8 @@
             "procesador",
             "estado"
         ];
+        cols.push("ultimaActualizacion", "ultimoMantenimiento");
+        return cols;
     }
 
     function buildActionButtons(item, options, ctx) {
@@ -123,6 +124,8 @@
                 <td>${ctx.escapeHtml(item.ubicacionDireccion || "-")}</td>
                 <td>${ctx.escapeHtml(item.procesador || item.caracteristicas || "-")}</td>
                 <td>${ctx.stateBadge(item.estado)}</td>
+                <td>${ctx.escapeHtml(item.ultimaActualizacion || "-")}</td>
+                <td>${ctx.escapeHtml(item.ultimoMantenimiento || "-")}</td>
                 <td>${ctx.buildInventoryActionButtons(item)}</td>
             </tr>
         `;

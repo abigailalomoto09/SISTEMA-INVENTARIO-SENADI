@@ -40,7 +40,7 @@ public final class InventarioSql {
 
     public static final String BASE_QUERY =
             "SELECT e.id_equipo, e.tipo_equipo, e.codigo_sbye, e.codigo_megan, e.descripcion, " +
-            "e.marca, e.modelo, e.sn, e.estado, e.observacion, e.fecha_ingreso, e.ultimo_mantenimiento, " +
+            "e.marca, e.modelo, e.sn, e.estado, e.observacion, e.fecha_ingreso, e.ultima_actualizacion, e.ultimo_mantenimiento, " +
             "c.nombre AS custodio_nombre, " +
             "u.edificio, u.piso, u.direccion, " +
             "pc.procesador AS pc_procesador, pc.ram AS pc_ram, pc.disco_duro AS pc_disco_duro, pc.so AS pc_so, pc.ip AS pc_ip, " +
