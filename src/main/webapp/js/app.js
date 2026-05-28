@@ -1620,15 +1620,21 @@
     }
 
     async function exportActaSoftware(format) {
+        const form = document.getElementById("actaSoftwareForm");
+        const selector = document.getElementById("actaSwSelector");
+        if (!form || !selector?.value) {
+            showToast("Equipo requerido", "Seleccione un equipo desde el buscador inicial para autocompletar el acta.", "warning");
+            return;
+        }
+        if (!form.reportValidity()) return;
+        const payload = buildActaSwPayload();
+
+        if (format === "pdf") {
+            await exportActaSwPdfAuto(payload);
+            return;
+        }
+
         try {
-            const form = document.getElementById("actaSoftwareForm");
-            const selector = document.getElementById("actaSwSelector");
-            if (!form || !selector?.value) {
-                showToast("Equipo requerido", "Seleccione un equipo desde el buscador inicial para autocompletar el acta.", "warning");
-                return;
-            }
-            if (!form.reportValidity()) return;
-            const payload = buildActaSwPayload();
             const response = await apiFetch(`/actas/software/export/${format}`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
@@ -1650,6 +1656,110 @@
             showToast("Exportación lista", `El documento ${format.toUpperCase()} fue generado correctamente.`, "success");
         } catch (error) {
             showToast("Error", error.message || "No se pudo exportar el acta.", "danger");
+        }
+    }
+
+    function loadScriptOnce(src) {
+        return new Promise((resolve, reject) => {
+            if (document.querySelector(`script[src="${src}"]`)) { resolve(); return; }
+            const s = document.createElement("script");
+            s.src = src;
+            s.onload = resolve;
+            s.onerror = () => reject(new Error("No se pudo cargar: " + src));
+            document.head.appendChild(s);
+        });
+    }
+
+    async function exportActaSwPdfAuto(payload) {
+        let container = null;
+        try {
+            showToast("Generando PDF", "Preparando el documento...", "info");
+
+            // Load html2canvas and jsPDF independently for full control
+            await loadScriptOnce("https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js");
+            await loadScriptOnce("https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js");
+
+            const previewHtml = renderActaSwPreview(payload);
+
+            // Container must be FULLY VISIBLE in the DOM — html2canvas cannot capture
+            // hidden/visibility:hidden/off-screen elements. Use z-index overlay approach.
+            container = document.createElement("div");
+            container.className = "acta-preview";
+            container.style.cssText = [
+                "position:fixed", "top:0", "left:0",
+                "width:800px", "min-height:200px",
+                "background:#fff", "padding:24px 28px",
+                "box-sizing:border-box",
+                "z-index:2147483647",    // maximum z-index — on top of everything
+                "overflow:visible"
+            ].join(";");
+            container.innerHTML = previewHtml;
+            document.body.appendChild(container);
+
+            // Wait for every image inside to fully load (logos, etc.)
+            const imgs = Array.from(container.querySelectorAll("img"));
+            await Promise.all(imgs.map((img) => new Promise((resolve) => {
+                if (img.complete && img.naturalWidth > 0) { resolve(); return; }
+                img.addEventListener("load",  resolve, { once: true });
+                img.addEventListener("error", resolve, { once: true });
+            })));
+
+            // Let browser finish layout pass
+            await new Promise((r) => setTimeout(r, 400));
+
+            // Sanity checks
+            const w = container.offsetWidth;
+            const h = container.offsetHeight;
+            if (!w || !h) throw new Error(`Contenedor sin dimensiones (${w}x${h}). El DOM no renderizó el contenido.`);
+
+            // Capture the real rendered DOM with html2canvas
+            const canvas = await window.html2canvas(container, {
+                scale:           2,
+                useCORS:         true,
+                allowTaint:      true,
+                backgroundColor: "#ffffff",
+                logging:         false,
+                width:           w,
+                height:          h,
+                scrollX:         0,
+                scrollY:         0
+            });
+
+            if (canvas.width === 0 || canvas.height === 0) {
+                throw new Error("html2canvas devolvió un canvas vacío.");
+            }
+
+            // Build PDF page-by-page
+            const { jsPDF } = window.jspdf;
+            const pdf      = new jsPDF({ unit: "mm", format: "a4", orientation: "portrait" });
+            const pageW    = pdf.internal.pageSize.getWidth();
+            const pageH    = pdf.internal.pageSize.getHeight();
+            const margin   = 8;
+            const contentW = pageW - margin * 2;
+            const pxPerMm  = canvas.width / contentW;
+            const pageHpx  = (pageH - margin * 2) * pxPerMm;
+
+            let srcY = 0;
+            while (srcY < canvas.height) {
+                if (srcY > 0) pdf.addPage();
+                const srcH     = Math.min(pageHpx, canvas.height - srcY);
+                const slice    = document.createElement("canvas");
+                slice.width    = canvas.width;
+                slice.height   = srcH;
+                slice.getContext("2d").drawImage(canvas, 0, srcY, canvas.width, srcH, 0, 0, canvas.width, srcH);
+                const sliceH   = srcH / pxPerMm;
+                pdf.addImage(slice.toDataURL("image/jpeg", 0.97), "JPEG", margin, margin, contentW, sliceH);
+                srcY += srcH;
+            }
+
+            pdf.save("acta_programas_aplicaciones.pdf");
+            showToast("Exportación lista", "PDF generado correctamente.", "success");
+
+        } catch (err) {
+            console.error("[exportActaSwPdfAuto]", err);
+            showToast("Error", err.message || "No se pudo generar el PDF.", "danger");
+        } finally {
+            if (container?.parentNode) container.parentNode.removeChild(container);
         }
     }
 
