@@ -127,7 +127,10 @@
         equipmentFieldCatalog: {},
         exportSelection: null,
         loginCredentials: null,
-        sidebarOpen: false
+        sidebarOpen: false,
+        actaSwCurrentPage: 1,
+        actaSwLastFiltered: [],
+        actaSwLastCriteria: {}
     };
 
     document.addEventListener("DOMContentLoaded", () => {
@@ -319,7 +322,7 @@
             actas: "Actas",
             "acta-equipos": "Acta de Equipos",
             "acta-software": "Acta de Software",
-            "acta-rc": "Acta RC"
+            "acta-rc": "Acta de Redes y Comunicaciones"
         };
         return titles[pageName] || "Sistema de Inventario";
     }
@@ -340,8 +343,11 @@
         if (page === "actas") {
             return renderActasHubPage();
         }
-        if (page === "acta-equipos" || page === "acta-software" || page === "acta-rc") {
+        if (page === "acta-equipos" || page === "acta-software") {
             return renderActaFormPage(page);
+        }
+        if (page === "acta-rc") {
+            return renderActaRedesComunicacionesPage();
         }
         return "";
     }
@@ -956,7 +962,7 @@
         const cards = [
             ["Equipos", "Acta de mantenimiento preventivo de equipos.", `${basePath}/acta-equipos.html`],
             ["Software", "Acta de programas y aplicaciones instaladas.", `${basePath}/acta-software.html`],
-            ["RC", "Acta de mantenimiento preventivo RC.", `${basePath}/acta-rc.html`]
+            ["Redes y Comunicaciones", "Acta de mantenimiento preventivo de redes y comunicaciones.", `${basePath}/acta-rc.html`]
         ];
 
         return `
@@ -1028,25 +1034,7 @@
                 `
             },
             "acta-software": null,
-            "acta-rc": {
-                eyebrow: "Mantenimiento preventivo RC",
-                title: "Formulario RC",
-                description: "Registro orientado al mantenimiento preventivo RC bajo el mismo formato institucional.",
-                hint: "Documenta los datos del recurso, el mantenimiento efectuado y el estado de cierre.",
-                fields: `
-                    <div class="field-group"><label for="actaFechaRc">Fecha</label><input id="actaFechaRc" name="fecha" type="date" required></div>
-                    <div class="field-group"><label for="actaTecnicoRc">Técnico responsable</label><input id="actaTecnicoRc" name="tecnico" type="text" required></div>
-                    <div class="field-group"><label for="actaDependenciaRc">Dependencia</label><input id="actaDependenciaRc" name="dependencia" type="text"></div>
-                    <div class="field-group"><label for="actaUbicacionRc">ubicación</label><input id="actaUbicacionRc" name="ubicacion" type="text"></div>
-                    <div class="field-group"><label for="actaCodigoRc">Código RC</label><input id="actaCodigoRc" name="codigoRc" type="text"></div>
-                    <div class="field-group"><label for="actaEquipoRc">Equipo o recurso</label><input id="actaEquipoRc" name="equipoRecurso" type="text"></div>
-                    <div class="field-group"><label for="actaEstadoRc">Estado inicial</label><select id="actaEstadoRc" name="estadoInicial"><option value="">Seleccione</option><option>Operativo</option><option>Con novedad</option><option>Fuera de servicio</option></select></div>
-                    <div class="field-group"><label for="actaResultadoRc">Resultado</label><select id="actaResultadoRc" name="resultado"><option value="">Seleccione</option><option>Atendido</option><option>Pendiente</option><option>Escalado</option></select></div>
-                    <div class="field-group field-group--wide"><label for="actaTrabajoRc">Trabajo realizado</label><textarea id="actaTrabajoRc" name="trabajoRealizado" rows="4"></textarea></div>
-                    <div class="field-group field-group--wide"><label for="actaObservacionRc">Observaciones</label><textarea id="actaObservacionRc" name="observaciones" rows="4"></textarea></div>
-                    ${commonFooter}
-                `
-            }
+            "acta-rc": null
         };
 
         return configs[pageName];
@@ -1073,9 +1061,12 @@
                         <h2>${config.title}</h2>
                         <p>${config.description}</p>
                     </div>
-                    <div class="inventory-header__badge">
-                        <span>${iconMarkup("clipboard")}</span>
-                        <strong>ACTAS</strong>
+                    <div style="display: flex; flex-direction: column; gap: 8px; align-items: flex-end;">
+                        <div class="inventory-header__badge">
+                            <span>${iconMarkup("clipboard")}</span>
+                            <strong>ACTAS</strong>
+                        </div>
+                        <a class="btn btn-secondary" href="${basePath}/actas.html" style="width: 100%; text-align: center; display: inline-flex; justify-content: center; align-items: center; border-radius: 12px; font-size: 13px; padding: 10px 16px; background: #eef4fc; border: 1px solid #1565c0; color: #1565c0; font-weight: 700; text-decoration: none; box-shadow: 0 2px 4px rgba(21, 101, 192, 0.1); cursor: pointer; transition: all 0.2s;">Regresar a Actas</a>
                     </div>
                 </div>
                 <div class="helper-banner">${config.hint}</div>
@@ -1108,6 +1099,70 @@
 
     const ACTA_PC_CERTIFICATION_TEXT = "Certifico que los elementos detallados en el presente documento me han sido entregados para mi cuidado y custodia con el propósito de cumplir con las tareas y asignaciones propias de mi cargo en la Institución, siendo estos de mi única y exclusiva responsabilidad. Me comprometo a usar correctamente los recursos, y solo para los fines establecidos, a no instalar ni permitir la instalación de software por personal ajeno al área de soporte de DTIC; ante cualquier novedad daré conocimiento a los técnicos de DTIC.";
 
+    const ACTA_RC_GROUPS = [
+        {
+            key: "centralTelefonica",
+            title: "CENTRAL TELEFONICA",
+            label: "Central Telefónica",
+            keywords: ["telefono", "telef", "central", "pbx", "call", "extension", "cisco", "ata"]
+        },
+        {
+            key: "equiposCisco",
+            title: "EQUIPOS CISCO",
+            label: "Equipos Cisco",
+            keywords: ["cisco"]
+        },
+        {
+            key: "controladoraWifiAccessPoints",
+            title: "CONTROLADORA WIFI Y ACCESS POINTS",
+            label: "Controladora Wifi y Access Points",
+            keywords: ["access point", "wifi", "wireless", "wlc", "controladora", "ap"]
+        },
+        {
+            key: "servidores",
+            title: "SERVIDORES",
+            label: "Servidores",
+            keywords: ["server", "servidor", "nas", "storage"]
+        },
+        {
+            key: "switches",
+            title: "SWITCHES",
+            label: "Switches",
+            keywords: ["switch", "stack", "catalyst"]
+        }
+    ];
+
+    const ACTA_RC_ACTIVITY_GROUPS = {
+        centralTelefonica: [
+            "MONITOREO CONTINUO",
+            "RESPALDO DE CONFIGURACION",
+            "ACTUALIZACIONES Y PARCHES",
+            "PLAN DE CONTINUIDAD"
+        ],
+        equiposCisco: [
+            "CONFIGURACION OPTIMA",
+            "GESTION DE TRAFICO",
+            "MONITOREO AVANZADO"
+        ],
+        controladoraWifiAccessPoints: [
+            "OPTIMIZACION DE COBERTURA",
+            "GESTION DE USUARIOS",
+            "BALANCEO DE CARGAS"
+        ],
+        servidores: [
+            "SUPERVISION Y MANTENIMIENTO",
+            "GESTION DE RECURSOS",
+            "SEGURIDAD"
+        ],
+        switches: [
+            "GESTION DE REDES",
+            "SUPERVISION DE TRAFICO",
+            "SEGURIDAD"
+        ]
+    };
+
+    const ACTA_RC_CERTIFICATION_TEXT = "Certifico que los elementos detallados en el presente documento, me han sido instalados para mi cuidado y custodia con el propósito de cumplir con las tareas y asignaciones propias de mi cargo en la Institución, siendo estos de mi única y exclusiva responsabilidad. Me comprometo a usar correctamente los recursos, y solo para los fines establecidos, a no instalar ni permitir la instalación de software por personal ajeno al área de soporte de DTIC, dado cualquier novedad dar conocimiento a los técnicos de DTIC.";
+
     const ACTA_IMPRESORA_ACTIVITY_ROWS = [
         "LIMPIEZA DE EQUIPO",
         "CALIBRACIÓN",
@@ -1139,24 +1194,24 @@
     ];
 
     const ACTA_SOFTWARE_PAGE1 = [
-        { categoria: "SISTEMA OPERATIVO",              programa: "MICROSOFT WINDOWS 10 HOME" },
-        { categoria: "SISTEMA OPERATIVO",              programa: "MICROSOFT WINDOWS 10 PRO" },
-        { categoria: "PAQUETE OFIMÁTICO",              programa: "MICROSOFT OFFICE 365 PRO PLUS" },
-        { categoria: "SOFTWARE ANTIVIRUS",             programa: "KASPERSKY ENDPOINT SECURITY 11.9" },
-        { categoria: "NAVEGADORES",                    programa: "GOOGLE CHROME" },
-        { categoria: "NAVEGADORES",                    programa: "MOZILLA FIREFOX" },
-        { categoria: "NAVEGADORES",                    programa: "MICROSOFT EDGE" },
-        { categoria: "NAVEGADORES",                    programa: "INTERNET EXPLORER" },
-        { categoria: "SOFTWARE SOPORTE REMOTO",        programa: "ANYDESK" },
-        { categoria: "SOFTWARE SOPORTE REMOTO",        programa: "ZOHO ASSIST" },
-        { categoria: "SOFTWARE DE FIRMA ELECTRÓNICA",  programa: "TOKEN SECURITY BAUAC 2018 (64 BITS)" },
-        { categoria: "SOFTWARE DE FIRMA ELECTRÓNICA",  programa: "SIGNER DIGITAL 1.0.0.VERSIÓN" },
+        { categoria: "SISTEMA OPERATIVO",               programa: "MICROSOFT WINDOWS 10 PRO" },
+        { categoria: "SISTEMA OPERATIVO",               programa: "MICROSOFT WINDOWS 11 PRO" },
+        { categoria: "PAQUETE OFIMÁTICO",               programa: "MICROSOFT OFFICE 365 PRO PLUS" },
+        { categoria: "SOFTWARE ANTIVIRUS",              programa: "ESET ENDPOINT SECURITY" },
+        { categoria: "NAVEGADORES",                     programa: "MOZILLA FIREFOX" },
+        { categoria: "NAVEGADORES",                     programa: "GOOGLE CHROME" },
+        { categoria: "NAVEGADORES",                     programa: "MICROSOFT EDGE" },
+        { categoria: "NAVEGADORES",                     programa: "SAFARI" },
+        { categoria: "SOFTWARE SOPORTE REMOTO",         programa: "TIGHT VNC SERVICE" },
+        { categoria: "SOFTWARE SOPORTE REMOTO",         programa: "ANYDESK" },
+        { categoria: "SOFTWARE DE FIRMA ELECTRÓNICA",   programa: "FIRMA EC" },
+        { categoria: "SOFTWARE DE FIRMA ELECTRÓNICA",   programa: "FIRMA MASIVA SENADI" },
+        { categoria: "SOFTWARE PARA VISUALIZACIÓN PDF", programa: "PDF 24" },
         { categoria: "SOFTWARE PARA VISUALIZACIÓN PDF", programa: "ADOBE ACROBAT READER" },
-        { categoria: "SOFTWARE PARA VISUALIZACIÓN PDF", programa: "PDF 24 CREATOR" },
-        { categoria: "SOFTWARE PARA VISUALIZACIÓN PDF", programa: "FOXIT READER" },
-        { categoria: "COMPRESIÓN",                     programa: "WINRAR" },
-        { categoria: "CORREOS",                        programa: "MICROSOFT OUTLOOK" },
-        { categoria: "VIDEO CONFERENCIA",              programa: "ZOOM MEETINGS" }
+        { categoria: "SOFTWARE PARA VISUALIZACIÓN PDF", programa: "NITRO PDF" },
+        { categoria: "COMPRESIÓN",                      programa: "WINRAR" },
+        { categoria: "CORREOS",                         programa: "ZIMBRA DESKTOP" },
+        { categoria: "VIDEO CONFERENCIA",               programa: "ZOOM MEETINGS" }
     ];
 
     const ACTA_SOFTWARE_DRIVERS = [
@@ -1195,8 +1250,8 @@
             </tr>
         `).join("");
 
-        const adicRows = [0, 1, 2].map((i) => `
-            <tr>
+        const adicRows = [0].map((i) => `
+            <tr data-acta-adicional-row="${i}">
                 <td><input id="actaSwAdicional${i}" class="acta-input" placeholder="Descripción del software adicional"></td>
                 <td class="acta-sw-radio">
                     <label><input type="radio" name="adic${i}" value="SI"> SI</label>
@@ -1213,9 +1268,12 @@
                         <h2>Formulario de software</h2>
                         <p>Registra los programas y aplicaciones instaladas en un equipo institucional.</p>
                     </div>
-                    <div class="inventory-header__badge">
-                        <span>${iconMarkup("clipboard")}</span>
-                        <strong>ACTAS</strong>
+                    <div style="display: flex; flex-direction: column; gap: 8px; align-items: flex-end;">
+                        <div class="inventory-header__badge">
+                            <span>${iconMarkup("clipboard")}</span>
+                            <strong>ACTAS</strong>
+                        </div>
+                        <a class="btn btn-secondary" href="${actasBasePath()}/actas.html" style="width: 100%; text-align: center; display: inline-flex; justify-content: center; align-items: center; border-radius: 12px; font-size: 13px; padding: 10px 16px; background: #eef4fc; border: 1px solid #1565c0; color: #1565c0; font-weight: 700; text-decoration: none; box-shadow: 0 2px 4px rgba(21, 101, 192, 0.1); cursor: pointer; transition: all 0.2s;">Regresar a Actas</a>
                     </div>
                 </div>
 
@@ -1362,8 +1420,13 @@
                                 <th class="acta-table__label-large">DESCRIPCIÓN</th>
                                 <th>INSTALADO</th>
                             </tr>
-                            ${adicRows}
+                            <tbody id="actaSwAdicionalesTable">
+                                ${adicRows}
+                            </tbody>
                         </table>
+                        <div style="margin-bottom: 20px;">
+                            <button type="button" class="btn btn-secondary" id="actaSwAgregarAdicionalButton">+ Agregar programa adicional</button>
+                        </div>
 
                         <table class="acta-table acta-table--firma">
                             <tr><th colspan="2">ENTREGA RECEPCIÓN DEL EQUIPO</th></tr>
@@ -1378,7 +1441,9 @@
                                             <option value="">-- Seleccionar --</option>
                                             <option value="EMERSON R. CERACAPA SOLIS">EMERSON R. CERACAPA SOLIS</option>
                                             <option value="PAUL FERNANDO OROZCO VINUEZA">PAUL FERNANDO OROZCO VINUEZA</option>
+                                            <option value="OTRO">OTRO</option>
                                         </select>
+                                        <input id="actaSwEntregaNombreOtro" class="acta-input hidden" placeholder="Escriba el nombre completo" style="margin-top: 8px;">
                                     </label>
                                 </td>
                                 <td>
@@ -1496,7 +1561,7 @@
             softwareItems: [...swItems, ...drvItems],
             driversAdicionales: adicionales,
             entrega: {
-                nombre: document.getElementById("actaSwEntregaNombre")?.value.trim() || "",
+                nombre: getEntregaNombreValue("actaSwEntregaNombre", "actaSwEntregaNombreOtro"),
                 firma:  document.getElementById("actaSwEntregaFirma")?.value.trim() || "",
                 fecha:  document.getElementById("actaSwEntregaFecha")?.value || ""
             },
@@ -1516,20 +1581,27 @@
         const drivers = swItems.slice(ACTA_SOFTWARE_PAGE1.length, ACTA_SOFTWARE_PAGE1.length + ACTA_SOFTWARE_DRIVERS.length);
         const adicionales = Array.isArray(payload.driversAdicionales) ? payload.driversAdicionales : [];
 
-        const swRowsHtml = ACTA_SOFTWARE_PAGE1.map((item, i) => {
-            const ins = page1[i] ? escapeHtml(page1[i].instalado || "") : "";
-            return `<tr><td>${escapeHtml(item.categoria)}</td><td>${escapeHtml(item.programa)}</td><td style="text-align:center;font-weight:bold">${ins}</td></tr>`;
-        }).join("");
+        // Only render items marked SI (checklist — unmarked items do not appear)
+        const swRowsHtml = ACTA_SOFTWARE_PAGE1
+            .map((item, i) => ({ item, ins: page1[i] ? (page1[i].instalado || "") : "" }))
+            .filter(({ ins }) => ins === "SI")
+            .map(({ item }) =>
+                `<tr><td>${escapeHtml(item.categoria)}</td><td>${escapeHtml(item.programa)}</td><td style="text-align:center;font-weight:bold">SI</td></tr>`
+            ).join("");
 
-        const drvRowsHtml = ACTA_SOFTWARE_DRIVERS.map((drv, i) => {
-            const ins = drivers[i] ? escapeHtml(drivers[i].instalado || "") : "";
-            return `<tr><td>CONTROLADORES / DRIVERS</td><td>${escapeHtml(drv)}</td><td style="text-align:center;font-weight:bold">${ins}</td></tr>`;
-        }).join("");
+        const drvRowsHtml = ACTA_SOFTWARE_DRIVERS
+            .map((drv, i) => ({ drv, ins: drivers[i] ? (drivers[i].instalado || "") : "" }))
+            .filter(({ ins }) => ins === "SI")
+            .map(({ drv }) =>
+                `<tr><td>CONTROLADORES / DRIVERS</td><td>${escapeHtml(drv)}</td><td style="text-align:center;font-weight:bold">SI</td></tr>`
+            ).join("");
 
-        const adicHtml = [0, 1, 2].map((i) => {
-            const val = escapeHtml(adicionales[i] || "");
-            return `<tr><td colspan="2">${val}</td><td></td></tr>`;
-        }).join("");
+        // Adicionales: only show rows with a real description — 3 columns match the table header
+        const adicHtml = adicionales
+            .filter((v) => v && v.trim())
+            .map((v) =>
+                `<tr><td>${escapeHtml(v)}</td><td style="text-align:center;font-weight:bold">SI</td></tr>`
+            ).join("");
 
         return `
             <div class="acta-sheet acta-sheet--preview">
@@ -1574,11 +1646,11 @@
                     <tr><th>CATEGORÍA</th><th>PROGRAMA / APLICACIÓN</th><th>INSTALADO</th></tr>
                     ${drvRowsHtml}
                 </table>
-                <table class="acta-table acta-table--actividades">
+                ${adicHtml ? `<table class="acta-table acta-table--actividades">
                     <tr><th colspan="2" class="acta-table__title-dark">SOFTWARE Y DRIVERS ADICIONAL</th></tr>
                     <tr><th>DESCRIPCIÓN</th><th>INSTALADO</th></tr>
                     ${adicHtml}
-                </table>
+                </table>` : ""}
                 <table class="acta-table acta-table--firma">
                     <tr><th colspan="2">ENTREGA RECEPCIÓN DEL EQUIPO</th></tr>
                     <tr><th>ENTREGA</th><th>RECIBE</th></tr>
@@ -1786,6 +1858,10 @@
             const el = document.getElementById(id);
             if (el) el.value = "";
         });
+        // Resetear estado de paginación
+        state.actaSwCurrentPage = 1;
+        state.actaSwLastFiltered = [];
+        state.actaSwLastCriteria = {};
         const results = document.getElementById("actaSwEquipoResultados");
         if (results) {
             results.classList.add("hidden");
@@ -1815,7 +1891,15 @@
         });
 
         const hasFilters = Object.values(criteria).some(Boolean);
-        const items = hasFilters ? filtered.slice(0, 30) : filtered.slice(0, 15);
+        
+        // Guardar para paginación
+        state.actaSwLastFiltered = filtered;
+        state.actaSwLastCriteria = criteria;
+        state.actaSwCurrentPage = 1;
+        
+        // Si no hay filtros (TODOS), mostrar todos. Si hay filtros, mostrar 30 con paginación
+        const pageSize = 30;
+        const items = hasFilters ? filtered.slice(0, pageSize) : filtered;
 
         results.classList.remove("hidden");
 
@@ -1825,9 +1909,9 @@
             return;
         }
 
-        results.innerHTML = `
+        let htmlContent = `
             <div class="acta-search-results__meta">
-                ${items.length} coincidencia(s) encontrada(s)${filtered.length > items.length ? ` de ${filtered.length} total — refine los filtros para ver más` : ""}. Seleccione un equipo para autocompletar el acta.
+                ${items.length} coincidencia(s) encontrada(s)${filtered.length > items.length ? ` de ${filtered.length} total` : ""}. Seleccione un equipo para autocompletar el acta.
             </div>
             <div class="acta-search-results__list">
                 ${items.map((item) => `
@@ -1839,9 +1923,109 @@
                 `).join("")}
             </div>
         `;
+        
+        // Agregar botón "Siguientes" solo si hay más resultados y hay filtros activos
+        if (hasFilters && filtered.length > items.length) {
+            htmlContent += `
+                <div class="acta-search-results__pagination">
+                    <button type="button" class="btn btn-secondary" id="actaSwLoadMoreButton">Cargar siguientes 30</button>
+                </div>
+            `;
+        }
+        
+        results.innerHTML = htmlContent;
         results.querySelectorAll("[data-acta-sw-select]").forEach((btn) => {
             btn.addEventListener("click", () => selectActaSwEquipo(btn.dataset.actaSwSelect));
         });
+        
+        // Agregar listener al botón "Siguientes" si existe
+        const loadMoreBtn = document.getElementById("actaSwLoadMoreButton");
+        if (loadMoreBtn) {
+            loadMoreBtn.addEventListener("click", loadMoreActaSwResults);
+        }
+    }
+
+    function loadMoreActaSwResults() {
+        const results = document.getElementById("actaSwEquipoResultados");
+        if (!results) return;
+        
+        const pageSize = 30;
+        state.actaSwCurrentPage += 1;
+        const start = (state.actaSwCurrentPage - 1) * pageSize;
+        const end = start + pageSize;
+        const newItems = state.actaSwLastFiltered.slice(start, end);
+        
+        if (!newItems.length) return;
+        
+        // Obtener la lista de resultados actual
+        const list = results.querySelector(".acta-search-results__list");
+        if (!list) return;
+        
+        // Agregar los nuevos elementos
+        const newHtml = newItems.map((item) => `
+            <button type="button" class="acta-search-card" data-acta-sw-select="${item.id}">
+                <strong>${escapeHtml(item.codigoSbai || item.codigoMegan || `ID ${item.id}`)} · ${escapeHtml(displayInventoryType(item))}</strong>
+                <span>${escapeHtml([item.marca, item.modelo].filter(Boolean).join(" / ") || "Sin marca/modelo")} · SO: ${escapeHtml(item.sistemaOperativo || "-")}</span>
+                <span>Custodio: ${escapeHtml(item.custodio || "-")} · Área: ${escapeHtml(item.ubicacionDireccion || "-")} · Estado: ${escapeHtml(item.estado || "-")}</span>
+            </button>
+        `).join("");
+        
+        list.insertAdjacentHTML("beforeend", newHtml);
+        
+        // Agregar listeners a los nuevos elementos
+        newItems.forEach((item) => {
+            const btn = document.querySelector(`[data-acta-sw-select="${item.id}"]`);
+            if (btn) btn.addEventListener("click", () => selectActaSwEquipo(item.id));
+        });
+        
+        // Actualizar el meta info
+        const meta = results.querySelector(".acta-search-results__meta");
+        if (meta) {
+            const currentCount = results.querySelectorAll("[data-acta-sw-select]").length;
+            const total = state.actaSwLastFiltered.length;
+            meta.textContent = `${currentCount} coincidencia(s) encontrada(s) de ${total} total. Seleccione un equipo para autocompletar el acta.`;
+        }
+        
+        // Actualizar o remover el botón "Siguientes"
+        const pagination = results.querySelector(".acta-search-results__pagination");
+        if (pagination) {
+            const currentCount = results.querySelectorAll("[data-acta-sw-select]").length;
+            if (currentCount >= state.actaSwLastFiltered.length) {
+                pagination.remove();
+            } else {
+                const btn = pagination.querySelector("button");
+                if (btn) {
+                    const remaining = state.actaSwLastFiltered.length - currentCount;
+                    btn.textContent = `Cargar siguientes ${Math.min(30, remaining)}`;
+                }
+            }
+        }
+    }
+
+    function addActaSwAdicionalRow() {
+        const tbody = document.getElementById("actaSwAdicionalesTable");
+        if (!tbody) return;
+        
+        // Obtener el siguiente índice disponible
+        const rows = tbody.querySelectorAll("[data-acta-adicional-row]");
+        const nextIndex = Math.max(...Array.from(rows).map(r => {
+            const idx = r.getAttribute("data-acta-adicional-row");
+            return idx ? parseInt(idx) : 0;
+        })) + 1;
+        
+        // Crear nueva fila
+        const newRow = document.createElement("tr");
+        newRow.setAttribute("data-acta-adicional-row", nextIndex);
+        newRow.innerHTML = `
+            <td><input id="actaSwAdicional${nextIndex}" class="acta-input" placeholder="Descripción del software adicional"></td>
+            <td class="acta-sw-radio">
+                <label><input type="radio" name="adic${nextIndex}" value="SI"> SI</label>
+                <label><input type="radio" name="adic${nextIndex}" value="NO"> NO</label>
+            </td>
+        `;
+        
+        // Agregar la fila al tbody
+        tbody.appendChild(newRow);
     }
 
     function selectActaSwEquipo(id) {
@@ -1862,6 +2046,681 @@
         showToast("Equipo seleccionado", "El acta se autocompletó con los datos del inventario.", "success");
     }
 
+    // RC simplificado: búsqueda solo por custodio, formulario manual
+
+    function autofillActaRcForm(item) {
+        setInputValue("actaRcFuncionarioNombre", item?.nombre || item?.custodio || "");
+        setInputValue("actaRcFuncionarioCargo", item?.cargo || "");
+        setInputValue("actaRcFuncionarioExtension", item?.extension || "");
+        setInputValue("actaRcFuncionarioCorreo", item?.correo || "");
+        setInputValue("actaRcFuncionarioArea", item?.area || item?.ubicacionDireccion || item?.ubicacion || "");
+        setInputValue("actaRcFuncionarioEdificio", item?.edificio || item?.ubicacionEdificio || "");
+        setInputValue("actaRcRecibeNombre", item?.nombre || item?.custodio || "");
+    }
+
+    function loadActaRcInitialData() {
+        const today = new Date().toISOString().slice(0, 10);
+        ["actaRcEntregaFecha", "actaRcRecibeFecha"].forEach((id) => {
+            const input = document.getElementById(id);
+            if (input && !input.value) {
+                input.value = today;
+            }
+        });
+        if (state.session?.displayName) {
+            const entrega = document.getElementById("actaRcEntregaNombre");
+            if (entrega && !entrega.value) {
+                entrega.value = state.session.displayName;
+            }
+        }
+    }
+
+    function collectActaRcSearchCriteria() {
+        return {
+            custodio: document.getElementById("actaRcFilterCustodio")?.value.trim() || ""
+        };
+    }
+
+    function normalizeText(value) {
+        return String(value || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9\s]/g, " ").replace(/\s+/g, " ").trim();
+    }
+
+    function matchesActaRcCriteria(item, criteria) {
+        if (criteria.custodio && !normalizeText(item?.custodio).includes(normalizeText(criteria.custodio))) return false;
+        return true;
+    }
+
+    function renderActaRcSearchResults(items) {
+        const container = document.getElementById("actaRcEquipoResultados");
+        if (!container) return;
+        const form = document.getElementById("actaRcForm");
+        const preview = document.getElementById("actaRcPreviewActions");
+        if (preview) preview.classList.add("hidden");
+        if (form) form.classList.add("hidden");
+        if (!items.length) {
+            container.classList.remove("hidden");
+            container.innerHTML = '<div class="empty-state">No se encontraron coincidencias para los filtros indicados.</div>';
+            return;
+        }
+        container.classList.remove("hidden");
+        container.innerHTML = `
+            <div class="acta-search-results__meta">${items.length} coincidencia(s). Seleccione un custodio para autocompletar el formulario.</div>
+            <div class="acta-search-results__list">
+                ${items.map((item) => {
+                    return `
+                        <button type="button" class="acta-search-card" data-acta-rc-select="${item.id}">
+                            <strong>${escapeHtml(item.custodio || "Sin nombre")} · ${escapeHtml(item.cargo || "Sin cargo")}</strong>
+                            <span>Extensión: ${escapeHtml(item.extension || "-")} · Email: ${escapeHtml(item.correo || "-")}</span>
+                            <span>Área: ${escapeHtml(item.ubicacion || item.ubicacionDireccion || "-")} · Edificio: ${escapeHtml(item.ubicacionEdificio || "-")}</span>
+                        </button>
+                    `;
+                }).join("")}
+            </div>
+        `;
+        container.querySelectorAll("[data-acta-rc-select]").forEach((button) => {
+            button.addEventListener("click", () => selectActaRcItem(button.dataset.actaRcSelect));
+        });
+    }
+
+    async function runActaRcSearch() {
+        try {
+            const input = document.getElementById("actaRcFilterCustodio");
+            const dropdown = document.getElementById("actaRcAutocompleteDropdown");
+            if (!input || !dropdown) return;
+            const term = input.value.trim();
+            if (term.length < 2) {
+                dropdown.innerHTML = "";
+                dropdown.classList.add("hidden");
+                return;
+            }
+            const custodios = await loadCustodios(term, 100);
+            if (!custodios.length) {
+                dropdown.innerHTML = '<div style="padding: 8px; color: #999; font-size: 13px;">No se encontraron custodios</div>';
+                dropdown.classList.remove("hidden");
+                return;
+            }
+            dropdown.innerHTML = custodios.map((c) => `
+                <div class="autocomplete-item" data-id="${c.id}" style="padding: 8px 12px; cursor: pointer; border-bottom: 1px solid #eee; font-size: 13px; color: #333;" onmouseover="this.style.background='#f0f4f9'" onmouseout="this.style.background='white'">
+                    <strong>${escapeHtml(c.nombre || "Sin nombre")}</strong> <span style="color: #666;">(${escapeHtml(c.cargo || "Sin cargo")})</span>
+                </div>
+            `).join("");
+            dropdown.classList.remove("hidden");
+            dropdown.querySelectorAll(".autocomplete-item").forEach((item) => {
+                item.addEventListener("click", () => {
+                    const cid = item.dataset.id;
+                    const selected = custodios.find((row) => String(row.id) === String(cid));
+                    if (selected) {
+                        input.value = selected.nombre || "";
+                        dropdown.classList.add("hidden");
+                        selectActaRcItemByCustodio(selected);
+                    }
+                });
+            });
+        } catch (error) {
+            showToast("Error en búsqueda", error.message || "No se pudieron cargar los custodios.", "danger");
+        }
+    }
+
+    function selectActaRcItemByCustodio(item) {
+        if (!item) return;
+        const selector = document.getElementById("actaRcSelector");
+        if (selector) selector.value = item.id;
+        autofillActaRcForm(item);
+        loadActaRcInitialData();
+        document.getElementById("actaRcForm")?.classList.remove("hidden");
+        document.getElementById("actaRcPreviewActions")?.classList.remove("hidden");
+        const hint = document.getElementById("actaRcEquipmentHint");
+        if (hint) {
+            hint.textContent = `Custodio seleccionado: ${item.nombre || "RC"}.`;
+        }
+        showToast("Custodio seleccionado", "El formulario se autocompletó con datos del custodio.", "success");
+    }
+
+    function selectActaRcItem(id) {
+        // Obsoleto pero conservado por compatibilidad
+        const item = (state.inventory || []).find((row) => String(row.id) === String(id));
+        if (item) selectActaRcItemByCustodio(item);
+    }
+
+    function resetActaRcForm() {
+        document.getElementById("actaRcForm")?.reset();
+        if (document.getElementById("actaRcSelector")) {
+            document.getElementById("actaRcSelector").value = "";
+        }
+        const tableBody = document.getElementById("actaRcEquiposTableBody");
+        if (tableBody) tableBody.innerHTML = "";
+        const activitiesContainer = document.getElementById("actaRcDynamicActivitiesContainer");
+        if (activitiesContainer) activitiesContainer.innerHTML = "";
+
+        loadActaRcInitialData();
+        document.getElementById("actaRcForm")?.classList.add("hidden");
+        document.getElementById("actaRcPreviewActions")?.classList.add("hidden");
+        document.getElementById("actaRcEquipmentHint")?.classList.remove("hidden");
+        document.getElementById("actaRcIniciarButton")?.classList.remove("hidden");
+    }
+
+    function addActaRcEquipmentType(tipoName) {
+        if (!tipoName) return;
+        const normalizedTipo = tipoName.trim().toUpperCase();
+        if (!normalizedTipo) return;
+
+        const tableBody = document.getElementById("actaRcEquiposTableBody");
+        if (!tableBody) return;
+
+        const existingRow = Array.from(tableBody.querySelectorAll("tr")).find(row => {
+            const val = row.querySelector(".acta-rc-tipo-input")?.value || "";
+            return val.toUpperCase() === normalizedTipo;
+        });
+        if (existingRow) {
+            showToast("Tipo existente", "Ya se ha agregado este tipo de equipo.", "warning");
+            return;
+        }
+
+        const slug = "rc_" + normalizedTipo.replace(/[^A-Z0-9]/gi, "_").toLowerCase() + "_" + Date.now();
+
+        const tr = document.createElement("tr");
+        tr.id = `row_eq_${slug}`;
+        tr.innerHTML = `
+            <td><input class="acta-input acta-rc-tipo-input" value="${escapeHtml(normalizedTipo)}" readonly tabindex="-1" style="font-weight: bold; background: #f5f5f5;"></td>
+            <td><input class="acta-input acta-rc-marca-input" placeholder="Marca"></td>
+            <td><input class="acta-input acta-rc-modelo-input" placeholder="Modelo"></td>
+            <td><input class="acta-input acta-rc-serial-input" placeholder="Serial"></td>
+            <td><input class="acta-input acta-rc-codigo-input" placeholder="Código"></td>
+            <td style="text-align: center;">
+                <button type="button" class="btn btn-danger btn-sm" style="padding: 4px 8px; font-size: 11px; border-radius: 6px;">Eliminar</button>
+            </td>
+        `;
+        tr.querySelector(".btn-danger").addEventListener("click", () => {
+            tr.remove();
+            document.getElementById(`sec_act_${slug}`)?.remove();
+        });
+        tableBody.appendChild(tr);
+
+        const activitiesContainer = document.getElementById("actaRcDynamicActivitiesContainer");
+        if (activitiesContainer) {
+            const sec = document.createElement("div");
+            sec.id = `sec_act_${slug}`;
+            sec.className = "acta-rc-activities-section";
+            sec.style.marginBottom = "24px";
+            sec.innerHTML = `
+                <table class="acta-table acta-table--actividades">
+                    <thead>
+                        <tr><th colspan="5" class="acta-table__title-dark" style="background: #2e4057; color: white;">ACTIVIDADES DE ${escapeHtml(normalizedTipo)}</th></tr>
+                        <tr>
+                            <th>Actividad</th>
+                            <th>Fecha</th>
+                            <th>Estado</th>
+                            <th>Observación</th>
+                            <th style="width: 80px; text-align: center;">Acción</th>
+                        </tr>
+                    </thead>
+                    <tbody class="acta-rc-act-body" data-tipo="${escapeHtml(normalizedTipo)}">
+                    </tbody>
+                </table>
+                <div style="margin-top: 8px; text-align: left;">
+                    <button type="button" class="btn btn-secondary btn-sm btn-agregar-actividad" style="background: #eef4fc; border: 1px solid #1565c0; color: #1565c0; font-weight: bold; border-radius: 6px; padding: 4px 10px; cursor: pointer;">+ Agregar Actividad</button>
+                </div>
+            `;
+            sec.querySelector(".btn-agregar-actividad").addEventListener("click", () => {
+                const actBody = sec.querySelector(".acta-rc-act-body");
+                addActaRcActivityRow(actBody);
+            });
+            activitiesContainer.appendChild(sec);
+        }
+    }
+
+    function addActaRcActivityRow(tbody) {
+        if (!tbody) return;
+        const tr = document.createElement("tr");
+        const today = new Date().toISOString().slice(0, 10);
+        tr.innerHTML = `
+            <td><input class="acta-input acta-rc-act-nombre" placeholder="Nombre de la actividad" required></td>
+            <td><input class="acta-input acta-rc-act-fecha" type="date" value="${today}" required></td>
+            <td><input class="acta-input acta-rc-act-estado" placeholder="Estado" required></td>
+            <td><textarea class="acta-input acta-input--textarea acta-rc-act-obs" rows="2" placeholder="Observaciones"></textarea></td>
+            <td style="text-align: center; vertical-align: middle;">
+                <button type="button" class="btn btn-danger btn-sm" style="padding: 4px 8px; font-size: 11px; border-radius: 6px;">Eliminar</button>
+            </td>
+        `;
+        tr.querySelector(".btn-danger").addEventListener("click", () => {
+            tr.remove();
+        });
+        tbody.appendChild(tr);
+    }
+
+    function buildActaRcPayload() {
+        const payload = {
+            equipoSeleccionado: document.getElementById("actaRcSelector")?.value || "",
+            funcionario: {
+                nombre: document.getElementById("actaRcFuncionarioNombre")?.value.trim() || "",
+                cargo: document.getElementById("actaRcFuncionarioCargo")?.value.trim() || "",
+                extension: document.getElementById("actaRcFuncionarioExtension")?.value.trim() || "",
+                correo: document.getElementById("actaRcFuncionarioCorreo")?.value.trim() || "",
+                area: document.getElementById("actaRcFuncionarioArea")?.value.trim() || "",
+                edificio: document.getElementById("actaRcFuncionarioEdificio")?.value.trim() || ""
+            },
+            equiposManuales: [],
+            actividades: [],
+            certificacion: ACTA_RC_CERTIFICATION_TEXT,
+            entrega: {
+                nombre: getEntregaNombreValue("actaRcEntregaNombre", "actaRcEntregaNombreOtro"),
+                firma: document.getElementById("actaRcEntregaFirma")?.value.trim() || "",
+                fecha: document.getElementById("actaRcEntregaFecha")?.value || ""
+            },
+            recibe: {
+                nombre: document.getElementById("actaRcRecibeNombre")?.value.trim() || "",
+                firma: document.getElementById("actaRcRecibeFirma")?.value.trim() || "",
+                fecha: document.getElementById("actaRcRecibeFecha")?.value || ""
+            }
+        };
+
+        document.querySelectorAll("#actaRcEquiposTableBody tr").forEach(row => {
+            const tipo = row.querySelector(".acta-rc-tipo-input")?.value || "";
+            const marca = row.querySelector(".acta-rc-marca-input")?.value.trim() || "";
+            const modelo = row.querySelector(".acta-rc-modelo-input")?.value.trim() || "";
+            const serial = row.querySelector(".acta-rc-serial-input")?.value.trim() || "";
+            const codigo = row.querySelector(".acta-rc-codigo-input")?.value.trim() || "";
+            if (tipo) {
+                payload.equiposManuales.push({ tipo, marca, modelo, serial, codigo });
+            }
+        });
+
+        document.querySelectorAll(".acta-rc-act-body tr").forEach(row => {
+            const tbody = row.closest(".acta-rc-act-body");
+            const tipoEquipo = tbody ? (tbody.dataset.tipo || "") : "";
+            const actividad = row.querySelector(".acta-rc-act-nombre")?.value.trim() || "";
+            const fecha = row.querySelector(".acta-rc-act-fecha")?.value || "";
+            const estado = row.querySelector(".acta-rc-act-estado")?.value.trim() || "";
+            const observacion = row.querySelector(".acta-rc-act-obs")?.value.trim() || "";
+            if (actividad || fecha || estado || observacion) {
+                payload.actividades.push({ tipoEquipo, actividad, fecha, estado, observacion });
+            }
+        });
+
+        return payload;
+    }
+
+    function renderActaRcPreview(payload) {
+        const funcionario = payload.funcionario || {};
+
+        let equiposHtml = "";
+        if (payload.equiposManuales && payload.equiposManuales.length > 0) {
+            equiposHtml = `
+                <table class="acta-table acta-table--equipos">
+                    <tr><th colspan="5">EQUIPOS</th></tr>
+                    <tr><th>Tipo</th><th>Marca</th><th>Modelo</th><th>Serial</th><th>Código</th></tr>
+                    ${payload.equiposManuales.map(eq => `
+                        <tr>
+                            <td>${escapeHtml(eq.tipo)}</td>
+                            <td>${escapeHtml(eq.marca || "")}</td>
+                            <td>${escapeHtml(eq.modelo || "")}</td>
+                            <td>${escapeHtml(eq.serial || "")}</td>
+                            <td>${escapeHtml(eq.codigo || "")}</td>
+                        </tr>
+                    `).join("")}
+                </table>
+            `;
+        }
+
+        let actividadesHtml = "";
+        if (payload.equiposManuales && payload.equiposManuales.length > 0) {
+            payload.equiposManuales.forEach(eq => {
+                const match = (payload.actividades || []).filter(a => a.tipoEquipo === eq.tipo);
+                if (match.length > 0) {
+                    actividadesHtml += `
+                        <table class="acta-table acta-table--actividades">
+                            <tr><th colspan="4" class="acta-table__title-dark" style="background: #2e4057; color: white;">ACTIVIDADES DE ${escapeHtml(eq.tipo)}</th></tr>
+                            <tr>
+                                <th>Actividad</th>
+                                <th>Fecha</th>
+                                <th>Estado</th>
+                                <th>Observación</th>
+                            </tr>
+                            ${match.map(act => `
+                                <tr>
+                                    <td class="acta-table__activity">${escapeHtml(act.actividad)}</td>
+                                    <td>${escapeHtml(act.fecha || "")}</td>
+                                    <td>${escapeHtml(act.estado || "")}</td>
+                                    <td class="acta-preview__observation">${escapeHtml(act.observacion || "")}</td>
+                                </tr>
+                            `).join("")}
+                        </table>
+                    `;
+                }
+            });
+        }
+
+        return `
+            <div class="acta-sheet acta-sheet--preview">
+                <div class="acta-sheet__header">
+                    <img src="${actaAssetPath("logo_ecuador.png")}" alt="República del Ecuador" class="acta-sheet__logo acta-sheet__logo--ecuador">
+                    <img src="${actaAssetPath("logo_senadi.png")}" alt="Servicio Nacional de Derechos Intelectuales" class="acta-sheet__logo acta-sheet__logo--senadi">
+                </div>
+                <div class="acta-sheet__titles">
+                    <h3>SERVICIO NACIONAL DE DERECHOS INTELECTUALES</h3>
+                    <h4>DIRECCIÓN DE TECNOLOGÍAS DE LA INFORMACIÓN Y COMUNICACIÓN</h4>
+                    <h2>FORMULARIO DE MANTENIMIENTO PREVENTIVO DE EQUIPOS DE REDES Y COMUNICACIONES</h2>
+                </div>
+                <table class="acta-table">
+                    <tr><th colspan="6">DATOS DEL FUNCIONARIO SENADI</th></tr>
+                    <tr>
+                        <td class="acta-table__label">NOMBRE</td><td>${escapeHtml(funcionario.nombre || "")}</td>
+                        <td class="acta-table__label">CARGO</td><td>${escapeHtml(funcionario.cargo || "")}</td>
+                        <td class="acta-table__label">N° EXT.</td><td>${escapeHtml(funcionario.extension || "")}</td>
+                    </tr>
+                    <tr>
+                        <td class="acta-table__label">CORREO</td><td>${escapeHtml(funcionario.correo || "")}</td>
+                        <td class="acta-table__label">ÁREA</td><td>${escapeHtml(funcionario.area || "")}</td>
+                        <td class="acta-table__label">EDIFICIO</td><td>${escapeHtml(funcionario.edificio || "")}</td>
+                    </tr>
+                </table>
+                ${equiposHtml}
+                ${actividadesHtml}
+                <p class="acta-certification">${escapeHtml(payload.certificacion || ACTA_RC_CERTIFICATION_TEXT)}</p>
+                <table class="acta-table acta-table--firma">
+                    <tr><th colspan="2">ENTREGA RECEPCIÓN DE EQUIPO</th></tr>
+                    <tr><th>ENTREGA</th><th>RECIBE</th></tr>
+                    <tr><td><strong>Nombre:</strong> ${escapeHtml(payload.entrega?.nombre || "")}</td><td><strong>Nombre:</strong> ${escapeHtml(payload.recibe?.nombre || "")}</td></tr>
+                    <tr class="acta-table__row--firma"><td><strong>Firma:</strong> ${escapeHtml(payload.entrega?.firma || "")}</td><td><strong>Firma:</strong> ${escapeHtml(payload.recibe?.firma || "")}</td></tr>
+                    <tr><td><strong>Fecha:</strong> ${escapeHtml(payload.entrega?.fecha || "")}</td><td><strong>Fecha:</strong> ${escapeHtml(payload.recibe?.fecha || "")}</td></tr>
+                </table>
+                <div class="acta-sheet__footer">
+                    <div class="acta-sheet__footer-text">
+                        <span>Dirección: Av. República E7-197 y Diego de Almagro — Edificio FORUM 300</span>
+                        <span>Código postal: 170518 / Quito — Ecuador</span>
+                        <span>Teléfono: +539-2 394 0000</span>
+                        <span>www.derechosintelectuales.gob.ec</span>
+                    </div>
+                    <img src="${actaAssetPath("logo_nuevo_ecuador.png")}" alt="El Nuevo Ecuador" class="acta-sheet__footer-logo">
+                </div>
+            </div>
+        `;
+    }
+
+    function openActaRcPreview() {
+        const form = document.getElementById("actaRcForm");
+        if (!form) return;
+        if (!form.reportValidity()) {
+            return;
+        }
+        const payload = buildActaRcPayload();
+        openModal(
+            "Previsualización del Acta de Redes y Comunicaciones",
+            `<div class="acta-preview">${renderActaRcPreview(payload)}</div>`,
+            [
+                { label: "Exportar DOCX", className: "btn btn-primary", onClick: () => exportActaRc("docx") },
+                { label: "Exportar PDF", className: "btn btn-secondary", onClick: () => exportActaRc("pdf") },
+                { label: "Cerrar", className: "btn btn-secondary", onClick: closeModal }
+            ],
+            "modal--wide"
+        );
+    }
+
+    async function exportActaRcPdfAuto(payload) {
+        let container = null;
+        try {
+            showToast("Generando PDF", "Preparando el documento...", "info");
+
+            await loadScriptOnce("https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js");
+            await loadScriptOnce("https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js");
+
+            const previewHtml = renderActaRcPreview(payload);
+
+            container = document.createElement("div");
+            container.className = "acta-preview";
+            container.style.cssText = [
+                "position:fixed", "top:0", "left:0",
+                "width:800px", "min-height:200px",
+                "background:#fff", "padding:24px 28px",
+                "box-sizing:border-box",
+                "z-index:2147483647",
+                "overflow:visible"
+            ].join(";");
+            container.innerHTML = previewHtml;
+            document.body.appendChild(container);
+
+            const imgs = Array.from(container.querySelectorAll("img"));
+            await Promise.all(imgs.map((img) => new Promise((resolve) => {
+                if (img.complete && img.naturalWidth > 0) { resolve(); return; }
+                img.addEventListener("load",  resolve, { once: true });
+                img.addEventListener("error", resolve, { once: true });
+            })));
+
+            await new Promise((r) => setTimeout(r, 400));
+
+            const w = container.offsetWidth;
+            const h = container.offsetHeight;
+            if (!w || !h) throw new Error(`Contenedor sin dimensiones (${w}x${h}). El DOM no renderizó el contenido.`);
+
+            const canvas = await window.html2canvas(container, {
+                scale:           2,
+                useCORS:         true,
+                allowTaint:      true,
+                backgroundColor: "#ffffff",
+                logging:         false,
+                width:           w,
+                height:          h,
+                scrollX:         0,
+                scrollY:         0
+            });
+
+            if (canvas.width === 0 || canvas.height === 0) {
+                throw new Error("html2canvas devolvió un canvas vacío.");
+            }
+
+            const { jsPDF } = window.jspdf;
+            const pdf      = new jsPDF({ unit: "mm", format: "a4", orientation: "portrait" });
+            const pageW    = pdf.internal.pageSize.getWidth();
+            const pageH    = pdf.internal.pageSize.getHeight();
+            const margin   = 8;
+            const contentW = pageW - margin * 2;
+            const pxPerMm  = canvas.width / contentW;
+            const pageHpx  = (pageH - margin * 2) * pxPerMm;
+
+            let srcY = 0;
+            while (srcY < canvas.height) {
+                if (srcY > 0) pdf.addPage();
+                const srcH     = Math.min(pageHpx, canvas.height - srcY);
+                const slice    = document.createElement("canvas");
+                slice.width    = canvas.width;
+                slice.height   = srcH;
+                slice.getContext("2d").drawImage(canvas, 0, srcY, canvas.width, srcH, 0, 0, canvas.width, srcH);
+                const sliceH   = srcH / pxPerMm;
+                pdf.addImage(slice.toDataURL("image/jpeg", 0.97), "JPEG", margin, margin, contentW, sliceH);
+                srcY += srcH;
+            }
+
+            pdf.save("acta_redes_comunicaciones.pdf");
+            showToast("Exportación lista", "PDF generado correctamente.", "success");
+
+        } catch (err) {
+            console.error("[exportActaRcPdfAuto]", err);
+            showToast("Error", err.message || "No se pudo generar el PDF.", "danger");
+        } finally {
+            if (container?.parentNode) container.parentNode.removeChild(container);
+        }
+    }
+
+    async function exportActaRc(format) {
+        try {
+            const form = document.getElementById("actaRcForm");
+            if (!form) return;
+            if (!form.reportValidity()) {
+                return;
+            }
+            const payload = buildActaRcPayload();
+
+            if (format === "pdf") {
+                await exportActaRcPdfAuto(payload);
+                return;
+            }
+
+            const response = await apiFetch(`/actas/rc/export/${format}`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(payload)
+            });
+            if (!response.ok) {
+                let message = "No se pudo exportar el acta.";
+                try {
+                    const errorPayload = await response.json();
+                    message = errorPayload.message || errorPayload.error || message;
+                } catch (error) {
+                    // ignore fallback parsing errors
+                }
+                throw new Error(message);
+            }
+            const blob = await response.blob();
+            const disposition = response.headers.get("Content-Disposition") || "";
+            const match = disposition.match(/filename=\"?([^\";]+)\"?/i);
+            const filename = match?.[1] || `acta_redes_comunicaciones.${format}`;
+            downloadBlob(blob, filename);
+            showToast("Exportación lista", `El documento ${format.toUpperCase()} fue generado correctamente.`, "success");
+        } catch (error) {
+            showToast("Error", error.message || "No se pudo exportar el acta.", "danger");
+        }
+    }
+
+    function renderActaRedesComunicacionesPage() {
+        return `
+            <section class="panel panel--narrow acta-form-panel">
+                <div class="inventory-header inventory-header--form">
+                    <div>
+                        <div class="eyebrow">Mantenimiento preventivo</div>
+                        <h2>Actas de Redes y Comunicaciones</h2>
+                        <p>Formulario institucional basado en el mantenimiento preventivo oficial para redes y comunicaciones.</p>
+                    </div>
+                    <div style="display: flex; flex-direction: column; gap: 8px; align-items: flex-end;">
+                        <div class="inventory-header__badge">
+                            <span>${iconMarkup("clipboard")}</span>
+                            <strong>ACTAS</strong>
+                        </div>
+                        <a class="btn btn-secondary" href="${actasBasePath()}/actas.html" style="width: 100%; text-align: center; display: inline-flex; justify-content: center; align-items: center; border-radius: 12px; font-size: 13px; padding: 10px 16px; background: #eef4fc; border: 1px solid #1565c0; color: #1565c0; font-weight: 700; text-decoration: none; box-shadow: 0 2px 4px rgba(21, 101, 192, 0.1); cursor: pointer; transition: all 0.2s;">Regresar a Actas</a>
+                    </div>
+                </div>
+                <div class="acta-search-panel" style="text-align: center; padding: 24px;">
+                    <div style="margin-bottom: 16px;">
+                        <p>Haga clic en el siguiente botón para iniciar el llenado del acta de Redes y Comunicaciones de manera manual.</p>
+                    </div>
+                    <button type="button" class="btn btn-primary" id="actaRcIniciarButton">Iniciar Acta de Redes y Comunicaciones</button>
+                </div>
+                <div id="actaRcPreviewActions" class="toolbar hidden" style="margin-bottom:16px;">
+                    <button type="button" class="btn btn-primary" id="actaRcPreviewButton">Vista previa</button>
+                    <button type="button" class="btn btn-secondary" id="actaRcExportDocxButton">Exportar DOCX</button>
+                    <button type="button" class="btn btn-secondary" id="actaRcExportPdfButton">Exportar PDF</button>
+                    <button type="button" class="btn btn-secondary" id="actaRcResetButton">Limpiar</button>
+                </div>
+                <div id="actaRcEquipmentHint" class="helper-banner">Pulse el botón de arriba para iniciar el llenado del acta.</div>
+                <form id="actaRcForm" class="acta-pc-form hidden">
+                    <input type="hidden" id="actaRcSelector">
+                    <div class="acta-sheet">
+                        <div class="acta-sheet__header">
+                            <img src="${actaAssetPath("logo_ecuador.png")}" alt="República del Ecuador" class="acta-sheet__logo acta-sheet__logo--ecuador">
+                            <img src="${actaAssetPath("logo_senadi.png")}" alt="Servicio Nacional de Derechos Intelectuales" class="acta-sheet__logo acta-sheet__logo--senadi">
+                        </div>
+                        <div class="acta-sheet__titles">
+                            <h3>SERVICIO NACIONAL DE DERECHOS INTELECTUALES</h3>
+                            <h4>DIRECCIÓN DE TECNOLOGÍAS DE LA INFORMACIÓN Y COMUNICACIÓN</h4>
+                            <h2>FORMULARIO DE MANTENIMIENTO PREVENTIVO DE EQUIPOS DE REDES Y COMUNICACIONES</h2>
+                        </div>
+                        <table class="acta-table">
+                            <tr><th colspan="6">DATOS DEL FUNCIONARIO SENADI</th></tr>
+                            <tr>
+                                <td class="acta-table__label">NOMBRE</td>
+                                <td colspan="2"><input id="actaRcFuncionarioNombre" class="acta-input" required></td>
+                                <td class="acta-table__label">CARGO</td>
+                                <td><input id="actaRcFuncionarioCargo" class="acta-input" required></td>
+                                <td class="acta-table__label-value"><input id="actaRcFuncionarioExtension" class="acta-input" placeholder="N° EXT."></td>
+                            </tr>
+                            <tr>
+                                <td class="acta-table__label">CORREO</td>
+                                <td colspan="2"><input id="actaRcFuncionarioCorreo" class="acta-input" type="email" required></td>
+                                <td class="acta-table__label">ÁREA</td>
+                                <td><input id="actaRcFuncionarioArea" class="acta-input" required></td>
+                                <td class="acta-table__label-value"><input id="actaRcFuncionarioEdificio" class="acta-input" placeholder="EDIFICIO" required></td>
+                            </tr>
+                        </table>
+                        <table class="acta-table acta-table--equipos">
+                            <thead>
+                                <tr><th colspan="6">EQUIPOS</th></tr>
+                                <tr>
+                                    <th>Tipo</th>
+                                    <th>Marca</th>
+                                    <th>Modelo</th>
+                                    <th>Serial</th>
+                                    <th>Código</th>
+                                    <th style="width: 80px; text-align: center;">Acción</th>
+                                </tr>
+                            </thead>
+                            <tbody id="actaRcEquiposTableBody">
+                            </tbody>
+                        </table>
+                        <div style="margin: 12px 0 24px 0; text-align: left;">
+                            <button type="button" class="btn btn-secondary" id="actaRcAgregarTipoBtn" style="background: #eef4fc; border: 1px solid #1565c0; color: #1565c0; font-weight: 700; border-radius: 8px; padding: 6px 14px; cursor: pointer; transition: all 0.2s;">+ Agregar Tipo</button>
+                        </div>
+                        <div id="actaRcDynamicActivitiesContainer"></div>
+                        <p class="acta-certification">${ACTA_RC_CERTIFICATION_TEXT}</p>
+                        <table class="acta-table acta-table--firma">
+                            <tr><th colspan="2">ENTREGA RECEPCIÓN DE EQUIPO</th></tr>
+                            <tr><th>ENTREGA</th><th>RECIBE</th></tr>
+                            <tr>
+                                <td>
+                                    <label class="acta-signature-field">Nombre:
+                                        <select id="actaRcEntregaNombre" class="acta-input" required>
+                                            <option value="">-- Seleccionar --</option>
+                                            <option value="EMERSON R. CERACAPA SOLIS">EMERSON R. CERACAPA SOLIS</option>
+                                            <option value="PAUL FERNANDO OROZCO VINUEZA">PAUL FERNANDO OROZCO VINUEZA</option>
+                                            <option value="MARCO M. MOLINA MENDIETA">MARCO M. MOLINA MENDIETA</option>
+                                            <option value="OTRO">OTRO</option>
+                                        </select>
+                                        <input id="actaRcEntregaNombreOtro" class="acta-input hidden" placeholder="Escriba el nombre completo" style="margin-top: 8px;">
+                                    </label>
+                                </td>
+                                <td>
+                                    <label class="acta-signature-field">Nombre:
+                                        <input id="actaRcRecibeNombre" class="acta-input" required>
+                                    </label>
+                                </td>
+                            </tr>
+                            <tr class="acta-table__row--firma">
+                                <td>
+                                    <label class="acta-signature-field">Firma:
+                                        <input id="actaRcEntregaFirma" class="acta-input acta-input--readonly" readonly tabindex="-1" placeholder="Firma electrónica">
+                                    </label>
+                                </td>
+                                <td>
+                                    <label class="acta-signature-field">Firma:
+                                        <input id="actaRcRecibeFirma" class="acta-input acta-input--readonly" readonly tabindex="-1" placeholder="Firma electrónica">
+                                    </label>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <label class="acta-signature-field">Fecha:
+                                        <input id="actaRcEntregaFecha" class="acta-input" type="date" required>
+                                    </label>
+                                </td>
+                                <td>
+                                    <label class="acta-signature-field">Fecha:
+                                        <input id="actaRcRecibeFecha" class="acta-input" type="date" required>
+                                    </label>
+                                </td>
+                            </tr>
+                        </table>
+                        <div class="acta-sheet__footer">
+                            <div class="acta-sheet__footer-text">
+                                <span>Dirección: Av. República E7-197 y Diego de Almagro — Edificio FORUM 300</span>
+                                <span>Código postal: 170518 / Quito — Ecuador</span>
+                                <span>Teléfono: +539-2 394 0000</span>
+                                <span>www.derechosintelectuales.gob.ec</span>
+                            </div>
+                            <img src="${actaAssetPath("logo_nuevo_ecuador.png")}" alt="El Nuevo Ecuador" class="acta-sheet__footer-logo">
+                        </div>
+                    </div>
+                </form>
+            </section>
+        `;
+    }
+
     function renderActaEquiposPage() {
         return `
             <section class="panel panel--narrow acta-form-panel">
@@ -1871,9 +2730,12 @@
                         <h2>Formulario de equipos</h2>
                         <p>El subapartado PC replica el formato oficial del acta institucional y reutiliza datos existentes del inventario para autocompletar el documento.</p>
                     </div>
-                    <div class="inventory-header__badge">
-                        <span>${iconMarkup("clipboard")}</span>
-                        <strong>ACTAS</strong>
+                    <div style="display: flex; flex-direction: column; gap: 8px; align-items: flex-end;">
+                        <div class="inventory-header__badge">
+                            <span>${iconMarkup("clipboard")}</span>
+                            <strong>ACTAS</strong>
+                        </div>
+                        <a class="btn btn-secondary" href="${actasBasePath()}/actas.html" style="width: 100%; text-align: center; display: inline-flex; justify-content: center; align-items: center; border-radius: 12px; font-size: 13px; padding: 10px 16px; background: #eef4fc; border: 1px solid #1565c0; color: #1565c0; font-weight: 700; text-decoration: none; box-shadow: 0 2px 4px rgba(21, 101, 192, 0.1); cursor: pointer; transition: all 0.2s;">Regresar a Actas</a>
                     </div>
                 </div>
 
@@ -1998,7 +2860,9 @@
                                             <option value="">-- Seleccionar --</option>
                                             <option value="EMERSON R. CERACAPA SOLIS">EMERSON R. CERACAPA SOLIS</option>
                                             <option value="PAUL FERNANDO OROZCO VINUEZA">PAUL FERNANDO OROZCO VINUEZA</option>
+                                            <option value="OTRO">OTRO</option>
                                         </select>
+                                        <input id="actaEntregaNombreOtro" class="acta-input hidden" placeholder="Escriba el nombre completo" style="margin-top: 8px;">
                                     </label>
                                 </td>
                                 <td>
@@ -2124,7 +2988,9 @@
                                             <option value="">-- Seleccionar --</option>
                                             <option value="EMERSON R. CERACAPA SOLIS">EMERSON R. CERACAPA SOLIS</option>
                                             <option value="PAUL FERNANDO OROZCO VINUEZA">PAUL FERNANDO OROZCO VINUEZA</option>
+                                            <option value="OTRO">OTRO</option>
                                         </select>
+                                        <input id="actaImpresoraEntregaNombreOtro" class="acta-input hidden" placeholder="Escriba el nombre completo" style="margin-top: 8px;">
                                     </label>
                                 </td>
                                 <td>
@@ -2232,7 +3098,7 @@
                             <tr><th colspan="2">ENTREGA RECEPCION DE EQUIPO</th></tr>
                             <tr><th>ENTREGA</th><th>RECIBE</th></tr>
                             <tr>
-                                <td><label class="acta-signature-field">Nombre:<select id="actaEscanerEntregaNombre" class="acta-input" required><option value="">-- Seleccionar --</option><option value="EMERSON R. CERACAPA SOLIS">EMERSON R. CERACAPA SOLIS</option><option value="PAUL FERNANDO OROZCO VINUEZA">PAUL FERNANDO OROZCO VINUEZA</option></select></label></td>
+                                <td><label class="acta-signature-field">Nombre:<select id="actaEscanerEntregaNombre" class="acta-input" required><option value="">-- Seleccionar --</option><option value="EMERSON R. CERACAPA SOLIS">EMERSON R. CERACAPA SOLIS</option><option value="PAUL FERNANDO OROZCO VINUEZA">PAUL FERNANDO OROZCO VINUEZA</option><option value="OTRO">OTRO</option></select><input id="actaEscanerEntregaNombreOtro" class="acta-input hidden" placeholder="Escriba el nombre completo" style="margin-top: 8px;"></label></td>
                                 <td><label class="acta-signature-field">Nombre:<input id="actaEscanerRecibeNombre" class="acta-input" required></label></td>
                             </tr>
                             <tr class="acta-table__row--firma">
@@ -2318,7 +3184,7 @@
                             <tr><th colspan="2">ENTREGA RECEPCION DE EQUIPO</th></tr>
                             <tr><th>ENTREGA</th><th>RECIBE</th></tr>
                             <tr>
-                                <td><label class="acta-signature-field">Nombre:<select id="actaTelefonoEntregaNombre" class="acta-input" required><option value="">-- Seleccionar --</option><option value="EMERSON R. CERACAPA SOLIS">EMERSON R. CERACAPA SOLIS</option><option value="PAUL FERNANDO OROZCO VINUEZA">PAUL FERNANDO OROZCO VINUEZA</option></select></label></td>
+                                <td><label class="acta-signature-field">Nombre:<select id="actaTelefonoEntregaNombre" class="acta-input" required><option value="">-- Seleccionar --</option><option value="EMERSON R. CERACAPA SOLIS">EMERSON R. CERACAPA SOLIS</option><option value="PAUL FERNANDO OROZCO VINUEZA">PAUL FERNANDO OROZCO VINUEZA</option><option value="OTRO">OTRO</option></select><input id="actaTelefonoEntregaNombreOtro" class="acta-input hidden" placeholder="Escriba el nombre completo" style="margin-top: 8px;"></label></td>
                                 <td><label class="acta-signature-field">Nombre:<input id="actaTelefonoRecibeNombre" class="acta-input" required></label></td>
                             </tr>
                             <tr class="acta-table__row--firma">
@@ -2421,7 +3287,9 @@
                                             <option value="">-- Seleccionar --</option>
                                             <option value="EMERSON R. CERACAPA SOLIS">EMERSON R. CERACAPA SOLIS</option>
                                             <option value="PAUL FERNANDO OROZCO VINUEZA">PAUL FERNANDO OROZCO VINUEZA</option>
+                                            <option value="OTRO">OTRO</option>
                                         </select>
+                                        <input id="actaProyectorEntregaNombreOtro" class="acta-input hidden" placeholder="Escriba el nombre completo" style="margin-top: 8px;">
                                     </label>
                                 </td>
                                 <td>
@@ -2658,7 +3526,7 @@
             })),
             certificacion: ACTA_PC_CERTIFICATION_TEXT,
             entrega: {
-                nombre: document.getElementById("actaEntregaNombre")?.value.trim() || "",
+                nombre: getEntregaNombreValue("actaEntregaNombre", "actaEntregaNombreOtro"),
                 firma: document.getElementById("actaEntregaFirma")?.value.trim() || "",
                 fecha: document.getElementById("actaEntregaFecha")?.value || ""
             },
@@ -2846,7 +3714,7 @@
             })),
             certificacion: ACTA_PC_CERTIFICATION_TEXT,
             entrega: {
-                nombre: document.getElementById("actaImpresoraEntregaNombre")?.value.trim() || "",
+                nombre: getEntregaNombreValue("actaImpresoraEntregaNombre", "actaImpresoraEntregaNombreOtro"),
                 firma: document.getElementById("actaImpresoraEntregaFirma")?.value.trim() || "",
                 fecha: document.getElementById("actaImpresoraEntregaFecha")?.value || ""
             },
@@ -3056,7 +3924,7 @@
             })),
             certificacion: ACTA_PC_CERTIFICATION_TEXT,
             entrega: {
-                nombre: document.getElementById("actaEscanerEntregaNombre")?.value.trim() || "",
+                nombre: getEntregaNombreValue("actaEscanerEntregaNombre", "actaEscanerEntregaNombreOtro"),
                 firma: document.getElementById("actaEscanerEntregaFirma")?.value.trim() || "",
                 fecha: document.getElementById("actaEscanerEntregaFecha")?.value || ""
             },
@@ -3258,7 +4126,7 @@
             })),
             certificacion: ACTA_PC_CERTIFICATION_TEXT,
             entrega: {
-                nombre: document.getElementById("actaTelefonoEntregaNombre")?.value.trim() || "",
+                nombre: getEntregaNombreValue("actaTelefonoEntregaNombre", "actaTelefonoEntregaNombreOtro"),
                 firma: document.getElementById("actaTelefonoEntregaFirma")?.value.trim() || "",
                 fecha: document.getElementById("actaTelefonoEntregaFecha")?.value || ""
             },
@@ -3467,7 +4335,7 @@
             })),
             certificacion: ACTA_PC_CERTIFICATION_TEXT,
             entrega: {
-                nombre: document.getElementById("actaProyectorEntregaNombre")?.value.trim() || "",
+                nombre: getEntregaNombreValue("actaProyectorEntregaNombre", "actaProyectorEntregaNombreOtro"),
                 firma: document.getElementById("actaProyectorEntregaFirma")?.value.trim() || "",
                 fecha: document.getElementById("actaProyectorEntregaFecha")?.value || ""
             },
@@ -3801,6 +4669,10 @@
         }
         if (page === "acta-software") {
             bindActaSwEvents();
+            return;
+        }
+        if (page === "acta-rc") {
+            bindActaRcEvents();
             return;
         }
         document.querySelectorAll("[data-acta-form]").forEach((form) => {
@@ -5092,6 +5964,29 @@
         });
     }
 
+    function bindEntregaNombreOtroEvent(selectId, inputId) {
+        document.getElementById(selectId)?.addEventListener("change", (e) => {
+            const otroInput = document.getElementById(inputId);
+            if (e.target.value === "OTRO") {
+                otroInput?.classList.remove("hidden");
+                otroInput?.setAttribute("required", "required");
+                otroInput?.focus();
+            } else {
+                otroInput?.classList.add("hidden");
+                otroInput?.removeAttribute("required");
+                if (otroInput) otroInput.value = "";
+            }
+        });
+    }
+
+    function getEntregaNombreValue(selectId, inputId) {
+        const selVal = document.getElementById(selectId)?.value || "";
+        if (selVal === "OTRO") {
+            return document.getElementById(inputId)?.value.trim() || "";
+        }
+        return selVal;
+    }
+
     function loadActaPcInitialData() {
         const select = document.getElementById("actaPcSelector");
         if (!select) {
@@ -5163,6 +6058,78 @@
         document.getElementById("actaTelefonoExportDocxButton")?.addEventListener("click", () => exportActaTelefono("docx"));
         document.getElementById("actaTelefonoExportPdfButton")?.addEventListener("click", () => exportActaTelefono("pdf"));
         document.getElementById("actaTelefonoResetButton")?.addEventListener("click", resetActaTelefonoForm);
+
+        bindEntregaNombreOtroEvent("actaEntregaNombre", "actaEntregaNombreOtro");
+        bindEntregaNombreOtroEvent("actaImpresoraEntregaNombre", "actaImpresoraEntregaNombreOtro");
+        bindEntregaNombreOtroEvent("actaEscanerEntregaNombre", "actaEscanerEntregaNombreOtro");
+        bindEntregaNombreOtroEvent("actaTelefonoEntregaNombre", "actaTelefonoEntregaNombreOtro");
+        bindEntregaNombreOtroEvent("actaProyectorEntregaNombre", "actaProyectorEntregaNombreOtro");
+    }
+
+    function bindActaRcEvents() {
+        loadActaRcInitialData();
+        document.getElementById("actaRcIniciarButton")?.addEventListener("click", () => {
+            const form = document.getElementById("actaRcForm");
+            const preview = document.getElementById("actaRcPreviewActions");
+            const selector = document.getElementById("actaRcSelector");
+            if (selector) selector.value = "MANUAL";
+            if (form) form.classList.remove("hidden");
+            if (preview) preview.classList.remove("hidden");
+            document.getElementById("actaRcEquipmentHint")?.classList.add("hidden");
+            document.getElementById("actaRcIniciarButton")?.classList.add("hidden");
+        });
+        document.getElementById("actaRcPreviewButton")?.addEventListener("click", openActaRcPreview);
+        document.getElementById("actaRcExportDocxButton")?.addEventListener("click", () => exportActaRc("docx"));
+        document.getElementById("actaRcExportPdfButton")?.addEventListener("click", () => exportActaRc("pdf"));
+        document.getElementById("actaRcResetButton")?.addEventListener("click", resetActaRcForm);
+        bindEntregaNombreOtroEvent("actaRcEntregaNombre", "actaRcEntregaNombreOtro");
+        document.getElementById("actaRcAgregarTipoBtn")?.addEventListener("click", () => {
+            const bodyHtml = `
+                <div style="padding: 8px 0;">
+                    <label for="actaRcInputNuevoTipoName" style="font-weight: bold; margin-bottom: 8px; display: block;">Nombre del Tipo de Equipo:</label>
+                    <input id="actaRcInputNuevoTipoName" class="acta-input" placeholder="Ej. SWITCHES, SERVIDORES, CENTRAL TELEFONICA" style="width: 100%; border: 1px solid #ccc; border-radius: 8px; padding: 8px 12px; box-sizing: border-box; font-size: 14px;">
+                </div>
+            `;
+            openModal("Agregar Nuevo Tipo de Equipo", bodyHtml, [
+                {
+                    label: "Agregar",
+                    className: "btn btn-primary",
+                    onClick: () => {
+                        const input = document.getElementById("actaRcInputNuevoTipoName");
+                        const val = input ? input.value.trim() : "";
+                        if (!val) {
+                            showToast("Nombre inválido", "El nombre no puede estar vacío.", "danger");
+                            return;
+                        }
+                        addActaRcEquipmentType(val);
+                        closeModal();
+                    }
+                },
+                {
+                    label: "Cancelar",
+                    className: "btn btn-secondary",
+                    onClick: closeModal
+                }
+            ]);
+            setTimeout(() => {
+                const input = document.getElementById("actaRcInputNuevoTipoName");
+                if (input) {
+                    input.focus();
+                    input.addEventListener("keydown", (e) => {
+                        if (e.key === "Enter") {
+                            e.preventDefault();
+                            const val = input.value.trim();
+                            if (!val) {
+                                showToast("Nombre inválido", "El nombre no puede estar vacío.", "danger");
+                                return;
+                            }
+                            addActaRcEquipmentType(val);
+                            closeModal();
+                        }
+                    });
+                }
+            }, 100);
+        });
     }
 
     function bindActaSwEvents() {
@@ -5173,10 +6140,12 @@
                 if (event.key === "Enter") { event.preventDefault(); runActaSwEquipoSearch(); }
             });
         });
+        document.getElementById("actaSwAgregarAdicionalButton")?.addEventListener("click", addActaSwAdicionalRow);
         document.getElementById("actaSwPreviewButton")?.addEventListener("click", openActaSwPreview);
         document.getElementById("actaSwExportDocxButton")?.addEventListener("click", () => exportActaSoftware("docx"));
         document.getElementById("actaSwExportPdfButton")?.addEventListener("click", () => exportActaSoftware("pdf"));
         document.getElementById("actaSwResetButton")?.addEventListener("click", resetActaSwForm);
+        bindEntregaNombreOtroEvent("actaSwEntregaNombre", "actaSwEntregaNombreOtro");
         loadActaSwInitialData();
     }
 // Función para recolectar los criterios de búsqueda del acta desde los campos del formulario
@@ -5396,7 +6365,7 @@
             actas: "",
             "acta-equipos": "Formulario para registrar mantenimiento preventivo de equipos.",
             "acta-software": "Formulario para registrar programas y aplicaciones instaladas.",
-            "acta-rc": "Formulario para registrar mantenimiento preventivo RC."
+            "acta-rc": "Formulario institucional de redes y comunicaciones."
         };
         return descriptions[pageName] || "";
     }

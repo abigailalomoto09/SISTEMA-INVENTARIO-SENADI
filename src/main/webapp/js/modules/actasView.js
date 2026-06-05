@@ -4,7 +4,7 @@
             const cards = [
                 ["Equipos", "Acta de mantenimiento preventivo de equipos.", `${basePath}/acta-equipos.html`],
                 ["Software", "Acta de programas y aplicaciones instaladas.", `${basePath}/acta-software.html`],
-                ["RC", "Acta de mantenimiento preventivo RC.", `${basePath}/acta-rc.html`]
+                ["Redes y Comunicaciones", "Acta de mantenimiento preventivo de redes y comunicaciones.", `${basePath}/acta-rc.html`]
             ];
 
             return `

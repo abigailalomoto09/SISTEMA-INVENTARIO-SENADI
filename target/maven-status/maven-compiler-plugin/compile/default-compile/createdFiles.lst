@@ -16,10 +16,13 @@ com\mycompany\sistemainventariov3\service\UsuarioService.class
 com\mycompany\sistemainventariov3\dao\CustodioDAO.class
 com\mycompany\sistemainventariov3\util\LDAP.class
 com\mycompany\sistemainventariov3\util\SesionUsuario.class
+com\mycompany\sistemainventariov3\dto\ActaRedesComunicacionesRequest.class
 com\mycompany\sistemainventariov3\ConnectionTest.class
 com\mycompany\sistemainventariov3\model\Escaner.class
 com\mycompany\sistemainventariov3\resources\ActasResource.class
+com\mycompany\sistemainventariov3\service\ActaRedesComunicacionesDocumentService.class
 com\mycompany\sistemainventariov3\dao\InfraestructuraDAO.class
+com\mycompany\sistemainventariov3\dto\ActaRedesComunicacionesRequest$ActividadMantenimiento.class
 com\mycompany\sistemainventariov3\dao\EscanerDAO.class
 com\mycompany\sistemainventariov3\dao\UsuarioDAO.class
 com\mycompany\sistemainventariov3\service\UsuarioService$UsuarioAuthRecord.class
@@ -29,6 +32,7 @@ com\mycompany\sistemainventariov3\service\ActaMantenimientoTelefonoDocumentServi
 com\mycompany\sistemainventariov3\model\HistoricoCambio.class
 com\mycompany\sistemainventariov3\model\Periferico.class
 com\mycompany\sistemainventariov3\model\Custodio.class
+com\mycompany\sistemainventariov3\dto\ActaRedesComunicacionesRequest$FirmaRecepcion.class
 com\mycompany\sistemainventariov3\service\DatabaseService.class
 com\mycompany\sistemainventariov3\dto\ActaSoftwareRequest$Funcionario.class
 com\mycompany\sistemainventariov3\model\Laptop.class
@@ -46,6 +50,7 @@ com\mycompany\sistemainventariov3\dto\LoginRequest.class
 com\mycompany\sistemainventariov3\dao\TelefonoDAO.class
 com\mycompany\sistemainventariov3\model\Usuario.class
 com\mycompany\sistemainventariov3\dao\ProyectorDAO.class
+com\mycompany\sistemainventariov3\dto\ActaRedesComunicacionesRequest$EquipoRow.class
 com\mycompany\sistemainventariov3\util\EncriptacionUtil.class
 com\mycompany\sistemainventariov3\dao\UbicacionDAO.class
 com\mycompany\sistemainventariov3\util\LDAPConfig.class
@@ -58,6 +63,7 @@ com\mycompany\sistemainventariov3\bean\LoginBean.class
 com\mycompany\sistemainventariov3\dao\PeriferícoDAO.class
 com\mycompany\sistemainventariov3\dao\BienControlAdministrativoDAO.class
 com\mycompany\sistemainventariov3\JAXRSConfiguration.class
+com\mycompany\sistemainventariov3\dto\ActaRedesComunicacionesRequest$Funcionario.class
 com\mycompany\sistemainventariov3\service\ActaMantenimientoProyectorDocumentService.class
 com\mycompany\sistemainventariov3\resources\LoginResource.class
 com\mycompany\sistemainventariov3\dao\PCDAO.class

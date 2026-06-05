@@ -161,24 +161,31 @@ public class InventarioJdbcService {
             boolean tieneTablaUsuario = existeTabla(conn, "usuario");
             StringBuilder sql = new StringBuilder();
             if (tieneTablaUsuario) {
-                sql.append("SELECT c.id_custodio, c.nombre, u.username AS username ")
+                sql.append("SELECT c.id_custodio, c.nombre, u.username AS username, u.email AS email, ")
+                        .append("MAX(ub.edificio) AS edificio, MAX(ub.direccion) AS area ")
                         .append("FROM custodio c ")
                         .append("LEFT JOIN usuario u ON u.id_custodio = c.id_custodio AND u.rol = 'CUSTODIO' AND u.activo = 1 ")
+                        .append("LEFT JOIN equipo e ON e.id_custodio_actual = c.id_custodio ")
+                        .append("LEFT JOIN ubicacion ub ON ub.id_ubicacion = e.id_ubicacion ")
                         .append("WHERE c.activo = 1 ");
                 if (tieneFiltro) {
                     sql.append("AND (LOWER(c.nombre) LIKE ? OR LOWER(u.username) LIKE ?) ");
                 }
+                sql.append("GROUP BY c.id_custodio, c.nombre, u.username, u.email ");
                 sql.append("ORDER BY c.nombre");
                 if (limite > 0) {
                     sql.append(" LIMIT ?");
                 }
             } else {
-                sql.append("SELECT c.id_custodio, c.nombre ")
+                sql.append("SELECT c.id_custodio, c.nombre, MAX(ub.edificio) AS edificio, MAX(ub.direccion) AS area ")
                         .append("FROM custodio c ")
+                        .append("LEFT JOIN equipo e ON e.id_custodio_actual = c.id_custodio ")
+                        .append("LEFT JOIN ubicacion ub ON ub.id_ubicacion = e.id_ubicacion ")
                         .append("WHERE c.activo = 1 ");
                 if (tieneFiltro) {
                     sql.append("AND LOWER(c.nombre) LIKE ? ");
                 }
+                sql.append("GROUP BY c.id_custodio, c.nombre ");
                 sql.append("ORDER BY c.nombre");
                 if (limite > 0) {
                     sql.append(" LIMIT ?");
@@ -203,8 +210,11 @@ public class InventarioJdbcService {
                         Map<String, Object> item = new LinkedHashMap<>();
                         item.put("id", rs.getInt("id_custodio"));
                         item.put("nombre", rs.getString("nombre"));
+                        item.put("edificio", rs.getString("edificio"));
+                        item.put("area", rs.getString("area"));
                         if (tieneTablaUsuario) {
                             item.put("username", rs.getString("username"));
+                            item.put("correo", rs.getString("email"));
                         }
                         custodios.add(item);
                     }

@@ -1,6 +1,7 @@
 C:\Users\Joseph Zambrano\Desktop\senadi_v01\SISTEMA-INVENTARIO-SENADI\src\main\java\com\mycompany\sistemainventariov3\resources\InventarioResource.java
 C:\Users\Joseph Zambrano\Desktop\senadi_v01\SISTEMA-INVENTARIO-SENADI\src\main\java\com\mycompany\sistemainventariov3\dao\InfraestructuraDAO.java
 C:\Users\Joseph Zambrano\Desktop\senadi_v01\SISTEMA-INVENTARIO-SENADI\src\main\java\com\mycompany\sistemainventariov3\model\Infraestructura.java
+C:\Users\Joseph Zambrano\Desktop\senadi_v01\SISTEMA-INVENTARIO-SENADI\src\main\java\com\mycompany\sistemainventariov3\service\ActaRedesComunicacionesDocumentService.java
 C:\Users\Joseph Zambrano\Desktop\senadi_v01\SISTEMA-INVENTARIO-SENADI\src\main\java\com\mycompany\sistemainventariov3\model\Custodio.java
 C:\Users\Joseph Zambrano\Desktop\senadi_v01\SISTEMA-INVENTARIO-SENADI\src\main\java\com\mycompany\sistemainventariov3\resources\TestResource.java
 C:\Users\Joseph Zambrano\Desktop\senadi_v01\SISTEMA-INVENTARIO-SENADI\src\main\java\com\mycompany\sistemainventariov3\dao\HistoricoCambioDAO.java
@@ -60,6 +61,7 @@ C:\Users\Joseph Zambrano\Desktop\senadi_v01\SISTEMA-INVENTARIO-SENADI\src\main\j
 C:\Users\Joseph Zambrano\Desktop\senadi_v01\SISTEMA-INVENTARIO-SENADI\src\main\java\com\mycompany\sistemainventariov3\service\inventory\InventarioSql.java
 C:\Users\Joseph Zambrano\Desktop\senadi_v01\SISTEMA-INVENTARIO-SENADI\src\main\java\com\mycompany\sistemainventariov3\model\BienControlAdministrativo.java
 C:\Users\Joseph Zambrano\Desktop\senadi_v01\SISTEMA-INVENTARIO-SENADI\src\main\java\com\mycompany\sistemainventariov3\util\LDAP.java
+C:\Users\Joseph Zambrano\Desktop\senadi_v01\SISTEMA-INVENTARIO-SENADI\src\main\java\com\mycompany\sistemainventariov3\dto\ActaRedesComunicacionesRequest.java
 C:\Users\Joseph Zambrano\Desktop\senadi_v01\SISTEMA-INVENTARIO-SENADI\src\main\java\com\mycompany\sistemainventariov3\model\Telefono.java
 C:\Users\Joseph Zambrano\Desktop\senadi_v01\SISTEMA-INVENTARIO-SENADI\src\main\java\com\mycompany\sistemainventariov3\service\ActaMantenimientoPcDocumentService.java
 C:\Users\Joseph Zambrano\Desktop\senadi_v01\SISTEMA-INVENTARIO-SENADI\src\main\java\com\mycompany\sistemainventariov3\util\SessionRequestFilter.java

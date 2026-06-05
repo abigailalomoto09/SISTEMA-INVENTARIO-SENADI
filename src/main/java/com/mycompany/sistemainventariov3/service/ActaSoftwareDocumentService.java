@@ -53,24 +53,24 @@ public class ActaSoftwareDocumentService {
 
     // ── Software catalogue ─────────────────────────────────────────────────────
     private static final String[][] SOFTWARE_PAGE1 = {
-        {"SISTEMA OPERATIVO",              "MICROSOFT WINDOWS 10 HOME"},
-        {"SISTEMA OPERATIVO",              "MICROSOFT WINDOWS 10 PRO"},
-        {"PAQUETE OFIMATICO",              "MICROSOFT OFFICE 365 PRO PLUS"},
-        {"SOFTWARE ANTIVIRUS",             "KASPERSKY ENDPOINT SECURITY 11.9"},
-        {"NAVEGADORES",                    "GOOGLE CHROME"},
-        {"NAVEGADORES",                    "MOZILLA FIREFOX"},
-        {"NAVEGADORES",                    "MICROSOFT EDGE"},
-        {"NAVEGADORES",                    "INTERNET EXPLORER"},
-        {"SOFTWARE SOPORTE REMOTO",        "ANYDESK"},
-        {"SOFTWARE SOPORTE REMOTO",        "ZOHO ASSIST"},
-        {"SOFTWARE DE FIRMA ELECTRONICA",  "TOKEN SECURITY BAUAC 2018 (64 BITS)"},
-        {"SOFTWARE DE FIRMA ELECTRONICA",  "SIGNER DIGITAL 1.0.0.VERSION"},
-        {"SOFTWARE PARA VISUALIZACION PDF","ADOBE ACROBAT READER"},
-        {"SOFTWARE PARA VISUALIZACION PDF","PDF 24 CREATOR"},
-        {"SOFTWARE PARA VISUALIZACION PDF","FOXIT READER"},
-        {"COMPRESION",                     "WINRAR"},
-        {"CORREOS",                        "MICROSOFT OUTLOOK"},
-        {"VIDEO CONFERENCIA",              "ZOOM MEETINGS"}
+        {"SISTEMA OPERATIVO",               "MICROSOFT WINDOWS 10 PRO"},
+        {"SISTEMA OPERATIVO",               "MICROSOFT WINDOWS 11 PRO"},
+        {"PAQUETE OFIMATICO",               "MICROSOFT OFFICE 365 PRO PLUS"},
+        {"SOFTWARE ANTIVIRUS",              "ESET ENDPOINT SECURITY"},
+        {"NAVEGADORES",                     "MOZILLA FIREFOX"},
+        {"NAVEGADORES",                     "GOOGLE CHROME"},
+        {"NAVEGADORES",                     "MICROSOFT EDGE"},
+        {"NAVEGADORES",                     "SAFARI"},
+        {"SOFTWARE SOPORTE REMOTO",         "TIGHT VNC SERVICE"},
+        {"SOFTWARE SOPORTE REMOTO",         "ANYDESK"},
+        {"SOFTWARE DE FIRMA ELECTRONICA",   "FIRMA EC"},
+        {"SOFTWARE DE FIRMA ELECTRONICA",   "FIRMA MASIVA SENADI"},
+        {"SOFTWARE PARA VISUALIZACION PDF", "PDF 24"},
+        {"SOFTWARE PARA VISUALIZACION PDF", "ADOBE ACROBAT READER"},
+        {"SOFTWARE PARA VISUALIZACION PDF", "NITRO PDF"},
+        {"COMPRESION",                      "WINRAR"},
+        {"CORREOS",                         "ZIMBRA DESKTOP"},
+        {"VIDEO CONFERENCIA",               "ZOOM MEETINGS"}
     };
 
     private static final String[] DRIVERS_PAGE2 = {
@@ -200,7 +200,15 @@ public class ActaSoftwareDocumentService {
 
     private void addSoftwarePage1Table(XWPFDocument doc, ActaSoftwareRequest req) {
         List<ActaSoftwareRequest.SoftwareItem> items = req.getSoftwareItems();
-        int totalRows = 2 + SOFTWARE_PAGE1.length;
+
+        // Collect only SI items
+        List<String[]> siItems = new ArrayList<>();
+        for (int i = 0; i < SOFTWARE_PAGE1.length; i++) {
+            String ins = (items != null && i < items.size()) ? n(items.get(i).getInstalado()) : "";
+            if ("SI".equalsIgnoreCase(ins)) siItems.add(SOFTWARE_PAGE1[i]);
+        }
+
+        int totalRows = 2 + Math.max(1, siItems.size()); // at least 1 data row
         int[] grid = {3872, 4919, 1675};
         XWPFTable t = createStyledTable(doc, totalRows, 3, grid);
         t.getRow(0).setHeight(DX_HDR);
@@ -208,68 +216,81 @@ public class ActaSoftwareDocumentService {
         for (int i = 2; i < totalRows; i++) t.getRow(i).setHeight(DX_SW);
 
         mergeCellsH(t, 0, 0, 2);
-        setCellText(t.getRow(0).getCell(0), "PROGRAMAS Y APLICACIONES INSTALADAS", true, ParagraphAlignment.CENTER, "2E4057", "FFFFFF", 9);
+        setCellText(t.getRow(0).getCell(0), "PROGRAMAS Y APLICACIONES INSTALADAS", true, ParagraphAlignment.CENTER, "7F7F7F", "FFFFFF", 9);
         setCellText(t.getRow(1).getCell(0), "CATEGORIA",             true, ParagraphAlignment.CENTER, "D9D9D9");
         setCellText(t.getRow(1).getCell(1), "PROGRAMA / APLICACION", true, ParagraphAlignment.CENTER, "D9D9D9");
         setCellText(t.getRow(1).getCell(2), "INSTALADO",             true, ParagraphAlignment.CENTER, "D9D9D9");
 
-        for (int i = 0; i < SOFTWARE_PAGE1.length; i++) {
-            String ins = (items != null && i < items.size()) ? n(items.get(i).getInstalado()) : "";
-            String bg  = (i % 2 == 0) ? "FFFFFF" : "F5F5F8";
+        for (int i = 0; i < siItems.size(); i++) {
+            String bg = (i % 2 == 0) ? "FFFFFF" : "F5F5F8";
             XWPFTableRow row = t.getRow(2 + i);
-            setCellText(row.getCell(0), SOFTWARE_PAGE1[i][0], false, ParagraphAlignment.LEFT,   bg);
-            setCellText(row.getCell(1), SOFTWARE_PAGE1[i][1], false, ParagraphAlignment.LEFT,   bg);
-            setCellText(row.getCell(2), ins,                   true,  ParagraphAlignment.CENTER, bg);
+            setCellText(row.getCell(0), siItems.get(i)[0], false, ParagraphAlignment.LEFT,   bg);
+            setCellText(row.getCell(1), siItems.get(i)[1], false, ParagraphAlignment.LEFT,   bg);
+            setCellText(row.getCell(2), "SI",               true,  ParagraphAlignment.CENTER, bg);
         }
     }
 
     private void addDriversPage2Table(XWPFDocument doc, ActaSoftwareRequest req) {
         List<ActaSoftwareRequest.SoftwareItem> items = req.getSoftwareItems();
-        int offset   = SOFTWARE_PAGE1.length;
-        int totalRows = 2 + DRIVERS_PAGE2.length + 2 + 3; // hdrs + drivers + adicional hdrs + 3 blanks
-        int[] grid   = {3872, 4919, 1675};
-        XWPFTable t  = createStyledTable(doc, totalRows, 3, grid);
+        int offset = SOFTWARE_PAGE1.length;
 
-        // ── Drivers section ──────────────────────────────────────────────────
-        t.getRow(0).setHeight(DX_HDR);
-        t.getRow(1).setHeight(DX_DATA);
-        for (int i = 2; i < 2 + DRIVERS_PAGE2.length; i++) t.getRow(i).setHeight(DX_SW);
-
-        mergeCellsH(t, 0, 0, 2);
-        setCellText(t.getRow(0).getCell(0), "CONTROLADORES / DRIVERS", true, ParagraphAlignment.CENTER, "2E4057", "FFFFFF", 9);
-        setCellText(t.getRow(1).getCell(0), "CATEGORIA",             true, ParagraphAlignment.CENTER, "D9D9D9");
-        setCellText(t.getRow(1).getCell(1), "PROGRAMA / APLICACION", true, ParagraphAlignment.CENTER, "D9D9D9");
-        setCellText(t.getRow(1).getCell(2), "INSTALADO",             true, ParagraphAlignment.CENTER, "D9D9D9");
-
+        // Collect only SI drivers
+        List<String> siDrivers = new ArrayList<>();
         for (int i = 0; i < DRIVERS_PAGE2.length; i++) {
             int idx = offset + i;
             String ins = (items != null && idx < items.size()) ? n(items.get(idx).getInstalado()) : "";
-            String bg  = (i % 2 == 0) ? "FFFFFF" : "F5F5F8";
-            XWPFTableRow row = t.getRow(2 + i);
-            setCellText(row.getCell(0), "CONTROLADORES / DRIVERS", false, ParagraphAlignment.LEFT,   bg);
-            setCellText(row.getCell(1), DRIVERS_PAGE2[i],           false, ParagraphAlignment.LEFT,   bg);
-            setCellText(row.getCell(2), ins,                          true,  ParagraphAlignment.CENTER, bg);
+            if ("SI".equalsIgnoreCase(ins)) siDrivers.add(DRIVERS_PAGE2[i]);
         }
 
-        // ── Adicionales section ──────────────────────────────────────────────
-        int base = 2 + DRIVERS_PAGE2.length;
-        t.getRow(base).setHeight(DX_HDR);
-        t.getRow(base + 1).setHeight(DX_DATA);
-        for (int i = 0; i < 3; i++) t.getRow(base + 2 + i).setHeight(DX_SW + 80);
-
-        mergeCellsH(t, base, 0, 2);
-        setCellText(t.getRow(base).getCell(0), "SOFTWARE Y DRIVERS ADICIONAL", true, ParagraphAlignment.CENTER, "2E4057", "FFFFFF", 9);
-        setCellText(t.getRow(base + 1).getCell(0), "CATEGORIA",             true, ParagraphAlignment.CENTER, "D9D9D9");
-        setCellText(t.getRow(base + 1).getCell(1), "PROGRAMA / APLICACION", true, ParagraphAlignment.CENTER, "D9D9D9");
-        setCellText(t.getRow(base + 1).getCell(2), "INSTALADO",             true, ParagraphAlignment.CENTER, "D9D9D9");
-
+        // Collect non-empty adicionales
         List<String> adicionales = req.getDriversAdicionales();
-        for (int i = 0; i < 3; i++) {
-            String val = (adicionales != null && i < adicionales.size()) ? n(adicionales.get(i)) : "";
-            XWPFTableRow row = t.getRow(base + 2 + i);
-            setCellText(row.getCell(0), "",  false, ParagraphAlignment.LEFT,   "FFFFFF");
-            setCellText(row.getCell(1), val, false, ParagraphAlignment.LEFT,   "FFFFFF");
-            setCellText(row.getCell(2), "",  false, ParagraphAlignment.CENTER, "FFFFFF");
+        List<String> siAdicionales = new ArrayList<>();
+        if (adicionales != null) {
+            for (String val : adicionales) {
+                if (val != null && !val.trim().isEmpty()) siAdicionales.add(val.trim());
+            }
+        }
+
+        int[] grid = {3872, 4919, 1675};
+
+        // ── Drivers table ────────────────────────────────────────────────────
+        if (!siDrivers.isEmpty()) {
+            int drvRows = 2 + siDrivers.size();
+            XWPFTable td = createStyledTable(doc, drvRows, 3, grid);
+            td.getRow(0).setHeight(DX_HDR);
+            td.getRow(1).setHeight(DX_DATA);
+            for (int i = 2; i < drvRows; i++) td.getRow(i).setHeight(DX_SW);
+            mergeCellsH(td, 0, 0, 2);
+            setCellText(td.getRow(0).getCell(0), "CONTROLADORES / DRIVERS", true, ParagraphAlignment.CENTER, "7F7F7F", "FFFFFF", 9);
+            setCellText(td.getRow(1).getCell(0), "CATEGORIA",             true, ParagraphAlignment.CENTER, "D9D9D9");
+            setCellText(td.getRow(1).getCell(1), "PROGRAMA / APLICACION", true, ParagraphAlignment.CENTER, "D9D9D9");
+            setCellText(td.getRow(1).getCell(2), "INSTALADO",             true, ParagraphAlignment.CENTER, "D9D9D9");
+            for (int i = 0; i < siDrivers.size(); i++) {
+                String bg = (i % 2 == 0) ? "FFFFFF" : "F5F5F8";
+                XWPFTableRow row = td.getRow(2 + i);
+                setCellText(row.getCell(0), "CONTROLADORES / DRIVERS", false, ParagraphAlignment.LEFT,   bg);
+                setCellText(row.getCell(1), siDrivers.get(i),           false, ParagraphAlignment.LEFT,   bg);
+                setCellText(row.getCell(2), "SI",                        true,  ParagraphAlignment.CENTER, bg);
+            }
+        }
+
+        // ── Adicionales table (only if there are entries) ─────────────────────
+        if (!siAdicionales.isEmpty()) {
+            int adicRows = 2 + siAdicionales.size();
+            int[] adicGrid = {8360, 2106};
+            XWPFTable ta = createStyledTable(doc, adicRows, 2, adicGrid);
+            ta.getRow(0).setHeight(DX_HDR);
+            ta.getRow(1).setHeight(DX_DATA);
+            for (int i = 2; i < adicRows; i++) ta.getRow(i).setHeight(DX_SW + 80);
+            mergeCellsH(ta, 0, 0, 1);
+            setCellText(ta.getRow(0).getCell(0), "SOFTWARE Y DRIVERS ADICIONAL", true, ParagraphAlignment.CENTER, "7F7F7F", "FFFFFF", 9);
+            setCellText(ta.getRow(1).getCell(0), "DESCRIPCION",          true, ParagraphAlignment.CENTER, "D9D9D9");
+            setCellText(ta.getRow(1).getCell(1), "INSTALADO",             true, ParagraphAlignment.CENTER, "D9D9D9");
+            for (int i = 0; i < siAdicionales.size(); i++) {
+                XWPFTableRow row = ta.getRow(2 + i);
+                setCellText(row.getCell(0), siAdicionales.get(i), false, ParagraphAlignment.LEFT,   "FFFFFF");
+                setCellText(row.getCell(1), "SI",                 true,  ParagraphAlignment.CENTER, "FFFFFF");
+            }
         }
     }
 
@@ -360,16 +381,21 @@ public class ActaSoftwareDocumentService {
             y = drawRow(cs, MARGIN, y, new float[]{eW,eW,eW,eW,eW}, new String[]{"TIPO","MARCA","MODELO","SERIAL","CODIGO"}, H_ROW, true, new Color(230,230,230));
             y = drawRow(cs, MARGIN, y, new float[]{eW,eW,eW,eW,eW}, new String[]{n(eq.getTipo()),n(eq.getMarca()),n(eq.getModelo()),n(eq.getSerial()),n(eq.getCodigo())}, H_ROW, false, Color.WHITE);
 
-            // Software table
+            // Software table — only SI items
             float cW = CONT_W * 0.37f, pW = CONT_W * 0.47f, iW = CONT_W * 0.16f;
-            y = drawDarkHeader(cs, "PROGRAMAS Y APLICACIONES INSTALADAS", MARGIN, y, CONT_W, H_DARK);
-            y = drawRow(cs, MARGIN, y, new float[]{cW,pW,iW}, new String[]{"CATEGORIA","PROGRAMA / APLICACION","INSTALADO"}, H_ROW, true, new Color(217,217,217));
-
             List<ActaSoftwareRequest.SoftwareItem> swItems = req.getSoftwareItems();
+            List<String[]> siSw = new ArrayList<>();
             for (int i = 0; i < SOFTWARE_PAGE1.length; i++) {
                 String ins = (swItems != null && i < swItems.size()) ? n(swItems.get(i).getInstalado()) : "";
-                Color bg = (i % 2 == 0) ? Color.WHITE : new Color(245,245,248);
-                y = drawSwRow(cs, MARGIN, y, cW, pW, iW, H_SW, SOFTWARE_PAGE1[i][0], SOFTWARE_PAGE1[i][1], ins, bg);
+                if ("SI".equalsIgnoreCase(ins)) siSw.add(SOFTWARE_PAGE1[i]);
+            }
+            if (!siSw.isEmpty()) {
+                y = drawDarkHeader(cs, "PROGRAMAS Y APLICACIONES INSTALADAS", MARGIN, y, CONT_W, H_DARK);
+                y = drawRow(cs, MARGIN, y, new float[]{cW,pW,iW}, new String[]{"CATEGORIA","PROGRAMA / APLICACION","INSTALADO"}, H_ROW, true, new Color(217,217,217));
+                for (int i = 0; i < siSw.size(); i++) {
+                    Color bg = (i % 2 == 0) ? Color.WHITE : new Color(245,245,248);
+                    y = drawSwRow(cs, MARGIN, y, cW, pW, iW, H_SW, siSw.get(i)[0], siSw.get(i)[1], "SI", bg);
+                }
             }
 
             drawFooterLine(cs);
@@ -394,25 +420,36 @@ public class ActaSoftwareDocumentService {
 
             float cW = CONT_W * 0.37f, pW = CONT_W * 0.47f, iW = CONT_W * 0.16f;
 
-            // Drivers
-            y = drawDarkHeader(cs, "CONTROLADORES / DRIVERS", MARGIN, y, CONT_W, H_DARK);
-            y = drawRow(cs, MARGIN, y, new float[]{cW,pW,iW}, new String[]{"CATEGORIA","PROGRAMA / APLICACION","INSTALADO"}, H_ROW, true, new Color(217,217,217));
+            // Drivers — only SI
             List<ActaSoftwareRequest.SoftwareItem> swItems = req.getSoftwareItems();
             int offset = SOFTWARE_PAGE1.length;
+            List<String> siDrv = new ArrayList<>();
             for (int i = 0; i < DRIVERS_PAGE2.length; i++) {
                 int idx = offset + i;
                 String ins = (swItems != null && idx < swItems.size()) ? n(swItems.get(idx).getInstalado()) : "";
-                Color bg = (i % 2 == 0) ? Color.WHITE : new Color(245,245,248);
-                y = drawSwRow(cs, MARGIN, y, cW, pW, iW, H_SW, "CONTROLADORES / DRIVERS", DRIVERS_PAGE2[i], ins, bg);
+                if ("SI".equalsIgnoreCase(ins)) siDrv.add(DRIVERS_PAGE2[i]);
+            }
+            if (!siDrv.isEmpty()) {
+                y = drawDarkHeader(cs, "CONTROLADORES / DRIVERS", MARGIN, y, CONT_W, H_DARK);
+                y = drawRow(cs, MARGIN, y, new float[]{cW,pW,iW}, new String[]{"CATEGORIA","PROGRAMA / APLICACION","INSTALADO"}, H_ROW, true, new Color(217,217,217));
+                for (int i = 0; i < siDrv.size(); i++) {
+                    Color bg = (i % 2 == 0) ? Color.WHITE : new Color(245,245,248);
+                    y = drawSwRow(cs, MARGIN, y, cW, pW, iW, H_SW, "CONTROLADORES / DRIVERS", siDrv.get(i), "SI", bg);
+                }
             }
 
-            // Adicionales
-            y = drawDarkHeader(cs, "SOFTWARE Y DRIVERS ADICIONAL", MARGIN, y, CONT_W, H_DARK);
-            y = drawRow(cs, MARGIN, y, new float[]{cW,pW,iW}, new String[]{"CATEGORIA","PROGRAMA / APLICACION","INSTALADO"}, H_ROW, true, new Color(217,217,217));
+            // Adicionales — only non-empty
             List<String> adicionales = req.getDriversAdicionales();
-            for (int i = 0; i < 3; i++) {
-                String val = (adicionales != null && i < adicionales.size()) ? n(adicionales.get(i)) : "";
-                y = drawSwRow(cs, MARGIN, y, cW, pW, iW, H_SW + 4f, "", val, "", Color.WHITE);
+            List<String> siAdic = new ArrayList<>();
+            if (adicionales != null) {
+                for (String v : adicionales) { if (v != null && !v.trim().isEmpty()) siAdic.add(v.trim()); }
+            }
+            if (!siAdic.isEmpty()) {
+                y = drawDarkHeader(cs, "SOFTWARE Y DRIVERS ADICIONAL", MARGIN, y, CONT_W, H_DARK);
+                y = drawRow(cs, MARGIN, y, new float[]{cW,pW,iW}, new String[]{"DESCRIPCION","PROGRAMA / APLICACION","INSTALADO"}, H_ROW, true, new Color(217,217,217));
+                for (String v : siAdic) {
+                    y = drawSwRow(cs, MARGIN, y, cW, pW, iW, H_SW + 4f, "", v, "SI", Color.WHITE);
+                }
             }
             y -= 4f;
 
